@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>종근당 카운터</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap');
+:root{--red:#D0021B;--accent:#FFD700;--green:#00E676;--bg:#08101e;--card:#111827}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:#fff;display:flex;flex-direction:column;height:100dvh}
+
+/* ── TAB ── */
+.tabs{display:flex;background:#050b14;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.07)}
+.tab{flex:1;padding:10px 0;text-align:center;font-size:11px;font-weight:700;color:rgba(255,255,255,.3);cursor:pointer;border-bottom:3px solid transparent;transition:.2s;position:relative}
+.tab.on{color:#fff;border-bottom-color:var(--red)}
+.badge{position:absolute;top:5px;right:calc(50% - 20px);background:var(--red);color:#fff;font-size:9px;font-weight:700;border-radius:8px;padding:1px 5px;display:none}
+.badge.show{display:block}
+.screen{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0}
+.screen.on{display:flex}
+
+/* ══ FIELD ══ */
+#F{background:var(--bg)}
+.bar{display:flex;align-items:center;justify-content:space-between;padding:3px 10px;flex-shrink:0;background:rgba(0,0,0,.4);border-bottom:1px solid rgba(255,255,255,.05)}
+.bar-l{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:rgba(255,255,255,.3)}
+.dot{width:6px;height:6px;border-radius:50%;background:#333}
+.dot.on{background:#00E676;box-shadow:0 0 6px #00E676;animation:bl 1.5s infinite}
+.dot.pause{background:#FFD700;box-shadow:0 0 6px #FFD700;animation:none}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
+.bar-r{display:flex;align-items:center;gap:8px}
+.wl{font-size:10px;font-weight:700;color:rgba(255,255,255,.3)}
+.ai{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:rgba(255,215,0,.6);opacity:0;transition:.2s}
+.ai.on{opacity:1}
+.sp{width:8px;height:8px;border:2px solid rgba(255,215,0,.15);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.totals{flex:0 0 46%;display:flex;min-height:0}
+.t-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:0}
+.t-col:first-child{border-right:1px solid rgba(255,255,255,.08)}
+.t-lbl{font-family:'Black Han Sans',sans-serif;font-size:4.5vw;color:rgba(255,255,255,.35);line-height:1;margin-bottom:2px}
+.t-num{font-family:'Black Han Sans',sans-serif;font-size:min(20vw,28vh);line-height:1;letter-spacing:-1px;transition:transform .18s cubic-bezier(.34,1.56,.64,1);max-width:100%;padding:0 4px;}
+.t-num.pop{transform:scale(1.07)}
+.t-num.yellow{color:var(--accent);text-shadow:0 0 40px rgba(255,215,0,.3),0 3px 0 rgba(0,0,0,.7)}
+.t-num.green{color:var(--green);text-shadow:0 0 40px rgba(0,230,118,.2),0 3px 0 rgba(0,0,0,.7)}
+.t-unit{font-family:'Black Han Sans',sans-serif;font-size:4.5vw;color:rgba(255,255,255,.25);margin-top:2px;line-height:1}
+
+.bottom{flex:1;min-height:0;display:flex;flex-direction:column;border-top:1px solid rgba(255,255,255,.07);background:#0b1422;padding:4px 10px 5px;gap:3px}
+.info-row{display:flex;gap:6px;flex:0 0 auto}
+.icard{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:5px 0;gap:2px}
+.ic-lbl{font-family:'Black Han Sans',sans-serif;font-size:3.2vw;color:rgba(255,255,255,.3);letter-spacing:1px;line-height:1}
+.ic-val{font-family:'Black Han Sans',sans-serif;font-size:min(9vw,6vh);line-height:1;color:#fff;display:flex;align-items:baseline;gap:3px}
+.ic-val.y{color:var(--accent)}
+.ic-val small{font-family:'Black Han Sans',sans-serif;font-size:3.5vw;color:rgba(255,255,255,.3)}
+.prog{flex-shrink:0}
+.ph{display:flex;justify-content:space-between;margin-bottom:3px}
+.ph span{font-family:'Black Han Sans',sans-serif;font-size:3vw;color:rgba(255,255,255,.25)}
+.pt{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.pf{height:100%;background:linear-gradient(90deg,#1a3a6b,var(--accent));border-radius:3px;transition:width .4s ease;width:0%}
+
+/* ── 작업 컨트롤 버튼 ── */
+.ctrl-row{display:flex;gap:6px;flex-shrink:0}
+.ctrl-btn{flex:1;padding:10px 0;border:none;border-radius:12px;font-family:'Black Han Sans',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:.15s;letter-spacing:.5px}
+.ctrl-btn:active{transform:scale(.95)}
+.ctrl-start{background:linear-gradient(135deg,#00C853,#00E676);color:#000}
+.ctrl-start:disabled{background:rgba(255,255,255,.08);color:rgba(255,255,255,.25);cursor:not-allowed;transform:none}
+.ctrl-pause{background:linear-gradient(135deg,#FF8F00,#FFD700);color:#000}
+.ctrl-pause:disabled{background:rgba(255,255,255,.08);color:rgba(255,255,255,.25);cursor:not-allowed;transform:none}
+.ctrl-finish{background:linear-gradient(135deg,#B71C1C,var(--red));color:#fff}
+.ctrl-finish:disabled{background:rgba(255,255,255,.08);color:rgba(255,255,255,.25);cursor:not-allowed;transform:none}
+
+/* ══ WAITING ══ */
+#W{background:var(--bg)}
+.w-head{padding:10px 14px 8px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.06)}
+.w-title{font-family:'Black Han Sans',sans-serif;font-size:15px;margin-bottom:8px}
+.w-summary{display:flex;gap:8px}
+.ws{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:7px 10px;text-align:center}
+.ws-v{font-family:'Black Han Sans',sans-serif;font-size:20px;color:var(--accent)}
+.ws-v.g{color:var(--green)}
+.ws-l{font-size:9px;color:rgba(255,255,255,.3);font-weight:700;margin-top:1px}
+.w-add{margin:8px 14px 0;padding:8px;background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.15);border-radius:10px;color:rgba(255,255,255,.4);font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:12px;cursor:pointer;width:calc(100% - 28px);text-align:center}
+.w-add:active{background:rgba(255,255,255,.1)}
+
+.pal-grid{
+  flex:1;overflow-y:auto;
+  padding:8px 10px 10px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  grid-auto-rows:calc((100vh - 220px) / 2.2);
+  gap:6px;
+  align-content:start;
+}
+.pal-grid::-webkit-scrollbar{width:3px}
+.pal-grid::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
+
+.pal-card{
+  background:var(--card);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  position:relative;
+  cursor:pointer;
+  overflow:hidden;
+  padding:6px 4px 4px;
+  animation:fi .3s ease;
+  min-height:0;
+}
+@keyframes fi{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+.pc-badge{
+  position:absolute;top:4px;left:5px;
+  font-family:'Black Han Sans',sans-serif;
+  font-size:10px;color:rgba(255,255,255,.4);
+  line-height:1;
+}
+.pc-actions{
+  position:absolute;top:3px;right:3px;
+  display:flex;gap:2px;
+}
+.pc-eb{width:20px;height:20px;border:none;border-radius:5px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.pc-eb.edit{background:rgba(255,255,255,.08);color:#fff}
+.pc-eb.del{background:rgba(208,2,27,.15);color:var(--red)}
+.pc-eb:active{opacity:.7}
+.pc-emoji{font-size:clamp(32px,9vw,44px);line-height:1;margin-bottom:1px}
+.pc-count{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:clamp(18px,5.5vw,26px);
+  line-height:1;color:var(--accent);
+  text-shadow:0 2px 0 rgba(0,0,0,.6);
+  width:100%;text-align:center;
+}
+.pc-count.full{color:var(--green)}
+.pc-count.low{color:#FF6B00}
+.pc-pct{font-size:9px;font-weight:700;color:rgba(255,255,255,.3);margin-top:1px}
+.pc-full-bar{position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 11px 11px}
+.w-empty{text-align:center;padding:40px 20px;color:rgba(255,255,255,.2);font-size:13px;line-height:2;grid-column:1/-1}
+.w-empty-icon{font-size:40px;margin-bottom:8px}
+
+/* ══ SETTING ══ */
+#S{overflow-y:auto;background:var(--bg)}
+#S::-webkit-scrollbar{display:none}
+.cam-box{position:relative;width:100%;height:220px;background:#000;flex-shrink:0;overflow:hidden}
+#sv{width:100%;height:100%;object-fit:cover;display:block}
+.cc-wrap{position:absolute;inset:0;pointer-events:none}
+.cc{position:absolute;width:18px;height:18px;border-color:var(--red);border-style:solid}
+.cc.tl{top:8px;left:8px;border-width:2px 0 0 2px}
+.cc.tr{top:8px;right:8px;border-width:2px 2px 0 0}
+.cc.bl{bottom:8px;left:8px;border-width:0 0 2px 2px}
+.cc.br{bottom:8px;right:8px;border-width:0 2px 2px 0}
+.scan{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:sc 3s linear infinite;opacity:0}
+.scan.on{opacity:1}
+@keyframes sc{0%{top:0}100%{top:100%}}
+.c-info{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);padding:3px 12px;border-radius:10px;font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap}
+.c-btn{position:absolute;top:10px;right:10px;border:none;border-radius:10px;padding:8px 16px;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:13px;cursor:pointer}
+.c-btn.off{background:var(--red);color:#fff}
+.c-btn.on2{background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.2)}
+.sbody{padding:12px}
+.sec{background:rgba(255,255,255,.04);border-radius:13px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(255,255,255,.06)}
+.sec-t{padding:9px 14px 7px;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:2px;border-bottom:1px solid rgba(255,255,255,.05)}
+.sr{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04)}
+.sr:last-child{border-bottom:none}
+.sl{display:flex;flex-direction:column;gap:2px}
+.sl-l{font-size:13px;font-weight:700}
+.sl-d{font-size:10px;color:rgba(255,255,255,.28)}
+.step{display:flex;align-items:center;gap:8px}
+.sb{width:30px;height:30px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sb:active{background:rgba(255,255,255,.18)}
+.sn{font-family:'Black Han Sans',sans-serif;font-size:19px;color:var(--accent);min-width:28px;text-align:center}
+.tog{position:relative;width:40px;height:22px;cursor:pointer}
+.tog input{opacity:0;width:0;height:0}
+.tsl{position:absolute;inset:0;background:#2a2a2a;border-radius:11px;transition:.3s}
+.tsl::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+.tog input:checked+.tsl{background:var(--green)}
+.tog input:checked+.tsl::before{transform:translateX(18px)}
+
+/* 카메라 선택 셀렉트 */
+.cam-select{
+  width:100%;padding:10px 14px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
+  color:#fff;
+  font-family:'Noto Sans KR',sans-serif;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  appearance:none;
+  -webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.4)' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 14px center;
+  padding-right:36px;
+}
+.cam-select option{background:#111827;color:#fff}
+
+.abtns{display:flex;gap:8px;margin-bottom:10px}
+.abtn{flex:1;padding:12px 0;border:none;border-radius:11px;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:13px;cursor:pointer}
+.abtn:active{transform:scale(.95)}
+.abtn-r{background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.1)}
+.abtn-e{background:#1a5c32;color:#fff}
+
+/* ══ MODAL ══ */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-bg.show{opacity:1;pointer-events:all}
+.modal{width:100%;background:#111827;border-radius:20px 20px 0 0;padding:20px 18px 34px;transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.1,.64,1)}
+.modal-bg.show .modal{transform:translateY(0)}
+.modal-title{font-family:'Black Han Sans',sans-serif;font-size:18px;margin-bottom:16px}
+.modal-row{margin-bottom:14px}
+.modal-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:1.5px;margin-bottom:6px}
+.modal-stepper{display:flex;align-items:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden}
+.ms-btn{width:54px;height:54px;background:rgba(255,255,255,.06);border:none;color:#fff;font-size:26px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.ms-btn:active{background:rgba(255,255,255,.15)}
+.ms-val{flex:1;text-align:center;font-family:'Black Han Sans',sans-serif;font-size:34px;color:var(--accent)}
+.modal-btns{display:flex;gap:8px;margin-top:18px}
+.mbtn{flex:1;padding:15px;border:none;border-radius:13px;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:15px;cursor:pointer}
+.mbtn:active{transform:scale(.97)}
+.mbtn-cancel{background:rgba(255,255,255,.07);color:#fff;border:1px solid rgba(255,255,255,.1)}
+.mbtn-confirm{background:var(--green);color:#000}
+
+/* flash/toast */
+.flash{position:fixed;inset:0;background:rgba(0,230,118,.15);border:4px solid var(--green);pointer-events:none;opacity:0;z-index:9999;transition:.1s}
+.flash.on{opacity:1}
+.toast{position:fixed;bottom:10px;left:50%;transform:translateX(-50%) translateY(10px);background:rgba(5,10,20,.95);border:1px solid rgba(0,255,120,.25);color:#00ff88;padding:7px 16px;border-radius:18px;font-size:12px;font-weight:700;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;z-index:9999}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{border-color:rgba(255,80,80,.3);color:#ff8080}
+
+/* ══ 전체화면 카메라 모달 ══ */
+.cam-full{
+  position:fixed;inset:0;z-index:2000;
+  background:#000;
+  display:none;flex-direction:column;
+}
+.cam-full.show{display:flex}
+.cam-full-video{
+  flex:1;width:100%;object-fit:cover;
+  display:block;
+}
+.cam-full-bar{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:16px 16px calc(16px + env(safe-area-inset-bottom));
+  background:linear-gradient(transparent,rgba(0,0,0,.85));
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;
+}
+.cam-full-info{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:13px;color:rgba(255,255,255,.6);
+  display:flex;align-items:center;gap:6px;
+}
+.cam-full-close{
+  background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:12px;
+  color:#fff;padding:10px 20px;
+  font-family:'Black Han Sans',sans-serif;
+  font-size:14px;cursor:pointer;
+  backdrop-filter:blur(8px);
+  flex-shrink:0;
+}
+.cam-full-close:active{background:rgba(255,255,255,.3)}
+/* 전체화면 열기 버튼 (설정탭 카메라 위) */
+.cam-full-btn{
+  position:absolute;top:10px;left:10px;
+  border:none;border-radius:10px;
+  padding:8px 14px;
+  background:rgba(0,0,0,.55);
+  color:#fff;
+  font-family:'Noto Sans KR',sans-serif;
+  font-weight:700;font-size:12px;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,.2);
+  backdrop-filter:blur(4px);
+  display:none;
+}
+.cam-full-btn.show{display:block}
+.cam-full-btn:active{background:rgba(255,255,255,.2)}
+/* 조준선 (전체화면) */
+.cam-full-guide{
+  position:absolute;inset:0;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+  padding:40px 8px 80px;
+}
+.guide-box{
+  width:92%;height:78%;
+  border:2.5px solid rgba(255,60,60,.75);
+  border-radius:14px;
+  box-shadow:0 0 0 9999px rgba(0,0,0,.18);
+  position:relative;
+}
+.guide-corner{position:absolute;width:28px;height:28px;border-color:var(--red);border-style:solid}
+.guide-corner.tl{top:-2px;left:-2px;border-width:4px 0 0 4px;border-radius:5px 0 0 0}
+.guide-corner.tr{top:-2px;right:-2px;border-width:4px 4px 0 0;border-radius:0 5px 0 0}
+.guide-corner.bl{bottom:-2px;left:-2px;border-width:0 0 4px 4px;border-radius:0 0 0 5px}
+.guide-corner.br{bottom:-2px;right:-2px;border-width:0 4px 4px 0;border-radius:0 0 5px 0}
+.guide-label{
+  position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);
+  font-family:'Black Han Sans',sans-serif;font-size:12px;
+  color:rgba(255,100,100,.9);white-space:nowrap;
+  background:rgba(0,0,0,.5);padding:3px 10px;border-radius:8px;
+}
+
+/* 작업 상태 오버레이 */
+.pause-overlay{
+  position:absolute;inset:0;
+  background:rgba(0,0,0,.6);
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+  opacity:0;transition:.2s;
+  z-index:5;
+}
+.pause-overlay.show{opacity:1}
+.pause-label{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:28px;
+  color:var(--accent);
+  letter-spacing:2px;
+  text-shadow:0 2px 10px rgba(0,0,0,.8);
+}
+
+/* ── 현장탭 카메라 미니 미리보기 ── */
+.field-cam-wrap{
+  position:relative;
+  width:100%;
+  flex:0 0 80px;
+  background:#000;
+  overflow:hidden;
+  border-radius:10px;
+  flex-shrink:0;
+}
+#fv{
+  width:100%;height:100%;
+  object-fit:cover;
+  display:block;
+}
+.field-cam-off{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  background:#0b1422;
+  font-size:11px;color:rgba(255,255,255,.25);
+  font-weight:700;
+}
+/* 신뢰도 오버레이 */
+.conf-bar{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:4px 8px;
+  background:linear-gradient(transparent,rgba(0,0,0,.85));
+  display:flex;align-items:center;justify-content:space-between;
+  gap:6px;
+}
+.conf-label{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:11px;color:rgba(255,255,255,.6);
+}
+.conf-val{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:13px;color:var(--green);
+}
+.conf-val.low{color:#FF6B00}
+.conf-val.mid{color:var(--accent)}
+/* 클래스 표시 */
+.class-tag{
+  position:absolute;top:6px;left:6px;
+  background:rgba(0,0,0,.65);
+  border-radius:6px;padding:2px 8px;
+  font-family:'Black Han Sans',sans-serif;
+  font-size:11px;color:#fff;
+}
+/* 수동 박스 수 조절 */
+.manual-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;
+  padding:5px 10px;
+  flex-shrink:0;
+}
+.manual-lbl{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:3vw;color:rgba(255,255,255,.35);
+}
+.manual-step{display:flex;align-items:center;gap:8px}
+.msb{width:28px;height:28px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.msb:active{background:rgba(255,255,255,.2)}
+.msn{font-family:'Black Han Sans',sans-serif;font-size:16px;color:var(--accent);min-width:24px;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab on" id="tab-F" onclick="goTab('F')">📦 현장</div>
+  <div class="tab" id="tab-W" onclick="goTab('W')">⏳ 대기<span class="badge" id="wBadge">0</span></div>
+  <div class="tab" id="tab-S" onclick="goTab('S')">⚙️ 설정</div>
+</div>
+
+<!-- FIELD -->
+<div class="screen on" id="F">
+  <div class="bar">
+    <div class="bar-l"><div class="dot" id="dot"></div><span id="stTxt">카메라 꺼짐 · 설정탭에서 시작</span></div>
+    <div class="bar-r"><span class="wl" id="wlStatus">💡</span><div class="ai" id="ai"><div class="sp"></div>분석중</div></div>
+  </div>
+  <div class="totals">
+    <div class="t-col">
+      <div class="t-lbl">총 박스</div>
+      <div class="t-num yellow" id="fTB">0</div>
+      <div class="t-unit">개</div>
+    </div>
+    <div class="t-col">
+      <div class="t-lbl">총 파렛트</div>
+      <div class="t-num green" id="fTP">0</div>
+      <div class="t-unit">개</div>
+    </div>
+  </div>
+  <div class="bottom">
+    <div class="info-row">
+      <div class="icard">
+        <div class="ic-lbl">현재 파렛트</div>
+        <div class="ic-val"><span id="fPN">1</span><small>번째</small></div>
+      </div>
+      <div class="icard">
+        <div class="ic-lbl">감지 박스</div>
+        <div class="ic-val y" id="fCB">0</div>
+      </div>
+    </div>
+    <!-- 카메라 미니 미리보기 -->
+    <div class="field-cam-wrap" id="fieldCamWrap">
+      <video id="fv" autoplay playsinline muted></video>
+      <div class="field-cam-off" id="fieldCamOff">📷 설정탭에서 카메라 시작</div>
+      <div class="class-tag" id="classTag">-</div>
+      <div class="conf-bar">
+        <span class="conf-label">신뢰도</span>
+        <span class="conf-val" id="confVal">-</span>
+      </div>
+    </div>
+    <!-- 수동 박스 수 조절 -->
+    <div class="manual-row">
+      <span class="manual-lbl">🔧 박스 수 수동 조절</span>
+      <div class="manual-step">
+        <button class="msb" onclick="manualBox(-1)">−</button>
+        <div class="msn" id="manualVal">0</div>
+        <button class="msb" onclick="manualBox(1)">+</button>
+        <button class="msb" style="background:rgba(0,230,118,.15);border-color:var(--green);font-size:11px;width:36px" onclick="manualApply()">✅</button>
+      </div>
+    </div>
+    <div class="prog">
+      <div class="ph"><span>파렛트 진행</span><span id="pTxt">0 / 18</span></div>
+      <div class="pt"><div class="pf" id="pFill"></div></div>
+    </div>
+    <!-- 작업 컨트롤 버튼 -->
+    <div class="ctrl-row">
+      <button class="ctrl-btn ctrl-start" id="btnStart" onclick="ctrlStart()" disabled>▶ 작업시작</button>
+      <button class="ctrl-btn ctrl-pause" id="btnPause" onclick="ctrlPause()" disabled>⏸ 일시중지</button>
+      <button class="ctrl-btn ctrl-finish" id="btnFinish" onclick="ctrlFinish()" disabled>✅ 작업완료</button>
+    </div>
+  </div>
+</div>
+
+<!-- WAITING -->
+<div class="screen" id="W">
+  <div class="w-head">
+    <div class="w-title">⏳ 대기 중인 파렛트</div>
+    <div class="w-summary">
+      <div class="ws"><div class="ws-v" id="wTB">0</div><div class="ws-l">총 박스</div></div>
+      <div class="ws"><div class="ws-v g" id="wTP">0</div><div class="ws-l">총 파렛트</div></div>
+    </div>
+  </div>
+  <button class="w-add" onclick="openModal(null)">＋ 파렛트 수동 추가</button>
+  <div class="pal-grid" id="palList"></div>
+</div>
+
+<!-- SETTING -->
+<div class="screen" id="S">
+  <div class="cam-box">
+    <video id="sv" autoplay playsinline muted></video>
+    <div class="pause-overlay" id="pauseOverlay"><div class="pause-label">⏸ 일시중지</div></div>
+    <div class="cc-wrap">
+      <div class="scan" id="scan"></div>
+      <div class="cc tl"></div><div class="cc tr"></div>
+      <div class="cc bl"></div><div class="cc br"></div>
+    </div>
+    <button class="c-btn off" id="cBtn" onclick="toggleCam()">📷 카메라 시작</button>
+    <button class="cam-full-btn" id="fullBtn" onclick="openFullCam()">⛶ 전체화면</button>
+    <div class="c-info" id="cInfo">카메라 꺼짐</div>
+  </div>
+  <div class="sbody">
+    <!-- 카메라 선택 -->
+    <div class="sec">
+      <div class="sec-t">카메라 선택</div>
+      <div class="sr">
+        <div class="sl"><div class="sl-l">📷 카메라 방향</div><div class="sl-d">전면 또는 후면 카메라 선택</div></div>
+        <div style="min-width:140px">
+          <select class="cam-select" id="camMode" onchange="onCamModeChange()">
+            <option value="user">📱 전면 카메라</option>
+            <option value="environment">🔭 후면 카메라</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-t">파렛트 설정</div>
+      <div class="sr">
+        <div class="sl"><div class="sl-l">📦 파렛트 기준 박스 수</div><div class="sl-d">이 수 도달 시 자동 완료</div></div>
+        <div class="step"><button class="sb" onclick="chgT(-1)">−</button><div class="sn" id="tN">18</div><button class="sb" onclick="chgT(1)">+</button></div>
+      </div>
+      <div class="sr">
+        <div class="sl"><div class="sl-l">⏱ 분석 주기 (초)</div><div class="sl-d">카메라 분석 간격</div></div>
+        <div class="step"><button class="sb" onclick="chgI(-1)">−</button><div class="sn" id="iN">3</div><button class="sb" onclick="chgI(1)">+</button></div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-t">자동 완료 조건</div>
+      <div class="sr">
+        <div class="sl"><div class="sl-l">👁 화면에서 박스 사라질 때</div><div class="sl-d">연속 2회 감지 시 자동 완료</div></div>
+        <label class="tog"><input type="checkbox" id="tD" checked><span class="tsl"></span></label>
+      </div>
+      <div class="sr">
+        <div class="sl"><div class="sl-l">🔢 목표 박스 수 도달 시</div><div class="sl-d">기준 수에 도달하면 자동 완료</div></div>
+        <label class="tog"><input type="checkbox" id="tT" checked><span class="tsl"></span></label>
+      </div>
+    </div>
+    <div class="abtns">
+      <button class="abtn abtn-r" onclick="resetAll()">🔄 전체 초기화</button>
+      <button class="abtn abtn-e" onclick="exportCSV()">📊 엑셀 출력</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg" onclick="bgClick(event)">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">✏️ 파렛트 수정</div>
+    <div class="modal-row">
+      <div class="modal-label">파렛트 번호</div>
+      <div class="modal-stepper">
+        <button class="ms-btn" onclick="mStep('pn',-1)">−</button>
+        <div class="ms-val" id="m-pn">1</div>
+        <button class="ms-btn" onclick="mStep('pn',1)">+</button>
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">박스 수</div>
+      <div class="modal-stepper">
+        <button class="ms-btn" onclick="mStep('b',-1)">−</button>
+        <div class="ms-val" id="m-b">18</div>
+        <button class="ms-btn" onclick="mStep('b',1)">+</button>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-cancel" onclick="closeModal()">취소</button>
+      <button class="mbtn mbtn-confirm" onclick="confirmModal()">✅ 확인 · 반영</button>
+    </div>
+  </div>
+</div>
+
+<!-- 전체화면 카메라 -->
+<div class="cam-full" id="camFull">
+  <video id="svFull" autoplay playsinline muted class="cam-full-video"></video>
+  <div class="cam-full-guide">
+    <div class="guide-box">
+      <div class="guide-corner tl"></div>
+      <div class="guide-corner tr"></div>
+      <div class="guide-corner bl"></div>
+      <div class="guide-corner br"></div>
+      <div class="guide-label">📦 파렛트를 이 안에 맞춰주세요</div>
+    </div>
+  </div>
+  <div class="cam-full-bar">
+    <div class="cam-full-info" id="fullInfo">📷 카메라 미리보기</div>
+    <button class="cam-full-close" onclick="closeFullCam()">✕ 닫기</button>
+  </div>
+</div>
+
+<div class="flash" id="flash"></div>
+<div class="toast" id="toast"></div>
+
+<!-- Teachable Machine 라이브러리 -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+<script>
+// ── 상태 변수 ──
+let stream=null,running=false,paused=false,analyzing=false,timer=null;
+let curBox=0,totalBox=0,palCount=0,prevBox=0,zeroF=0,tgt=18,intv=3;
+let camMode='user'; // 'user'=전면, 'environment'=후면
+let recs=JSON.parse(localStorage.getItem('jkd13')||'[]');
+const sv=document.getElementById('sv');
+const cv=document.createElement('canvas'),cx=cv.getContext('2d');
+
+// Teachable Machine 모델
+let tmModel=null,tmWebcam=null;
+const TM_MODEL_URL='https://raw.githubusercontent.com/dayacompany815/JONG/refs/heads/main/';
+
+recalcTotals();
+
+// ── 전체화면 카메라 ──
+const svFull=document.getElementById('svFull');
+function openFullCam(){
+  if(!stream){showToast('⚠️ 먼저 카메라를 시작해주세요',true);return;}
+  svFull.srcObject=stream;
+  svFull.style.transform=camMode==='user'?'scaleX(-1)':'none';
+  document.getElementById('camFull').classList.add('show');
+  document.getElementById('fullInfo').textContent=camMode==='user'?'📱 전면 카메라':'🔭 후면 카메라';
+  // 화면 가로로 잠그기 시도 (지원 시)
+  try{screen.orientation.lock('portrait').catch(()=>{});}catch(e){}
+}
+function closeFullCam(){
+  document.getElementById('camFull').classList.remove('show');
+  svFull.srcObject=null;
+}
+
+// ── 수동 박스 조절 ──
+function manualBox(d){
+  const el=document.getElementById('manualVal');
+  let v=Math.max(0,Math.min(tgt,parseInt(el.textContent||0)+d));
+  el.textContent=v;
+}
+function manualApply(){
+  const v=parseInt(document.getElementById('manualVal').textContent||0);
+  curBox=v;prevBox=v;
+  if(v===0){zeroF=0;}
+  else if(v>=tgt&&document.getElementById('tT').checked){done('수동-목표도달');}
+  else{render();}
+  showToast(`🔧 박스 수 ${v}개로 수동 설정`);
+}
+
+// ── WAKELOCK ──
+let wakeLock=null;
+async function reqWL(){
+  if(!('wakeLock' in navigator))return;
+  try{
+    wakeLock=await navigator.wakeLock.request('screen');
+    document.getElementById('wlStatus').textContent='🔆';
+    wakeLock.addEventListener('release',()=>document.getElementById('wlStatus').textContent='💡');
+    document.addEventListener('visibilitychange',async()=>{
+      if(document.visibilityState==='visible'&&running&&!paused)
+        try{wakeLock=await navigator.wakeLock.request('screen');document.getElementById('wlStatus').textContent='🔆';}catch(e){}
+    });
+  }catch(e){}
+}
+function relWL(){if(wakeLock){wakeLock.release();wakeLock=null;}document.getElementById('wlStatus').textContent='💡';}
+
+// ── TABS ──
+function goTab(t){
+  ['F','W','S'].forEach(x=>{
+    document.getElementById('tab-'+x).classList.toggle('on',x===t);
+    document.getElementById(x).classList.toggle('on',x===t);
+  });
+  if(t==='S'&&stream)sv.srcObject=stream;
+  if(t==='W')renderList();
+}
+
+// ── 카메라 모드 변경 ──
+function onCamModeChange(){
+  camMode=document.getElementById('camMode').value;
+  // 카메라가 켜져있으면 재시작
+  if(running){
+    stopCam();
+    setTimeout(()=>toggleCam(),300);
+  }
+}
+
+// ── CAMERA ──
+async function toggleCam(){
+  if(running){stopCam();return;}
+  try{
+    // 전면/후면 선택 적용
+    const constraints={
+      video:{
+        facingMode:camMode,
+        width:{ideal:1280},
+        height:{ideal:720}
+      },
+      audio:false
+    };
+    stream=await navigator.mediaDevices.getUserMedia(constraints);
+    sv.srcObject=stream;running=true;paused=false;
+    // 현장탭 미니뷰 연동
+    const fv=document.getElementById('fv');
+    fv.srcObject=stream;
+    fv.style.transform=camMode==='user'?'scaleX(-1)':'none';
+    document.getElementById('fieldCamOff').style.display='none';
+
+    // 전면카메라는 좌우반전, 후면은 정상
+    sv.style.transform=camMode==='user'?'scaleX(-1)':'none';
+
+    document.getElementById('cBtn').textContent='⏹ 카메라 정지';
+    document.getElementById('cBtn').className='c-btn on2';
+    document.getElementById('dot').classList.add('on');
+    document.getElementById('dot').classList.remove('pause');
+    document.getElementById('scan').classList.add('on');
+    document.getElementById('cInfo').textContent='✅ 카메라 작동 중';
+    document.getElementById('pauseOverlay').classList.remove('show');
+    document.getElementById('fullBtn').classList.add('show');
+
+    // 작업시작 버튼 활성화 (분석은 아직 안 시작)
+    updateCtrlBtns('ready');
+    reqWL();
+  }catch(e){
+    showToast('❌ 카메라 접근 불가 — 크롬에서 열어주세요',true);
+    document.getElementById('cInfo').textContent='❌ 카메라 접근 불가';
+  }
+}
+
+function stopCam(){
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  stream=null;sv.srcObject=null;running=false;paused=false;
+  clearInterval(timer);relWL();
+  document.getElementById('cBtn').textContent='📷 카메라 시작';
+  document.getElementById('cBtn').className='c-btn off';
+  document.getElementById('dot').classList.remove('on','pause');
+  document.getElementById('stTxt').textContent='카메라 꺼짐 · 설정탭에서 시작';
+  document.getElementById('scan').classList.remove('on');
+  document.getElementById('cInfo').textContent='카메라 꺼짐';
+  document.getElementById('pauseOverlay').classList.remove('show');
+  document.getElementById('fullBtn').classList.remove('show');
+  // 현장탭 미니뷰 초기화
+  const fv=document.getElementById('fv');
+  fv.srcObject=null;
+  document.getElementById('fieldCamOff').style.display='flex';
+  document.getElementById('classTag').textContent='-';
+  document.getElementById('confVal').textContent='-';
+  document.getElementById('confVal').className='conf-val';
+  closeFullCam();
+  updateCtrlBtns('off');
+}
+
+function startTimer(){clearInterval(timer);timer=setInterval(()=>{if(!analyzing&&!paused)analyze();},intv*1000);}
+
+// ── 작업 컨트롤 ──
+function ctrlStart(){
+  if(!running)return;
+  paused=false;
+  document.getElementById('stTxt').textContent='AI 자동 분석 중';
+  document.getElementById('dot').classList.add('on');
+  document.getElementById('dot').classList.remove('pause');
+  document.getElementById('scan').classList.add('on');
+  document.getElementById('pauseOverlay').classList.remove('show');
+  reqWL();
+  startTimer();
+  updateCtrlBtns('running');
+  showToast('▶ 작업 시작');
+}
+
+function ctrlPause(){
+  if(!running)return;
+  if(paused){
+    // 일시중지 → 재개
+    ctrlStart();
+    return;
+  }
+  paused=true;
+  clearInterval(timer);
+  document.getElementById('stTxt').textContent='⏸ 일시중지됨';
+  document.getElementById('dot').classList.remove('on');
+  document.getElementById('dot').classList.add('pause');
+  document.getElementById('scan').classList.remove('on');
+  document.getElementById('pauseOverlay').classList.add('show');
+  relWL();
+  updateCtrlBtns('paused');
+  showToast('⏸ 일시중지');
+}
+
+function ctrlFinish(){
+  if(!running)return;
+  if(!confirm('현재 작업을 완료하시겠습니까?\n현재 감지된 박스가 파렛트에 기록됩니다.'))return;
+  // 현재 박스가 있으면 파렛트 완료 처리
+  if(curBox>0||prevBox>0){
+    done('수동-작업완료');
+  }
+  stopCam();
+  showToast('✅ 작업 완료!');
+}
+
+// 버튼 상태 관리
+// state: 'off' | 'ready' | 'running' | 'paused'
+function updateCtrlBtns(state){
+  const s=document.getElementById('btnStart');
+  const p=document.getElementById('btnPause');
+  const f=document.getElementById('btnFinish');
+  if(state==='off'){
+    s.disabled=true;p.disabled=true;f.disabled=true;
+    p.textContent='⏸ 일시중지';
+  }else if(state==='ready'){
+    s.disabled=false;p.disabled=true;f.disabled=true;
+    p.textContent='⏸ 일시중지';
+  }else if(state==='running'){
+    s.disabled=true;p.disabled=false;f.disabled=false;
+    p.textContent='⏸ 일시중지';
+  }else if(state==='paused'){
+    s.disabled=false;p.disabled=false;f.disabled=false;
+    s.textContent='▶ 재개';
+    p.textContent='▶ 재개';
+    // 재개는 pause 버튼도 같은 역할
+    s.textContent='▶ 작업재개';
+  }
+}
+
+// ── ANALYZE (Teachable Machine) ──
+async function analyze(){
+  if(!running||paused||analyzing)return;
+  analyzing=true;document.getElementById('ai').classList.add('on');
+
+  if(!tmModel){
+    try{
+      // Teachable Machine 모델 로드
+      const modelURL=TM_MODEL_URL+'model.json';
+      const metadataURL=TM_MODEL_URL+'metadata.json';
+      tmModel=await tmImage.load(modelURL,metadataURL);
+      document.getElementById('ai').classList.remove('on');analyzing=false;
+      return;
+    }catch(e){
+      showToast('❌ 모델 로드 실패',true);
+      document.getElementById('ai').classList.remove('on');analyzing=false;
+      return;
+    }
+  }
+
+  try{
+    // 카메라 화면을 canvas에 그리기
+    cv.width=sv.videoWidth||640;cv.height=sv.videoHeight||480;
+    cx.save();
+    if(camMode==='user'){
+      cx.scale(-1,1);cx.drawImage(sv,-cv.width,0,cv.width,cv.height);
+    }else{
+      cx.drawImage(sv,0,0,cv.width,cv.height);
+    }
+    cx.restore();
+
+    // Teachable Machine 예측
+    const predictions=await tmModel.predict(cv);
+    
+    // 가장 높은 확률의 클래스 찾기
+    let maxProb=0,maxClass=-1;
+    predictions.forEach((p,i)=>{
+      if(p.probability>maxProb){maxProb=p.probability;maxClass=i;}
+    });
+
+    // 신뢰도 UI 업데이트
+    const pct=Math.round(maxProb*100);
+    const confEl=document.getElementById('confVal');
+    const classNames=['빈파렛트','1개','2개','3개','4개','5개','6개','7개','8개','9개','10개','11개','12개','13개','14개','15개','16개','17개','18개'];
+    document.getElementById('classTag').textContent=maxClass>=0?classNames[maxClass]||('-'):'-';
+    confEl.textContent=pct+'%';
+    confEl.className='conf-val'+(pct<50?' low':pct<70?' mid':'');
+
+    // 신뢰도 70% 이상일 때만 인식
+    if(maxProb<0.7){
+      zeroF++;
+      if(zeroF>=2&&prevBox>0&&document.getElementById('tD').checked){done('자동-사라짐');zeroF=0;}
+      document.getElementById('ai').classList.remove('on');analyzing=false;
+      return;
+    }
+
+    zeroF=0;
+    
+    // 18개 클래스별 박스 개수 매핑
+    // Class 0 = 빈파렛트, Class 1~18 = 박스 1~18개
+    let detectedBox=0;
+    if(maxClass===0)detectedBox=0;
+    else detectedBox=maxClass; // Class 1=1개, Class 2=2개, ..., Class 18=18개
+    
+    if(detectedBox===0){
+      zeroF++;
+      if(zeroF>=2&&prevBox>0&&document.getElementById('tD').checked){done('자동-사라짐');zeroF=0;}
+    }else{
+      zeroF=0;curBox=detectedBox;prevBox=detectedBox;
+      if(curBox>=tgt&&document.getElementById('tT').checked)done('자동-목표도달');
+      else render();
+    }
+  }catch(e){
+    console.error('분석 오류:',e);
+  }
+  document.getElementById('ai').classList.remove('on');analyzing=false;
+}
+
+// ── DONE ──
+function done(reason){
+  const b=curBox||prevBox||tgt;
+  palCount++;totalBox+=b;curBox=0;prevBox=0;zeroF=0;
+  const now=new Date();
+  recs.unshift({id:Date.now(),dt:now.toLocaleDateString('ko-KR'),tm:now.toLocaleTimeString('ko-KR'),pn:palCount,b,r:reason});
+  if(recs.length>300)recs=recs.slice(0,300);
+  save();
+  const f=document.getElementById('flash');f.classList.add('on');setTimeout(()=>f.classList.remove('on'),600);
+  render();updateBadge();
+  showToast(`✅ 파렛트 ${palCount}번 완료 · ${b}개`);
+}
+
+// ── RENDER LIST ──
+function renderList(){
+  const el=document.getElementById('palList');
+  document.getElementById('wTB').textContent=totalBox;
+  document.getElementById('wTP').textContent=palCount;
+  if(!recs.length){
+    el.innerHTML=`<div class="w-empty"><div class="w-empty-icon">🏭</div>완료된 파렛트가 없습니다<br><span style="font-size:11px">카메라로 자동 감지되거나<br>수동으로 추가하세요</span></div>`;
+    return;
+  }
+  el.innerHTML=recs.map(r=>{
+    const pct=Math.min(100,Math.round(r.b/tgt*100));
+    const isFull=r.b>=tgt;
+    const isLow=pct<60;
+    const barColor=isFull?'#00C853':isLow?'#FF6B00':'#FFD700';
+    const cntClass=isFull?'full':isLow?'low':'';
+    return `
+    <div class="pal-card" style="border-color:${isFull?'rgba(0,200,83,.3)':'rgba(255,255,255,.08)'}">
+      <div class="pc-badge">No.${r.pn}</div>
+      <div class="pc-actions">
+        <button class="pc-eb edit" onclick="event.stopPropagation();openModal(${r.id})">✏️</button>
+        <button class="pc-eb del" onclick="event.stopPropagation();delPal(${r.id})">🗑</button>
+      </div>
+      <div class="pc-emoji">
+        <svg viewBox="0 0 60 50" width="48" height="40" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="18" width="16" height="14" rx="2" fill="#2B5FD9" stroke="#4a7aff" stroke-width="0.8"/>
+          <rect x="3" y="22" width="14" height="2" rx="1" fill="rgba(255,255,255,0.3)"/>
+          <rect x="22" y="18" width="16" height="14" rx="2" fill="#2B5FD9" stroke="#4a7aff" stroke-width="0.8"/>
+          <rect x="23" y="22" width="14" height="2" rx="1" fill="rgba(255,255,255,0.3)"/>
+          <rect x="42" y="18" width="16" height="14" rx="2" fill="#2B5FD9" stroke="#4a7aff" stroke-width="0.8"/>
+          <rect x="43" y="22" width="14" height="2" rx="1" fill="rgba(255,255,255,0.3)"/>
+          <rect x="2" y="5" width="16" height="14" rx="2" fill="#1e47c8" stroke="#3a6aee" stroke-width="0.8"/>
+          <rect x="3" y="9" width="14" height="2" rx="1" fill="rgba(255,255,255,0.25)"/>
+          <rect x="22" y="5" width="16" height="14" rx="2" fill="#1e47c8" stroke="#3a6aee" stroke-width="0.8"/>
+          <rect x="23" y="9" width="14" height="2" rx="1" fill="rgba(255,255,255,0.25)"/>
+          <rect x="42" y="5" width="16" height="14" rx="2" fill="#1e47c8" stroke="#3a6aee" stroke-width="0.8"/>
+          <rect x="43" y="9" width="14" height="2" rx="1" fill="rgba(255,255,255,0.25)"/>
+          <rect x="0" y="32" width="60" height="7" rx="1.5" fill="#A07820"/>
+          <rect x="0" y="32" width="60" height="2" rx="0" fill="#C8A030" opacity="0.7"/>
+          <rect x="2" y="39" width="16" height="5" rx="1" fill="#7A5C10"/>
+          <rect x="22" y="39" width="16" height="5" rx="1" fill="#7A5C10"/>
+          <rect x="42" y="39" width="16" height="5" rx="1" fill="#7A5C10"/>
+        </svg>
+      </div>
+      <div class="pc-count ${cntClass}">${r.b}</div>
+      <div class="pc-pct">${r.b}/${tgt}개 · ${pct}%</div>
+      <div class="pc-full-bar" style="background:${barColor};opacity:.7"></div>
+    </div>`;
+  }).join('');
+}
+
+// ── RENDER FIELD ──
+function render(){
+  setN('fTB',totalBox);setN('fTP',palCount);setN('fCB',curBox);
+  document.getElementById('fPN').textContent=palCount+1;
+  const p=Math.min(100,Math.round(curBox/tgt*100));
+  document.getElementById('pFill').style.width=p+'%';
+  document.getElementById('pTxt').textContent=`${curBox} / ${tgt}`;
+  document.getElementById('wTB').textContent=totalBox;
+  document.getElementById('wTP').textContent=palCount;
+  updateBadge();
+}
+function setN(id,val){
+  const e=document.getElementById(id);
+  if(e&&e.textContent!=val){
+    e.textContent=val;
+    if(e.classList.contains('t-num')){
+      const len=String(val).length;
+      if(len<=1)e.style.fontSize='min(38vw,48vh)';
+      else if(len===2)e.style.fontSize='min(26vw,34vh)';
+      else if(len===3)e.style.fontSize='min(17vw,22vh)';
+      else e.style.fontSize='min(13vw,17vh)';
+    }
+    e.classList.remove('pop');void e.offsetWidth;e.classList.add('pop');
+    setTimeout(()=>e.classList.remove('pop'),300);
+  }
+}
+function updateBadge(){
+  const b=document.getElementById('wBadge');
+  if(recs.length>0){b.textContent=recs.length;b.classList.add('show');}
+  else b.classList.remove('show');
+}
+
+// ── DELETE ──
+function delPal(id){
+  if(!confirm('이 파렛트 기록을 삭제하시겠습니까?'))return;
+  recs=recs.filter(r=>r.id!==id);
+  recalcTotals();save();render();renderList();
+  showToast('🗑 삭제 완료');
+}
+
+// ── MODAL ──
+let modalId=null,mVals={pn:1,b:18};
+function openModal(id){
+  modalId=id;
+  if(id===null){mVals={pn:palCount+1,b:tgt};document.getElementById('modalTitle').textContent='➕ 파렛트 수동 추가';}
+  else{const r=recs.find(x=>x.id===id);if(!r)return;mVals={pn:r.pn,b:r.b};document.getElementById('modalTitle').textContent='✏️ 파렛트 수정';}
+  document.getElementById('m-pn').textContent=mVals.pn;
+  document.getElementById('m-b').textContent=mVals.b;
+  document.getElementById('modalBg').classList.add('show');
+}
+function closeModal(){document.getElementById('modalBg').classList.remove('show');}
+function bgClick(e){if(e.target===document.getElementById('modalBg'))closeModal();}
+function mStep(k,d){
+  if(k==='b')mVals.b=Math.max(1,mVals.b+d);
+  if(k==='pn')mVals.pn=Math.max(1,mVals.pn+d);
+  document.getElementById('m-'+k).textContent=mVals[k];
+}
+function confirmModal(){
+  if(modalId===null){
+    const now=new Date();
+    recs.unshift({id:Date.now(),dt:now.toLocaleDateString('ko-KR'),tm:now.toLocaleTimeString('ko-KR'),pn:mVals.pn,b:mVals.b,r:'수동추가'});
+    showToast(`➕ 파렛트 ${mVals.pn}번 추가 · ${mVals.b}개`);
+  }else{
+    const idx=recs.findIndex(r=>r.id===modalId);
+    if(idx>-1){recs[idx].pn=mVals.pn;recs[idx].b=mVals.b;}
+    showToast(`✅ 파렛트 ${mVals.pn}번 수정 반영 · ${mVals.b}개`);
+  }
+  recs.sort((a,b)=>b.pn-a.pn);
+  recalcTotals();save();render();renderList();
+  closeModal();
+}
+
+// ── UTILS ──
+function recalcTotals(){
+  totalBox=recs.reduce((s,r)=>s+r.b,0);
+  palCount=recs.length>0?Math.max(...recs.map(r=>r.pn)):0;
+}
+function save(){localStorage.setItem('jkd13',JSON.stringify(recs));}
+function chgT(d){tgt=Math.max(1,tgt+d);document.getElementById('tN').textContent=tgt;render();}
+function chgI(d){intv=Math.max(1,Math.min(30,intv+d));document.getElementById('iN').textContent=intv;if(running&&!paused)startTimer();}
+function resetAll(){
+  if(!confirm('모든 데이터를 초기화하시겠습니까?'))return;
+  curBox=0;totalBox=0;palCount=0;prevBox=0;zeroF=0;
+  recs=[];save();render();renderList();showToast('🔄 초기화 완료');
+}
+function exportCSV(){
+  if(!recs.length){showToast('⚠️ 기록 없음',true);return;}
+  const sorted=[...recs].sort((a,b)=>a.pn-b.pn);
+  let c='\uFEFF파렛트번호,박스수,날짜,시간,완료조건\n';
+  sorted.forEach(r=>{c+=`${r.pn},${r.b},${r.dt},${r.tm},${r.r}\n`;});
+  c+=`\n합계,${totalBox}박스,,${palCount}파렛트,\n`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([c],{type:'text/csv;charset=utf-8;'}));
+  a.download=`종근당_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.csv`;
+  a.click();showToast('📊 엑셀 저장됨');
+}
+function showToast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast'+(err?' err':'');
+  t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);
+}
+
+render();renderList();
+</script>
+</body>
+</html>
