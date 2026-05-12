@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⚙️ 시스템 설정 관리</title>
+<style>
+:root {
+  --bg:#0b0f1a; --card:#111827; --card2:#1a2235; --border:#1e2d45;
+  --text:#e2eaf5; --muted:#5a7a99;
+  --a1:#3b9eff; --a2:#f97316; --a3:#2ecc71; --a4:#a78bfa; --a5:#ffd600; --a6:#ff6b9d;
+  --red:#ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','Apple SD Gothic Neo','Segoe UI',sans-serif;min-height:100vh;}
+
+.hdr{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#080d1a,#0f1e35);border-bottom:2px solid var(--a4);padding:12px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,.5);}
+.hdr-icon{font-size:26px;}
+.hdr-info{flex:1;}
+.hdr-title{font-size:17px;font-weight:900;color:#fff;}
+.hdr-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.hdr-save{background:linear-gradient(135deg,var(--a3),#16a34a);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;}
+
+.banner{margin:10px 12px 0;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;display:none;align-items:center;gap:8px;}
+.banner.show{display:flex;}
+.banner.ok{background:rgba(46,204,113,.1);border:1.5px solid rgba(46,204,113,.3);color:var(--a3);}
+.banner.err{background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.3);color:var(--red);}
+
+.tab-nav{display:flex;background:#080f18;border-bottom:2px solid var(--border);position:sticky;top:62px;z-index:90;overflow-x:auto;}
+.tab-nav::-webkit-scrollbar{display:none;}
+.tab-btn{flex-shrink:0;border:none;background:transparent;cursor:pointer;font-family:inherit;padding:10px 14px;font-size:12px;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap;}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--a4);}
+
+.main{padding:12px;display:flex;flex-direction:column;gap:12px;max-width:700px;margin:0 auto;}
+.tab-page{display:none;flex-direction:column;gap:12px;}
+.tab-page.active{display:flex;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.chdr{padding:12px 14px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.cdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.ctitle{font-size:14px;font-weight:800;}
+.ccnt{font-size:11px;color:var(--muted);margin-left:auto;}
+.cbody{padding:12px;}
+
+.inp{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-size:14px;font-weight:600;padding:9px 12px;outline:none;font-family:inherit;transition:border-color .2s;}
+.inp:focus{border-color:var(--a1);}
+.inp::placeholder{color:var(--muted);font-weight:400;}
+.lbl{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px;margin-top:10px;display:block;}
+.lbl:first-child{margin-top:0;}
+
+.row{background:var(--card2);border-radius:9px;padding:8px 10px;display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.row:last-child{margin-bottom:0;}
+.rnum{font-size:11px;color:var(--muted);font-weight:700;width:18px;flex-shrink:0;text-align:center;}
+.row .inp{background:var(--bg);font-size:13px;padding:7px 9px;}
+.dbtn{background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.25);color:var(--red);border-radius:7px;padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;}
+
+.avt{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0;}
+
+.biz-item{background:var(--card2);border-radius:10px;padding:10px 11px;margin-bottom:8px;border-left:3px solid var(--border);}
+.biz-item:last-child{margin-bottom:0;}
+.biz-top{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
+.biz-top .inp{flex:1;font-size:13px;padding:6px 9px;}
+.bsel{background:var(--bg);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;font-weight:700;padding:5px 7px;outline:none;font-family:inherit;}
+.biz-bot{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.clbl{font-size:10px;color:var(--muted);font-weight:700;white-space:nowrap;}
+.cbtn{width:20px;height:20px;border-radius:5px;border:2px solid transparent;cursor:pointer;flex-shrink:0;transition:transform .1s;}
+.cbtn.sel{border-color:#fff;transform:scale(1.2);}
+.num-inp{width:46px;background:var(--bg);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;padding:4px 6px;outline:none;font-family:inherit;text-align:center;}
+
+.jb-row{background:var(--card2);border-radius:8px;padding:7px 10px;display:flex;align-items:center;gap:7px;margin-bottom:5px;border-left:3px solid #f472b6;}
+.jb-row:last-child{margin-bottom:0;}
+.hj-row{background:var(--card2);border-radius:8px;padding:7px 10px;display:flex;align-items:center;gap:7px;margin-bottom:5px;border-left:3px solid var(--a6);}
+.hj-row:last-child{margin-bottom:0;}
+
+.fb-row{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--card2);border-radius:9px;margin-top:10px;font-size:12px;font-weight:700;}
+.fdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.fdot.ok{background:var(--a3);box-shadow:0 0 5px var(--a3);}
+.fdot.err{background:var(--red);}
+.fdot.chk{background:var(--a5);animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+.ftest{margin-left:auto;background:rgba(59,158,255,.15);border:1.5px solid rgba(59,158,255,.4);color:var(--a1);border-radius:7px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;}
+
+.add-btn{background:rgba(59,158,255,.1);border:1.5px dashed rgba(59,158,255,.35);color:var(--a1);border-radius:9px;padding:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;margin-top:8px;}
+.note{background:rgba(255,214,0,.06);border:1.5px solid rgba(255,214,0,.2);border-radius:10px;padding:10px 12px;font-size:11px;color:var(--a5);line-height:1.8;margin-top:8px;}
+.note strong{color:#fff;}
+.rbtn{width:100%;background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.3);color:var(--red);border-radius:9px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;}
+
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a2634;color:#e2eaf5;border:1px solid #1e2d45;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;z-index:9999;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none;}
+#toast.show{opacity:1;}
+
+/* ── 관리자 로그인 오버레이 ── */
+#adminLoginOverlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.al-box{background:#111827;border:2px solid var(--a4);border-radius:18px;padding:28px 24px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px;}
+.al-title{font-size:20px;font-weight:900;color:#fff;text-align:center;}
+.al-sub{font-size:12px;color:var(--muted);text-align:center;margin-top:-6px;}
+.al-inp{background:#0b0f1a;border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-weight:600;padding:11px 14px;outline:none;font-family:inherit;transition:border-color .2s;width:100%;}
+.al-inp:focus{border-color:var(--a4);}
+.al-btn{background:linear-gradient(135deg,var(--a4),#7c3aed);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;width:100%;margin-top:4px;}
+.al-msg{font-size:13px;font-weight:700;text-align:center;min-height:18px;}
+.al-msg.err{color:#ef4444;}
+.al-msg.ok{color:var(--a3);}
+
+/* ── 알람 행 ── */
+.alarm-row{background:var(--card2);border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:3px solid var(--a5);}
+.alarm-row:last-child{margin-bottom:0;}
+.alarm-row1{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.alarm-row2{display:flex;align-items:center;gap:8px;}
+.alarm-time{background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;font-weight:800;padding:7px 10px;outline:none;font-family:inherit;width:110px;flex-shrink:0;}
+.alarm-toggle{flex:1;border-radius:8px;padding:8px 10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;border:1.5px solid rgba(46,204,113,.4);background:rgba(46,204,113,.15);color:var(--a3);text-align:center;}
+.alarm-toggle.off{background:rgba(90,122,153,.1);border-color:var(--border);color:var(--muted);}
+.alarm-msg-inp{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-weight:600;padding:7px 10px;outline:none;font-family:inherit;}
+</style>
+</head>
+<body>
+
+<!-- 관리자 로그인 오버레이 -->
+<div id="adminLoginOverlay">
+  <div class="al-box">
+    <div class="al-title">⚙️ 시스템 설정</div>
+    <div class="al-sub">관리자 계정으로 로그인하세요</div>
+    <input class="al-inp" id="al-id" type="text" placeholder="아이디" autocomplete="off">
+    <input class="al-inp" id="al-pw" type="password" inputmode="numeric" maxlength="4" placeholder="비밀번호 4자리">
+    <button class="al-btn" onclick="doAdminLogin()">🔐 로그인</button>
+    <div class="al-msg" id="al-msg"></div>
+  </div>
+</div>
+
+<div class="hdr">
+  <div class="hdr-icon">⚙️</div>
+  <div class="hdr-info">
+    <div class="hdr-title">시스템 설정 관리</div>
+    <div class="hdr-sub" id="hdr-who">변경 후 저장 → 작업자앱 즉시 반영</div>
+  </div>
+  <button class="hdr-save" onclick="saveAll()">💾 저장</button>
+  <button onclick="doAdminLogout()" style="background:rgba(239,68,68,.15);border:1.5px solid rgba(239,68,68,.3);color:#ef4444;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;margin-left:4px;">로그아웃</button>
+</div>
+<div class="banner" id="banner"></div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="goTab(0)">🔥 Firebase</button>
+  <button class="tab-btn" onclick="goTab(1)">👷 작업자</button>
+  <button class="tab-btn" onclick="goTab(2)">💊 종근당</button>
+  <button class="tab-btn" onclick="goTab(3)">🚚 기타업체</button>
+  <button class="tab-btn" onclick="goTab(4)">📋 직배</button>
+  <button class="tab-btn" onclick="goTab(5)">➕ 기타</button>
+  <button class="tab-btn" onclick="goTab(6)">👤 계정관리</button>
+  <button class="tab-btn" onclick="goTab(7)">🔔 알람</button>
+</div>
+
+<div class="main">
+
+<!-- 탭0: Firebase -->
+<div class="tab-page active" id="tp0">
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:#2ecc71"></div><div class="ctitle">NAS 로컬 API 연결</div></div>
+    <div class="cbody">
+      <div class="fb-row">
+        <div class="fdot ok" id="fdot"></div>
+        <span id="ftxt">NAS 로컬 API 사용 중</span>
+        <button class="ftest" onclick="testFb()">연결 테스트</button>
+      </div>
+      <div class="note">🏠 <strong>Firebase 없이 NAS에서 직접 운영 중</strong><br>데이터 저장: NAS /docker/daya-web/data/<br>인터넷 없이도 내부망에서 동작합니다.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:var(--a5)"></div><div class="ctitle">기본 정보</div></div>
+    <div class="cbody">
+      <span class="lbl">회사/팀 이름</span>
+      <input class="inp" id="sys-co" placeholder="다야냉장팀">
+      <span class="lbl">작업 시작 시간 (생산성 계산 기준)</span>
+      <input class="inp" id="sys-st" type="time">
+    </div>
+  </div>
+</div>
+
+<!-- 탭1: 작업자 -->
+<div class="tab-page" id="tp1">
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:var(--a3)"></div><div class="ctitle">작업자 목록</div><div class="ccnt" id="wcnt"></div></div>
+    <div class="cbody">
+      <div id="wlist"></div>
+      <button class="add-btn" onclick="addW()">+ 작업자 추가</button>
+      <div class="note">작업자앱 <strong>선택 드롭다운</strong>과 <strong>출근부</strong>에 반영됩니다.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 탭2: 종근당 -->
+<div class="tab-page" id="tp2">
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:var(--a6)"></div><div class="ctitle">종근당 슬롯 수</div></div>
+    <div class="cbody">
+      <span class="lbl">숫자 입력 칸 개수 (현재 40개)</span>
+      <input class="inp" id="jkg-n" type="number" min="10" max="100">
+      <div class="note"><strong>권장: 30~50개.</strong> 너무 많으면 앱이 느려질 수 있습니다.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:#f472b6"></div><div class="ctitle">직배 업체 목록</div><div class="ccnt" id="jbcnt"></div></div>
+    <div class="cbody">
+      <div id="jblist"></div>
+      <button class="add-btn" onclick="addJb()">+ 직배 업체 추가</button>
+      <div class="note">종근당 탭 <strong>직배</strong> 섹션에 나타납니다. 빈칸 2개는 자동 추가됩니다.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:var(--a2)"></div><div class="ctitle">도매상 행 수</div></div>
+    <div class="cbody">
+      <span class="lbl">도매상 행 개수 (현재 3행)</span>
+      <input class="inp" id="dms-n" type="number" min="1" max="20">
+    </div>
+  </div>
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:var(--a4)"></div><div class="ctitle">용차 행 수</div></div>
+    <div class="cbody">
+      <span class="lbl">용차 행 개수 (현재 3행)</span>
+      <input class="inp" id="yc-n" type="number" min="1" max="20">
+    </div>
+  </div>
+</div>
+
+<!-- 탭3: 기타업체 -->
+<div class="tab-page" id="tp3">
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:var(--a2)"></div><div class="ctitle">기타업체 목록</div><div class="ccnt" id="bizcnt"></div></div>
+    <div class="cbody">
+      <div id="bizlist"></div>
+      <button class="add-btn" onclick="addBiz()">+ 업체 추가</button>
+      <div class="note"><strong>단순형</strong>: 1~N행 숫자입력 / <strong>국제형</strong>: 큰거+작은거 / <strong>한진형</strong>: 2열 그리드</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:var(--a6)"></div><div class="ctitle">한진 내부 항목</div><div class="ccnt" id="hjcnt"></div></div>
+    <div class="cbody">
+      <div id="hjlist"></div>
+      <button class="add-btn" onclick="addHj()">+ 항목 추가</button>
+      <div class="note">한진 2열 그리드 안에 들어가는 업체명 목록입니다.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 탭4: 직배 -->
+<div class="tab-page" id="tp4">
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:#f472b6"></div><div class="ctitle">직배 업체 목록</div><div class="ccnt" id="jbcnt2"></div></div>
+    <div class="cbody">
+      <div id="jblist2"></div>
+      <button class="add-btn" onclick="addJb()">+ 직배 업체 추가</button>
+      <div class="note">종근당 탭 직배 섹션의 업체명입니다. <strong>종근당 탭과 동일하게 연동</strong>됩니다.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 탭5: 기타 -->
+<div class="tab-page" id="tp5">
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:var(--a5)"></div><div class="ctitle">추가 항목 이름</div></div>
+    <div class="cbody">
+      <span class="lbl">광교 항목 이름</span>
+      <input class="inp" id="ext-gw" placeholder="광교센트럴가정의학과">
+      <span class="lbl">가산연합의원 항목 이름</span>
+      <input class="inp" id="ext-gs" placeholder="가산연합의원">
+      <span class="lbl">개별운송 항목 이름</span>
+      <input class="inp" id="ext-gb" placeholder="개별운송">
+    </div>
+  </div>
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:var(--red)"></div><div class="ctitle">설정 초기화</div></div>
+    <div class="cbody">
+      <div class="note">⚠️ 모든 설정을 기본값으로 되돌립니다. <strong>작업 데이터(수량·출근부)는 영향 없습니다.</strong></div>
+      <button class="rbtn" onclick="resetAll()">🔄 기본 설정으로 초기화</button>
+    </div>
+  </div>
+</div>
+
+<!-- 탭7: 알람 -->
+<div class="tab-page" id="tp7">
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:var(--a5)"></div><div class="ctitle">음성 알람 목록</div><div class="ccnt" id="alarmCnt"></div></div>
+    <div class="cbody">
+      <div id="alarmList"></div>
+      <button class="add-btn" onclick="addAlarm()">+ 알람 추가</button>
+      <div class="note">
+        🔔 <strong>로그인 상태의 작업자앱</strong>에서만 소리로 알림<br>
+        시간은 <strong>HH:MM</strong> 형식으로 입력하세요 (예: 11:20)<br>
+        켜기/끄기로 임시 비활성화 가능합니다
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 탭6: 계정관리 -->
+<div class="tab-page" id="tp6">
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:var(--a1)"></div><div class="ctitle">현재 접속 중</div><div class="ccnt" id="onlineCnt">0명</div></div>
+    <div class="cbody">
+      <div id="onlineList"><div style="color:var(--muted);font-size:13px;">불러오는 중...</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:var(--a3)"></div><div class="ctitle">가입 신청 목록</div><div class="ccnt" id="userCnt">0명</div></div>
+    <div class="cbody">
+      <div id="userList"><div style="color:var(--muted);font-size:13px;">불러오는 중...</div></div>
+    </div>
+  </div>
+</div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+const DEF = {
+  firebaseUrl:'', company:'다야냉장팀', startTime:'09:00',
+  workers:['이지철','이성재','한태준','최태원','김제선','김성영','오영석'],
+  jkgSlots:40,
+  jbList:['종로팔팔','종로카톨릭','종로365의원','종로5가미래','동탄아이엠유','강서아이엠유','필모어','크리스트','당산수','수원더셀','서울뷰세종','가산연합'],
+  dmsRows:3, ycRows:3,
+  bizList:[
+    {name:'국제',type:'gj',color:1,rows:5},
+    {name:'삼천당',type:'simple',color:2,rows:3},
+    {name:'비씨',type:'simple',color:3,rows:3},
+    {name:'대우',type:'simple',color:4,rows:3},
+    {name:'동구',type:'simple',color:5,rows:3},
+    {name:'아주',type:'simple',color:7,rows:3},
+    {name:'맥널티',type:'simple',color:8,rows:3},
+  ],
+  hjList:['국제','삼천당','비씨','대우','아주','동구','맥널티'],
+  extraGw:'광교센트럴가정의학과', extraGs:'가산연합의원', extraGb:'개별운송',
+  alarms:[
+    {time:'11:20',message:'일하는척 그만하고 밥이나 먹으러 가자',enabled:true},
+    {time:'14:50',message:'쉬는시간 다와간다 쫌만참아라',enabled:true},
+  ],
+};
+const CV=['#e91e8c','#f97316','#06b6d4','#84cc16','#ffd600','#a78bfa','#ef4444','#e2e8f0','#3b82f6'];
+const CN=['핑크','주황','하늘','연두','노랑','보라','빨강','흰색','파랑'];
+const BT=[{v:'simple',l:'단순형'},{v:'gj',l:'국제형'},{v:'hj',l:'한진형'}];
+const AV=['#3b82f6','#8b5cf6','#f97316','#ef4444','#06b6d4','#84cc16','#ec4899','#14b8a6','#f59e0b','#64748b'];
+let cfg={};
+
+function loadCfg(){
+  // 로컬 API에서 설정 로드
+  fetch(`/api/config.json?t=${Date.now()}`)
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{if(d){cfg={...DEF,...d};}else{try{const s=localStorage.getItem('sys_config_v1');cfg=s?{...DEF,...JSON.parse(s)}:{...DEF};}catch{cfg={...DEF};}}renderAll();})
+    .catch(()=>{try{const s=localStorage.getItem('sys_config_v1');cfg=s?{...DEF,...JSON.parse(s)}:{...DEF};}catch{cfg={...DEF};}renderAll();});
+}
+
+function renderAll(){
+  document.getElementById('sys-co').value=cfg.company||'';
+  document.getElementById('sys-st').value=cfg.startTime||'09:00';
+  document.getElementById('jkg-n').value=cfg.jkgSlots||40;
+  document.getElementById('dms-n').value=cfg.dmsRows||3;
+  document.getElementById('yc-n').value=cfg.ycRows||3;
+  document.getElementById('ext-gw').value=cfg.extraGw||'';
+  document.getElementById('ext-gs').value=cfg.extraGs||'';
+  document.getElementById('ext-gb').value=cfg.extraGb||'';
+  rW();rBiz();rHj();rJb();rAlarm();
+  updFdot();
+}
+
+// ── 작업자 ──
+function rW(){
+  const l=cfg.workers||[];
+  document.getElementById('wcnt').textContent=l.length+'명';
+  document.getElementById('wlist').innerHTML=l.map((n,i)=>`
+    <div class="row" id="wr${i}">
+      <div class="avt" style="background:linear-gradient(135deg,${AV[i%10]},${AV[(i+2)%10]})">${n?n[0]:'?'}</div>
+      <input class="inp" value="${x(n)}" placeholder="이름 입력"
+        oninput="cfg.workers[${i}]=this.value;document.querySelector('#wr${i} .avt').textContent=this.value[0]||'?'">
+      <button class="dbtn" onclick="cfg.workers.splice(${i},1);rW()">✕</button>
+    </div>`).join('');
+}
+function addW(){
+  (cfg.workers=cfg.workers||[]).push('');rW();
+  setTimeout(()=>{const e=document.querySelectorAll('#wlist .inp');if(e.length)e[e.length-1].focus();},50);
+}
+
+// ── 기타업체 ──
+function rBiz(){
+  const l=cfg.bizList||[];
+  document.getElementById('bizcnt').textContent=l.length+'개';
+  document.getElementById('bizlist').innerHTML=l.map((b,i)=>{
+    const to=BT.map(t=>`<option value="${t.v}"${b.type===t.v?' selected':''}>${t.l}</option>`).join('');
+    const cb=CV.map((c,ci)=>`<div class="cbtn${b.color===ci?' sel':''}" style="background:${c}" onclick="cfg.bizList[${i}].color=${ci};rBiz()" title="${CN[ci]}"></div>`).join('');
+    return `<div class="biz-item" style="border-left-color:${CV[b.color]||'var(--border)'}">
+      <div class="biz-top">
+        <span class="rnum">${i+1}</span>
+        <input class="inp" value="${x(b.name)}" placeholder="업체명" oninput="cfg.bizList[${i}].name=this.value">
+        <select class="bsel" onchange="cfg.bizList[${i}].type=this.value">${to}</select>
+        <button class="dbtn" onclick="cfg.bizList.splice(${i},1);rBiz()">✕</button>
+      </div>
+      <div class="biz-bot">
+        <span class="clbl">행수:</span>
+        <input class="num-inp" type="number" min="1" max="20" value="${b.rows||3}" oninput="cfg.bizList[${i}].rows=parseInt(this.value)||3">
+        <span class="clbl" style="margin-left:4px;">색상:</span>
+        <div style="display:flex;gap:3px;flex-wrap:wrap;">${cb}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function addBiz(){
+  (cfg.bizList=cfg.bizList||[]).push({name:'',type:'simple',color:1,rows:3});rBiz();
+  setTimeout(()=>{const e=document.querySelectorAll('#bizlist .inp');if(e.length)e[e.length-1].focus();},50);
+}
+
+// ── 한진 ──
+function rHj(){
+  const l=cfg.hjList||[];
+  document.getElementById('hjcnt').textContent=l.length+'개';
+  document.getElementById('hjlist').innerHTML=l.map((n,i)=>`
+    <div class="hj-row">
+      <span class="rnum">${i+1}</span>
+      <input class="inp" value="${x(n)}" placeholder="항목명" oninput="cfg.hjList[${i}]=this.value">
+      <button class="dbtn" onclick="cfg.hjList.splice(${i},1);rHj()">✕</button>
+    </div>`).join('');
+}
+function addHj(){
+  (cfg.hjList=cfg.hjList||[]).push('');rHj();
+  setTimeout(()=>{const e=document.querySelectorAll('#hjlist .inp');if(e.length)e[e.length-1].focus();},50);
+}
+
+// ── 직배 (탭2·탭4 동기) ──
+function rJb(){
+  const l=cfg.jbList||[];
+  const html=l.map((n,i)=>`
+    <div class="jb-row">
+      <span class="rnum">${i+1}</span>
+      <input class="inp" value="${x(n)}" placeholder="업체명" oninput="cfg.jbList[${i}]=this.value;rJb()">
+      <button class="dbtn" onclick="cfg.jbList.splice(${i},1);rJb()">✕</button>
+    </div>`).join('');
+  ['jblist','jblist2'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=html;});
+  ['jbcnt','jbcnt2'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=l.length+'개';});
+}
+function addJb(){
+  (cfg.jbList=cfg.jbList||[]).push('');rJb();
+  setTimeout(()=>{const e=document.querySelectorAll('#jblist .inp');if(e.length)e[e.length-1].focus();},50);
+}
+
+// ── 저장 ──
+async function saveAll(){
+  cfg.company=document.getElementById('sys-co').value.trim();
+  cfg.startTime=document.getElementById('sys-st').value;
+  cfg.jkgSlots=parseInt(document.getElementById('jkg-n').value)||40;
+  cfg.dmsRows=parseInt(document.getElementById('dms-n').value)||3;
+  cfg.ycRows=parseInt(document.getElementById('yc-n').value)||3;
+  cfg.extraGw=document.getElementById('ext-gw').value.trim();
+  cfg.extraGs=document.getElementById('ext-gs').value.trim();
+  cfg.extraGb=document.getElementById('ext-gb').value.trim();
+  cfg.workers=(cfg.workers||[]).filter(w=>w.trim());
+  cfg.jbList=(cfg.jbList||[]).filter(j=>j.trim());
+  cfg.bizList=(cfg.bizList||[]).filter(b=>b.name.trim());
+  cfg.hjList=(cfg.hjList||[]).filter(h=>h.trim());
+  cfg.alarms=(cfg.alarms||[]).filter(a=>a.time&&a.message.trim());
+
+  localStorage.setItem('sys_config_v1',JSON.stringify(cfg));
+  showBanner('⏳ NAS에 저장 중...',false);
+
+  try{
+    const res=await fetch('/api/config.json',{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({...cfg,savedAt:Date.now()})
+    });
+    if(res.ok){showBanner('✅ NAS 저장 완료!',false);showToast('✅ 저장 완료');}
+    else showBanner('⚠️ NAS 저장 실패 ('+res.status+')',true);
+  }catch{showBanner('⚠️ NAS 연결 실패 - 로컬에만 저장됨',true);}
+  renderAll();
+}
+
+// ── NAS API 연결 테스트 ──
+async function testFb(){
+  setFd('chk','테스트 중...');
+  try{
+    const r=await fetch(`/api/config.json?t=${Date.now()}`);
+    if(r.ok){setFd('ok','✅ NAS API 연결 성공!');showToast('✅ NAS API 연결 성공');}
+    else setFd('err',`❌ 실패 (${r.status})`);
+  }catch{setFd('err','❌ NAS API 연결 실패');}
+}
+function setFd(c,t){document.getElementById('fdot').className='fdot '+c;document.getElementById('ftxt').textContent=t;}
+function updFdot(){setFd('ok','NAS 로컬 API 사용 중');}
+
+function resetAll(){
+  if(!confirm('모든 설정을 기본값으로 초기화할까요?\n작업 데이터는 유지됩니다.'))return;
+  cfg={...DEF};renderAll();showToast('🔄 기본값으로 초기화');
+}
+
+function goTab(i){
+  document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  // tp7=알람 탭은 DOM 순서상 탭6 앞에 있으므로 id로 처리
+  document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));
+  const pageMap=[0,1,2,3,4,5,6,7]; // tab index → tp id (tp7 알람, tp6 계정)
+  const ids=['tp0','tp1','tp2','tp3','tp4','tp5','tp6','tp7'];
+  // 탭 버튼 순서: 0~5=설정, 6=계정관리, 7=알람
+  // tp DOM 순서: tp0~tp5, tp7(알람), tp6(계정관리) → 인덱스로 매핑
+  const tpId = i===6?'tp6':i===7?'tp7':'tp'+i;
+  const el=document.getElementById(tpId);
+  if(el) el.classList.add('active');
+  if(i===6) loadUserList();
+  if(i===7) rAlarm();
+}
+
+function showBanner(msg,isErr){
+  const e=document.getElementById('banner');
+  e.textContent=msg;e.className='banner show '+(isErr?'err':'ok');
+  setTimeout(()=>e.classList.remove('show'),4000);
+}
+let tt;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200);
+}
+function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+const NAS = 'https://daya.sudalife.net/api';
+// ── Firebase 자동 폴백 + NAS 자동 동기화 ──
+const FB_BACKUP = 'https://ice-work-d8045-default-rtdb.asia-southeast1.firebasedatabase.app';
+(function(){
+  const _f = window.fetch.bind(window);
+  function toFb(u){const p=u.replace('https://daya.sudalife.net/api','').split('?')[0];return p.endsWith('/')?FB_BACKUP+p.slice(0,-1)+'.json':FB_BACKUP+p;}
+  async function fbGet(u){
+    const p=u.replace('https://daya.sudalife.net/api','').split('?')[0],isDir=p.endsWith('/');
+    const r=await _f(toFb(u)+'?t='+Date.now());
+    if(!isDir)return r;
+    const d=await r.clone().json().catch(()=>null);
+    return new Response(JSON.stringify(d?Object.keys(d).sort().reverse():[]),{status:200});
+  }
+  window.fetch=async(url,opt)=>{
+    if(typeof url!=='string'||!url.startsWith('https://daya.sudalife.net/api'))return _f(url,opt);
+    const m=((opt&&opt.method)||'GET').toUpperCase();
+    if(m==='GET'){try{const r=await _f(url,opt);if(r.ok)return r;}catch(e){}return fbGet(url).catch(()=>new Response('null',{status:200}));}
+    const fo=Object.assign({},opt,{headers:{'Content-Type':'application/json'}});
+    const[r1,r2]=await Promise.all([_f(url,opt).catch(()=>null),_f(toFb(url),fo).catch(()=>null)]);
+    return(r1&&r1.ok)?r1:(r2&&r2.ok)?r2:new Response('{"error":"both failed"}',{status:500});
+  };
+  setTimeout(async()=>{
+    try{
+      const ping=await _f('/api/config.json?t='+Date.now());
+      if(!ping.ok)return;
+      const paths=['/config.json'];
+      for(const p of paths){
+        try{
+          const[nr,fr]=await Promise.all([
+            _f('/api'+p+'?t='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
+            _f(FB_BACKUP+p+'?t='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
+          ]);
+          if(!fr)continue;
+          const nSaved=(nr&&(nr.savedAt||0))||0;
+          const fSaved=(fr&&(fr.savedAt||0))||0;
+          if(fSaved>nSaved){await _f('/api'+p,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(fr)});}
+        }catch(e){}
+      }
+    }catch(e){}
+  },3000);
+})();
+
+async function loadUserList() {
+  const el = document.getElementById('userList');
+  const cnt = document.getElementById('userCnt');
+  const onlineEl = document.getElementById('onlineList');
+  const onlineCnt = document.getElementById('onlineCnt');
+  el.innerHTML = '<div style="color:var(--muted);font-size:13px;">불러오는 중...</div>';
+  onlineEl.innerHTML = '<div style="color:var(--muted);font-size:13px;">불러오는 중...</div>';
+  try {
+    // 디렉토리 목록 → 개별 파일 읽기
+    const listRes = await fetch(`${NAS}/users/?t=${Date.now()}`);
+    const ids = await listRes.json();
+    if (!Array.isArray(ids) || ids.length === 0) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:13px;">가입 신청자가 없습니다</div>';
+      onlineEl.innerHTML = '<div style="color:var(--muted);font-size:13px;">접속자 없음</div>';
+      cnt.textContent='0명'; onlineCnt.textContent='0명';
+      return;
+    }
+    const list = (await Promise.all(
+      ids.map(id => fetch(`${NAS}/users/${id}.json?t=${Date.now()}`).then(r=>r.json()).catch(()=>null))
+    )).filter(Boolean);
+
+    cnt.textContent = list.length + '명';
+    const now = Date.now();
+    const online = list.filter(u => u.sessionInfo?.loginAt && (now - u.sessionInfo.loginAt) < 3*60*60*1000);
+    onlineCnt.textContent = online.length + '명';
+
+    onlineEl.innerHTML = online.length === 0
+      ? '<div style="color:var(--muted);font-size:13px;">현재 접속자 없음</div>'
+      : online.map(u => {
+          const ago = Math.floor((now - u.sessionInfo.loginAt) / 60000);
+          const agoStr = ago < 60 ? `${ago}분 전 로그인` : `${Math.floor(ago/60)}시간 전 로그인`;
+          return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+            <div style="width:8px;height:8px;border-radius:50%;background:#2ecc71;flex-shrink:0;box-shadow:0 0 6px #2ecc71;"></div>
+            <div style="flex:1;">
+              <div style="font-weight:700;font-size:14px;">${x(u.name||'?')} <span style="font-size:11px;color:var(--muted);">(${x(u.id||'?')})</span></div>
+              <div style="font-size:11px;color:var(--muted);">${agoStr}</div>
+            </div>
+            <button onclick="forceLogout('${x(u.id)}')" style="padding:6px 12px;border:none;border-radius:8px;background:#ff6b35;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">강제로그아웃</button>
+          </div>`;
+        }).join('');
+
+    el.innerHTML = list.length === 0
+      ? '<div style="color:var(--muted);font-size:13px;">등록된 회원 없음</div>'
+      : list.map(u => {
+          const isAdmin = u.role === 'admin';
+          return `<div style="display:flex;align-items:center;gap:7px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+            <div style="flex:1;min-width:130px;">
+              <div style="font-weight:700;font-size:14px;">${x(u.name||'?')} <span style="font-size:11px;color:var(--muted);">(${x(u.id||'?')})</span></div>
+              <div style="font-size:11px;color:${u.status==='approved'?'#2ecc71':'#ffd600'};margin-top:2px;">${u.status==='approved'?'✅ 승인됨':'⏳ 대기 중'}</div>
+            </div>
+            <button onclick="toggleAdminRole('${x(u.id)}',${isAdmin})"
+              style="padding:5px 10px;border:none;border-radius:8px;background:${isAdmin?'rgba(167,139,250,.3)':'rgba(90,122,153,.15)'};color:${isAdmin?'#a78bfa':'var(--muted)'};border:1.5px solid ${isAdmin?'rgba(167,139,250,.5)':'var(--border)'};font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">
+              ${isAdmin?'👑 관리자':'작업자'}
+            </button>
+            ${u.status!=='approved'?`<button onclick="approveUser('${x(u.id)}')" style="padding:5px 10px;border:none;border-radius:8px;background:var(--a3);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">✅ 승인</button>`:''}
+            <button onclick="deleteUser('${x(u.id)}')" style="padding:5px 10px;border:none;border-radius:8px;background:var(--red);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🗑️ 삭제</button>
+          </div>`;
+        }).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="color:#ff6b6b;font-size:13px;">불러오기 실패: ' + e.message + '</div>';
+    onlineEl.innerHTML = el.innerHTML;
+  }
+}
+
+async function forceLogout(id) {
+  if (!confirm(`${id} 계정을 강제 로그아웃하겠습니까?`)) return;
+  try {
+    const res = await fetch(`${NAS}/users/${id}.json`);
+    const user = await res.json();
+    user.sessionToken = null;
+    user.sessionInfo = null;
+    await fetch(`${NAS}/users/${id}.json`, {method:'PUT', body: JSON.stringify(user)});
+    showToast('✅ 강제 로그아웃 완료');
+    loadUserList();
+  } catch(e) { showToast('⚠️ 실패'); }
+}
+
+async function approveUser(id) {
+  if (!confirm(`${id} 계정을 승인하겠습니까?`)) return;
+  try {
+    const res = await fetch(`${NAS}/users/${id}.json`);
+    const user = await res.json();
+    user.status = 'approved';
+    await fetch(`${NAS}/users/${id}.json`, {method:'PUT', body: JSON.stringify(user)});
+    showToast('✅ 승인 완료');
+    loadUserList();
+  } catch(e) { showToast('⚠️ 승인 실패'); }
+}
+
+async function deleteUser(id) {
+  if (!confirm(`${id} 계정을 삭제하겠습니까?`)) return;
+  try {
+    await fetch(`${NAS}/users/${id}.json`, {method:'DELETE'});
+    showToast('🗑️ 삭제 완료');
+    loadUserList();
+  } catch(e) { showToast('⚠️ 삭제 실패'); }
+}
+
+// ── 알람 ──
+function rAlarm(){
+  const l=cfg.alarms||[];
+  document.getElementById('alarmCnt').textContent=l.length+'개';
+  document.getElementById('alarmList').innerHTML=l.map((a,i)=>`
+    <div class="alarm-row" style="border-left-color:${a.enabled?'var(--a5)':'var(--border)'}">
+      <div class="alarm-row1">
+        <input class="alarm-time" type="time" value="${x(a.time)}" oninput="cfg.alarms[${i}].time=this.value">
+        <button class="alarm-toggle${a.enabled?'':' off'}" onclick="cfg.alarms[${i}].enabled=!cfg.alarms[${i}].enabled;rAlarm()">${a.enabled?'🔔 켜짐':'🔕 꺼짐'}</button>
+        <button class="dbtn" onclick="cfg.alarms.splice(${i},1);rAlarm()">✕</button>
+      </div>
+      <div class="alarm-row2">
+        <input class="alarm-msg-inp" type="text" value="${x(a.message)}" placeholder="알람 메시지 입력" oninput="cfg.alarms[${i}].message=this.value">
+      </div>
+    </div>`).join('');
+}
+function addAlarm(){
+  (cfg.alarms=cfg.alarms||[]).push({time:'09:00',message:'',enabled:true});rAlarm();
+  setTimeout(()=>{const e=document.querySelectorAll('.alarm-time');if(e.length)e[e.length-1].focus();},50);
+}
+
+// ── 관리자 권한 토글 ──
+async function toggleAdminRole(id, isAdmin){
+  const newRole = isAdmin ? 'worker' : 'admin';
+  const label = isAdmin ? '관리자 → 작업자' : '작업자 → 관리자';
+  if(!confirm(`${id} 계정을 ${label}로 변경하겠습니까?`)) return;
+  try{
+    const res=await fetch(`${NAS}/users/${id}.json`);
+    const user=await res.json();
+    user.role=newRole;
+    await fetch(`${NAS}/users/${id}.json`,{method:'PUT',body:JSON.stringify(user)});
+    showToast(`✅ ${id}: ${label} 변경 완료`);
+    loadUserList();
+  }catch(e){showToast('⚠️ 변경 실패');}
+}
+
+// ══ 관리자 로그인 ══
+const ADMIN_SESSION_KEY = 'daya_admin_session';
+
+async function checkAdminSession(){
+  const s = sessionStorage.getItem(ADMIN_SESSION_KEY);
+  if(s){
+    try{
+      const saved = JSON.parse(s);
+      // 빠른 세션 확인 (캐시된 세션으로 바로 통과)
+      document.getElementById('adminLoginOverlay').style.display = 'none';
+      document.getElementById('hdr-who').textContent = '👑 관리자: ' + (saved.name||saved.id);
+      return;
+    }catch{}
+  }
+  document.getElementById('adminLoginOverlay').style.display = 'flex';
+}
+
+async function doAdminLogin(){
+  const id = document.getElementById('al-id').value.trim();
+  const pw = document.getElementById('al-pw').value.trim();
+  const msg = document.getElementById('al-msg');
+  if(!id){msg.className='al-msg err';msg.textContent='아이디를 입력하세요';return;}
+  if(!pw){msg.className='al-msg err';msg.textContent='비밀번호를 입력하세요';return;}
+  msg.className='al-msg';msg.textContent='확인 중...';
+  try{
+    const res = await fetch(`${NAS}/users/${id}.json?t=${Date.now()}`);
+    const user = await res.json();
+    if(!user){msg.className='al-msg err';msg.textContent='아이디가 존재하지 않습니다';return;}
+    if(String(user.pw)!==String(pw)){msg.className='al-msg err';msg.textContent='비밀번호가 틀렸습니다';return;}
+    if(user.role!=='admin'){
+      // 관리자가 아직 한 명도 없으면 첫 번째 관리자로 자동 등록
+      const listRes = await fetch(`${NAS}/users/?t=${Date.now()}`);
+      const ids = await listRes.json();
+      const allUsers = (await Promise.all(
+        ids.map(i2 => fetch(`${NAS}/users/${i2}.json?t=${Date.now()}`).then(r=>r.json()).catch(()=>null))
+      )).filter(Boolean);
+      const hasAdmin = allUsers.some(u2 => u2.role==='admin');
+      if(hasAdmin){msg.className='al-msg err';msg.textContent='관리자 권한이 없습니다';return;}
+      // 첫 관리자 자동 등록
+      user.role='admin';
+      await fetch(`${NAS}/users/${id}.json`,{method:'PUT',body:JSON.stringify(user)});
+      showToast('👑 첫 번째 관리자로 등록되었습니다!');
+    }
+    if(user.status!=='approved'){msg.className='al-msg err';msg.textContent='승인되지 않은 계정입니다';return;}
+    // 로그인 성공
+    sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({id, name:user.name}));
+    document.getElementById('adminLoginOverlay').style.display='none';
+    document.getElementById('hdr-who').textContent='👑 관리자: '+(user.name||id);
+    showToast('✅ 로그인 성공: '+(user.name||id));
+  }catch(e){msg.className='al-msg err';msg.textContent='서버 연결 오류: '+e.message;}
+}
+
+function doAdminLogout(){
+  sessionStorage.removeItem(ADMIN_SESSION_KEY);
+  document.getElementById('adminLoginOverlay').style.display='flex';
+  document.getElementById('al-id').value='';
+  document.getElementById('al-pw').value='';
+  document.getElementById('al-msg').textContent='';
+  showToast('로그아웃 되었습니다');
+}
+
+// Enter 키로 로그인
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && document.getElementById('adminLoginOverlay').style.display!=='none'){
+    doAdminLogin();
+  }
+});
+
+loadCfg();
+checkAdminSession();
+</script>
+</body>
+</html>
