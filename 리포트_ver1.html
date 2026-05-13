@@ -243,7 +243,13 @@ async function fetchHistoryList() {
 }
 
 // ── 수량 파싱 ──
-function getQty(d) { return d?.totalQty || 0; }
+// 한진·직배 제외한 실작업 수량
+function getQty(d) {
+  if (!d) return 0;
+  const hanjin = d?.기타업체?.한진 || 0;
+  const jikbae = d?.종근당?.직배 || 0;
+  return (d?.totalQty || 0) - hanjin - jikbae;
+}
 function getPlt(d) { return d?.plt || 0; }
 function getJkg(d) { return d?.종근당?.매핑 || 0; }
 function getJb(d) { return d?.종근당?.직배 || 0; }
@@ -284,7 +290,7 @@ function renderDayReport(key, d) {
       </div>
       <div class="cbody">
         <div class="sum-grid">
-          <div class="sum-card"><div class="sum-label">총 수량</div><div class="sum-val blue">${d.totalQty||0}</div></div>
+          <div class="sum-card"><div class="sum-label">총 수량</div><div class="sum-val blue">${getQty(d)}</div></div>
           <div class="sum-card"><div class="sum-label">파렛트</div><div class="sum-val purple">${d.plt||0}</div></div>
           <div class="sum-card"><div class="sum-label">종근당</div><div class="sum-val pink">${jkg}</div></div>
           <div class="sum-card"><div class="sum-label">기타업체</div><div class="sum-val orange">${other}</div></div>
@@ -618,9 +624,13 @@ function buildManualForm() {
 }
 
 function calcTotal() {
-  const ids = ['m-jkg','m-jb','m-dms','m-dmsbox','m-yc','m-ycbox','m-gw','m-gs','m-gb'];
+  // 직배(m-jb) 제외
+  const ids = ['m-jkg','m-dms','m-dmsbox','m-yc','m-ycbox','m-gw','m-gs','m-gb'];
   let total = ids.reduce((s,id) => s + (parseInt(document.getElementById(id)?.value)||0), 0);
-  document.querySelectorAll('[data-etc]').forEach(el => { total += parseInt(el.value)||0; });
+  // 기타업체 중 한진 제외
+  document.querySelectorAll('[data-etc]').forEach(el => {
+    if (el.dataset.etc !== '한진') total += parseInt(el.value)||0;
+  });
   const el = document.getElementById('m-total-display');
   if (el) el.textContent = total;
 }
