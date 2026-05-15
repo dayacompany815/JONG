@@ -108,7 +108,8 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','Seg
   <button class="tab-btn active" onclick="goTab(0)">📅 일일</button>
   <button class="tab-btn" onclick="goTab(1)">📆 주간</button>
   <button class="tab-btn" onclick="goTab(2)">🗓️ 월간</button>
-  <button class="tab-btn" onclick="goTab(3)">✏️ 수동입력</button>
+  <button class="tab-btn" onclick="goTab(3)">📈 분석·예측</button>
+  <button class="tab-btn" onclick="goTab(4)">✏️ 수동입력</button>
 </div>
 
 <div class="main">
@@ -149,8 +150,20 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','Seg
   <div id="month-result"></div>
 </div>
 
-<!-- 수동 입력 탭 -->
+<!-- 분석·예측 탭 -->
 <div class="tab-page" id="tp3">
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:var(--a5)"></div><div class="ctitle">데이터 분석·예측</div><div class="csub" id="ana-range"></div></div>
+    <div class="cbody" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button class="btn-load" onclick="runAnalysis()" id="ana-btn">🔍 전체 데이터 분석 시작</button>
+      <span id="ana-loading" style="font-size:11px;color:var(--muted);"></span>
+    </div>
+  </div>
+  <div id="ana-result"></div>
+</div>
+
+<!-- 수동 입력 탭 -->
+<div class="tab-page" id="tp4">
   <div id="manual-form-wrap"></div>
 </div>
 
@@ -210,8 +223,24 @@ function goTab(i) {
   document.querySelectorAll('.tab-page').forEach((p,j) => p.classList.toggle('active', i===j));
   if (i===1) loadWeek();
   if (i===2) loadMonthList();
-  if (i===3 && !manualFormBuilt) { buildManualForm(); manualFormBuilt = true; }
+  if (i===3) autoRunAnalysis();  // ← 분석 탭: 자동 실행
+  if (i===4 && !manualFormBuilt) { buildManualForm(); manualFormBuilt = true; }
 }
+
+// 자동 분석: 오늘 첫 실행이거나 마지막 분석이 어제면 자동 재실행
+function autoRunAnalysis() {
+  const today = todayKey();
+  const lastRan = localStorage.getItem('ana_last_ran');
+  // 이미 오늘 분석했고 캐시도 있으면 스킵
+  if (anaCache && lastRan === today) {
+    document.getElementById('ana-loading').textContent = `✅ 오늘 분석 완료 (${anaCache.totalDays}일 기준)`;
+    return;
+  }
+  runAnalysis();
+}
+
+// runAnalysis 완료 시 오늘 날짜 저장
+const _origRunAnalysis = runAnalysis;
 
 // ── 날짜 유틸 ──
 function todayKey() {
@@ -318,12 +347,66 @@ function renderDayReport(key, d) {
         ${renderBizChart(biz)}
       </div>
     </div>` : ''}
+    ${d.snaps && d.snaps.length >= 2 ? `
+    <div class="card">
+      <div class="chdr"><div class="cdot" style="background:var(--a3)"></div><div class="ctitle">⏱️ 시간별 작업 진행</div><div class="csub">${d.snaps.length}개 기록</div></div>
+      <div class="cbody">
+        ${renderSnapsChart(d.snaps, getQty(d))}
+      </div>
+    </div>` : ''}
+    ${d.orderTotal ? `
+    <div class="card">
+      <div class="chdr"><div class="cdot" style="background:var(--a5)"></div><div class="ctitle">📦 주문량 vs 작업량</div></div>
+      <div class="cbody">
+        <div style="display:flex;gap:10px;">
+          <div class="sum-card" style="flex:1"><div class="sum-label">주문량</div><div class="sum-val yellow">${d.orderTotal}</div></div>
+          <div class="sum-card" style="flex:1"><div class="sum-label">작업량</div><div class="sum-val blue">${getQty(d)}</div></div>
+          <div class="sum-card" style="flex:1"><div class="sum-label">비율</div><div class="sum-val green">${(getQty(d)/d.orderTotal*100).toFixed(0)}%</div></div>
+        </div>
+      </div>
+    </div>` : ''}
     ${d.note ? `
     <div class="card">
       <div class="chdr"><div class="cdot" style="background:var(--muted)"></div><div class="ctitle">특이사항</div></div>
       <div class="cbody" style="font-size:13px;line-height:1.7;">${d.note}</div>
     </div>` : ''}
   `;
+}
+
+function renderSnapsChart(snaps, finalQty) {
+  if (!snaps || snaps.length < 2) return '';
+  const maxQty = Math.max(...snaps.map(s=>s.qty), finalQty||0, 1);
+  // 시간대별 속도 계산
+  const rows = snaps.map((s, i) => {
+    const prev = snaps[i-1];
+    const diff = prev ? s.qty - prev.qty : s.qty;
+    const pct  = (s.qty / maxQty * 100).toFixed(1);
+    const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+    const col = diff > 50 ? 'var(--a6)' : diff > 20 ? 'var(--a2)' : 'var(--a3)';
+    return `
+      <div class="chart-row">
+        <div class="chart-label" style="color:var(--muted);font-size:10px">${s.t}</div>
+        <div class="chart-bar-bg">
+          <div class="chart-bar" style="width:${pct}%;background:linear-gradient(90deg,var(--a1),var(--a3))"></div>
+        </div>
+        <div style="width:55px;flex-shrink:0;text-align:right">
+          <span style="font-size:13px;font-weight:900;color:var(--a1)">${s.qty}</span>
+          <span style="font-size:10px;font-weight:700;color:${col};margin-left:3px">${i>0?diffStr:''}</span>
+        </div>
+      </div>`;
+  });
+  // 시간당 평균 속도 계산
+  const first = snaps[0], last = snaps[snaps.length-1];
+  const [fh,fm] = first.t.split(':').map(Number);
+  const [lh,lm] = last.t.split(':').map(Number);
+  const elapsedH = ((lh*60+lm) - (fh*60+fm)) / 60;
+  const rate = elapsedH > 0 ? Math.round((last.qty - first.qty) / elapsedH) : 0;
+  return `
+    <div class="chart-wrap">${rows.join('')}</div>
+    <div style="margin-top:10px;padding:8px 12px;background:rgba(59,158,255,.07);border-radius:8px;font-size:11px;color:var(--muted);display:flex;gap:14px;">
+      <span>⚡ 시간당 평균 <strong style="color:var(--a1)">${rate}개</strong></span>
+      <span>📈 총 ${last.qty}개 → ${finalQty > last.qty ? `최종 ${finalQty}개` : '완료'}</span>
+    </div>`;
 }
 
 function renderBizChart(biz) {
@@ -703,6 +786,378 @@ async function saveManual() {
 function setMStatus(msg, isErr) {
   const el = document.getElementById('m-status');
   if (el) { el.textContent = msg; el.style.color = isErr ? '#ef4444' : '#2ecc71'; }
+}
+
+// ══════════════════════════════════════════════
+// 📈 분석·예측 엔진
+// ══════════════════════════════════════════════
+let anaCache = null; // 분석 결과 캐시
+
+async function runAnalysis() {
+  const btn = document.getElementById('ana-btn');
+  const loading = document.getElementById('ana-loading');
+  btn.disabled = true; btn.textContent = '⏳ 로딩 중...';
+  loading.textContent = '히스토리 목록 가져오는 중...';
+
+  try {
+    const list = await fetchHistoryList();
+    if (!list.length) {
+      document.getElementById('ana-result').innerHTML = '<div class="card"><div class="cbody"><div class="no-data">저장된 데이터가 없습니다</div></div></div>';
+      return;
+    }
+
+    // 날짜 파일명 → YYYY-MM-DD 추출
+    const dateKeys = list.map(f => f.replace('.json','')).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+    loading.textContent = `총 ${dateKeys.length}일 데이터 불러오는 중...`;
+
+    // 배치로 가져오기 (10개씩)
+    const all = [];
+    for (let i=0; i<dateKeys.length; i+=10) {
+      const batch = dateKeys.slice(i, i+10);
+      const results = await Promise.all(batch.map(k => fetchDay(k)));
+      batch.forEach((k,j) => { if (results[j]) all.push([k, results[j]]); });
+      loading.textContent = `${Math.min(i+10, dateKeys.length)} / ${dateKeys.length}일 로드 중...`;
+    }
+
+    if (all.length < 3) {
+      document.getElementById('ana-result').innerHTML = '<div class="card"><div class="cbody"><div class="no-data">분석에 필요한 데이터가 부족합니다 (최소 3일)</div></div></div>';
+      return;
+    }
+
+    document.getElementById('ana-range').textContent = `${all[0][0]} ~ ${all[all.length-1][0]} (${all.length}일)`;
+    loading.textContent = '';
+    anaCache = computeAnalysis(all);
+    renderAnalysis(anaCache);
+    // ✅ 오늘 날짜 저장 → 내일 탭 열기 전까지 재실행 안 함
+    localStorage.setItem('ana_last_ran', todayKey());
+
+  } finally {
+    btn.disabled = false; btn.textContent = '🔄 다시 분석';
+  }
+}
+
+function computeAnalysis(pairs) {
+  const DOW_KR = ['일','월','화','수','목','금','토'];
+
+  // 주말(토/일) 제외
+  const workPairs = pairs.filter(([k]) => {
+    const dow = new Date(k).getDay();
+    return dow !== 0 && dow !== 6; // 일=0, 토=6 제외
+  });
+  if (!workPairs.length) workPairs.push(...pairs); // 데이터 없으면 전체 사용
+
+  // 기초 통계 (주말 제외)
+  const qtys = workPairs.map(([,d]) => getQty(d));
+  const overall = qtys.reduce((a,b)=>a+b,0) / qtys.length;
+
+  // ── 요일별 (주말 제외) ──
+  const dowSum = Array(7).fill(0), dowCnt = Array(7).fill(0);
+  workPairs.forEach(([k,d]) => {
+    const dow = new Date(k).getDay();
+    dowSum[dow] += getQty(d); dowCnt[dow]++;
+  });
+  const dowAvg = dowSum.map((s,i) => dowCnt[i] ? Math.round(s/dowCnt[i]) : 0);
+  const dowFactor = dowAvg.map(a => overall > 0 ? a/overall : 1);
+
+  // ── 일별(1~31) (주말 제외) ──
+  const domSum = Array(32).fill(0), domCnt = Array(32).fill(0);
+  workPairs.forEach(([k,d]) => {
+    const dom = parseInt(k.split('-')[2]);
+    domSum[dom] += getQty(d); domCnt[dom]++;
+  });
+  const domAvg = domSum.map((s,i) => domCnt[i] ? Math.round(s/domCnt[i]) : 0);
+  const domFactor = domAvg.map(a => overall > 0 ? a/overall : 1);
+
+  // ── 월별(1~12) ──
+  const monSum = Array(13).fill(0), monCnt = Array(13).fill(0);
+  workPairs.forEach(([k,d]) => {
+    const mon = parseInt(k.split('-')[1]);
+    monSum[mon] += getQty(d); monCnt[mon]++;
+  });
+  const monAvg = monSum.map((s,i) => monCnt[i] ? Math.round(s/monCnt[i]) : 0);
+
+  // ── 월초(1~5일) vs 일반 비교 ──
+  const earlyQtys = workPairs.filter(([k])=>parseInt(k.split('-')[2])<=5).map(([,d])=>getQty(d));
+  const lateQtys  = workPairs.filter(([k])=>parseInt(k.split('-')[2])>5).map(([,d])=>getQty(d));
+  const earlyAvg = earlyQtys.length ? Math.round(earlyQtys.reduce((a,b)=>a+b,0)/earlyQtys.length) : 0;
+  const lateAvg  = lateQtys.length  ? Math.round(lateQtys.reduce((a,b)=>a+b,0)/lateQtys.length)  : 0;
+
+  // ── 향후 7일 예측 (주말 제외) ──
+  const forecast = [];
+  for (let i=1; i<=10; i++) {
+    const fd = new Date(); fd.setDate(fd.getDate()+i);
+    const dow = fd.getDay();
+    if (dow === 0 || dow === 6) continue; // 주말 건너뜀
+    if (forecast.length >= 7) break;
+    const fKey = `${fd.getFullYear()}-${pad(fd.getMonth()+1)}-${pad(fd.getDate())}`;
+    const dom  = fd.getDate();
+    const mon  = fd.getMonth()+1;
+    const monF = monCnt[mon] >= 2 ? monAvg[mon]/overall : 1;
+    const predicted = Math.round(overall * (dowFactor[dow]||1) * (domFactor[dom]||1) * (monF||1));
+    forecast.push({ key:fKey, dow, dom, mon, predicted });
+  }
+
+  // ── 주문량-작업량 비율 학습 ──
+  const orderPairs = workPairs.filter(([,d]) => d.orderTotal > 0 && getQty(d) > 0);
+  let orderRatio = 0;
+  if (orderPairs.length >= 5) {
+    const ratios = orderPairs.map(([,d]) => getQty(d) / d.orderTotal);
+    orderRatio = parseFloat((ratios.reduce((a,b)=>a+b,0) / ratios.length).toFixed(3));
+  }
+
+  // ── 최근 4주 같은 요일 평균 (핵심 예측값) ──
+  const recent4wAvg = Array(7).fill(0);
+  const recent4wCnt = Array(7).fill(0);
+  for (let dow = 1; dow <= 5; dow++) { // 월~금
+    const sameDowPairs = workPairs.filter(([k]) => new Date(k).getDay() === dow);
+    const last4 = sameDowPairs.slice(-4); // 가장 최근 4번
+    if (last4.length > 0) {
+      recent4wAvg[dow] = Math.round(last4.reduce((s,[,d])=>s+getQty(d),0) / last4.length);
+      recent4wCnt[dow] = last4.length;
+    }
+  }
+
+  // ── 베스트/워스트 요일 (주말 제외) ──
+  const validDow = dowAvg.map((a,i)=>({i,a,kr:DOW_KR[i],cnt:dowCnt[i]}))
+    .filter(x => x.cnt >= 2 && x.i !== 0 && x.i !== 6); // 주말 제외
+  validDow.sort((a,b)=>b.a-a.a);
+
+  // ── 최근 30일 트렌드 (평일만) ──
+  const recent30 = workPairs.slice(-30);
+  const r30first = recent30.slice(0,15).map(([,d])=>getQty(d));
+  const r30last  = recent30.slice(15).map(([,d])=>getQty(d));
+  const r30firstAvg = r30first.length ? Math.round(r30first.reduce((a,b)=>a+b,0)/r30first.length) : 0;
+  const r30lastAvg  = r30last.length  ? Math.round(r30last.reduce((a,b)=>a+b,0)/r30last.length)  : 0;
+  const trendPct = r30firstAvg > 0 ? Math.round((r30lastAvg - r30firstAvg) / r30firstAvg * 100) : 0;
+
+  const result = {
+    overall: Math.round(overall),
+    totalDays: workPairs.length,
+    totalDaysAll: pairs.length,
+    recent4wAvg, recent4wCnt, orderRatio,
+    totalQtySum: qtys.reduce((a,b)=>a+b,0),
+    maxQty: Math.max(...qtys), maxDay: workPairs[qtys.indexOf(Math.max(...qtys))][0],
+    minQty: Math.min(...qtys.filter(q=>q>0)),
+    dowAvg, dowFactor, dowCnt, validDow,
+    domAvg, domFactor, domCnt,
+    monAvg, monCnt,
+    earlyAvg, lateAvg, earlyPct: overall>0?Math.round(earlyAvg/overall*100):100,
+    forecast,
+    trendPct, r30firstAvg, r30lastAvg
+  };
+
+  // ✅ 예측 데이터를 config.json에 저장 → work.html에서 사용
+  savePredictionToConfig(result);
+
+  return result;
+}
+
+async function savePredictionToConfig(a) {
+  try {
+    const r = await fetch(`${API}/config.json?t=${Date.now()}`);
+    const cfg = (await r.json().catch(()=>({}))) || {};
+    cfg.prediction = {
+      overall: a.overall,
+      dowAvg: a.dowAvg,
+      domFactor: a.domFactor,
+      monAvg: a.monAvg,
+      monCnt: a.monCnt,
+      recent4wAvg: a.recent4wAvg,
+      recent4wCnt: a.recent4wCnt,
+      orderRatio: a.orderRatio,     // ← 주문량 비율 (5일 이상 데이터 있으면)
+      updatedAt: new Date().toISOString().slice(0,10),
+      baseDays: a.totalDays
+    };
+    await fetch(`${API}/config.json`, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(cfg)
+    });
+  } catch(e) {}
+}
+
+function renderAnalysis(a) {
+  const DOW_KR = ['일','월','화','수','목','금','토'];
+  const DOW_COLOR = ['#ff6b9d','#3b9eff','#2ecc71','#a78bfa','#ffd600','#f97316','#06b6d4'];
+  const MON_NAMES = ['','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+
+  // ── 섹션 렌더 헬퍼 ──
+  function barChart(items, colorFn, maxV) {
+    const m = maxV || Math.max(...items.map(x=>x.val), 1);
+    return `<div class="chart-wrap">${items.map(x=>`
+      <div class="chart-row">
+        <div class="chart-label" style="color:${colorFn(x)};font-weight:${x.bold?'900':'700'}">${x.label}</div>
+        <div class="chart-bar-bg">
+          <div class="chart-bar" style="width:${(x.val/m*100).toFixed(1)}%;background:${colorFn(x)};${x.bold?'box-shadow:0 0 6px '+colorFn(x):''}"></div>
+        </div>
+        <div class="chart-val" style="color:${colorFn(x)};font-weight:${x.bold?'900':'700'}">${x.val||'-'}</div>
+      </div>`).join('')}</div>`;
+  }
+
+  // 트렌드 아이콘
+  const trendIcon = a.trendPct > 5 ? '📈' : a.trendPct < -5 ? '📉' : '➡️';
+  const trendColor = a.trendPct > 5 ? 'var(--a3)' : a.trendPct < -5 ? 'var(--red)' : 'var(--a5)';
+
+  // ── 1. 전체 요약 ──
+  const summaryHtml = `
+    <div class="card">
+      <div class="chdr"><div class="cdot" style="background:var(--a5)"></div><div class="ctitle">📊 전체 요약</div><div class="csub">평일 ${a.totalDays}일 기준</div></div>
+      <div class="cbody">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:10px;padding:7px 10px;background:rgba(148,163,184,.07);border-radius:8px;line-height:1.7;">
+          📌 토·일요일은 분석에서 제외됩니다 &nbsp;|&nbsp; 전체 데이터: ${a.totalDaysAll}일 중 평일 ${a.totalDays}일
+        </div>
+        <div class="sum-grid">
+          <div class="sum-card"><div class="sum-label">평일 평균</div><div class="sum-val blue">${a.overall}</div></div>
+          <div class="sum-card"><div class="sum-label">총 평일수</div><div class="sum-val green">${a.totalDays}일</div></div>
+          <div class="sum-card"><div class="sum-label">누적 총량</div><div class="sum-val purple">${a.totalQtySum.toLocaleString()}</div></div>
+          <div class="sum-card"><div class="sum-label">최고 기록</div><div class="sum-val orange">${a.maxQty}<span style="font-size:11px;font-weight:600"> (${a.maxDay})</span></div></div>
+          <div class="sum-card" style="grid-column:span 2">
+            <div class="sum-label">최근 트렌드 ${trendIcon}</div>
+            <div class="sum-val" style="color:${trendColor};font-size:20px;">${a.trendPct > 0 ? '+' : ''}${a.trendPct}% <span style="font-size:12px;font-weight:600;color:var(--muted)">(${a.r30firstAvg}→${a.r30lastAvg})</span></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // ── 2. 월초 패턴 ──
+  const earlyDiff = a.earlyAvg - a.overall;
+  const earlyHtml = `
+    <div class="card">
+      <div class="chdr"><div class="cdot" style="background:var(--a6)"></div><div class="ctitle">📅 월초 패턴 (1~5일)</div></div>
+      <div class="cbody">
+        <div style="display:flex;gap:10px;margin-bottom:14px;">
+          <div class="sum-card" style="flex:1;background:rgba(255,107,157,.1);border-color:rgba(255,107,157,.3)">
+            <div class="sum-label">월초 1~5일 평균</div>
+            <div class="sum-val pink">${a.earlyAvg}</div>
+          </div>
+          <div class="sum-card" style="flex:1">
+            <div class="sum-label">나머지 일수 평균</div>
+            <div class="sum-val blue">${a.lateAvg}</div>
+          </div>
+          <div class="sum-card" style="flex:1;background:rgba(255,214,0,.08);border-color:rgba(255,214,0,.25)">
+            <div class="sum-label">월초 가중치</div>
+            <div class="sum-val yellow">${a.earlyPct}%</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;">
+          💡 월초 1~5일은 평균보다 <strong style="color:var(--a6)">${earlyDiff >= 0 ? '+' : ''}${earlyDiff}개 (${a.earlyPct}%)</strong> 수준입니다.
+        </div>
+        ${barChart(
+          Array.from({length:10},(_,i)=>({
+            label:`${i+1}일`,
+            val: a.domAvg[i+1]||0,
+            bold: i < 3
+          })),
+          x => x.bold ? 'var(--a6)' : 'var(--a1)',
+          Math.max(...Array.from({length:10},(_,i)=>a.domAvg[i+1]||0), 1)
+        )}
+      </div>
+    </div>`;
+
+  // ── 3. 요일별 분석 ──
+  const dowItems = [1,2,3,4,5,6,0].map(i=>({
+    label: DOW_KR[i]+'요일',
+    val: a.dowAvg[i]||0,
+    cnt: a.dowCnt[i]||0,
+    bold: i===1, // 월요일 강조
+    idx: i
+  }));
+  const dowHtml = `
+    <div class="card">
+      <div class="chdr"><div class="cdot" style="background:var(--a3)"></div><div class="ctitle">📆 요일별 평균</div></div>
+      <div class="cbody">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.7;">
+          ${a.validDow.length >= 2 ? `💡 가장 많은 요일: <strong style="color:${DOW_COLOR[a.validDow[0].i]}">${a.validDow[0].kr}요일 (${a.validDow[0].a}개)</strong> · 가장 적은 요일: <strong>${a.validDow[a.validDow.length-1].kr}요일 (${a.validDow[a.validDow.length-1].a}개)</strong>` : ''}<br>
+          🔇 <span style="color:#94a3b8">토·일: 분석 제외</span> &nbsp;|&nbsp; 📉 <span style="color:#f97316">금요일은 보통 물량이 적습니다</span>
+        </div>
+        ${barChart(dowItems, x => DOW_COLOR[x.idx])}
+        <div style="margin-top:12px;display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;">
+          ${[1,2,3,4,5,6,0].map(i=>`
+            <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:6px 3px;border:1px solid var(--border)">
+              <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">${DOW_KR[i]}요일</div>
+              <div style="font-size:13px;font-weight:900;color:${DOW_COLOR[i]}">${a.dowAvg[i]||'-'}</div>
+              <div style="font-size:9px;color:var(--muted)">${a.dowCnt[i]}일</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+
+  // ── 4. 일별 패턴 전체 (1~31) ──
+  const domItems = Array.from({length:31},(_,i)=>({
+    label:`${i+1}일`,
+    val: a.domAvg[i+1]||0,
+    bold: i < 3,
+    cnt: a.domCnt[i+1]||0
+  })).filter(x=>x.cnt>0);
+  const domHtml = `
+    <div class="card">
+      <div class="chdr"><div class="cdot" style="background:var(--a2)"></div><div class="ctitle">🗓️ 날짜별 평균 (전체)</div></div>
+      <div class="cbody">
+        ${barChart(domItems, x => x.bold ? 'var(--a6)' : x.val >= a.overall*1.1 ? 'var(--a2)' : 'var(--a1)')}
+      </div>
+    </div>`;
+
+  // ── 5. 월별 분석 ──
+  const monItems = Array.from({length:12},(_,i)=>({
+    label: MON_NAMES[i+1],
+    val: a.monAvg[i+1]||0,
+    cnt: a.monCnt[i+1]||0,
+    bold: false
+  })).filter(x=>x.cnt>0);
+  const monHtml = monItems.length >= 2 ? `
+    <div class="card">
+      <div class="chdr"><div class="cdot" style="background:var(--a4)"></div><div class="ctitle">📈 월별 평균</div></div>
+      <div class="cbody">
+        ${barChart(monItems, (_,i) => {
+          const colors=['#3b9eff','#2ecc71','#f97316','#a78bfa','#ff6b9d','#ffd600','#06b6d4','#84cc16','#3b9eff','#f97316','#a78bfa','#2ecc71'];
+          return colors[monItems.indexOf(_) % colors.length];
+        })}
+      </div>
+    </div>` : '';
+
+  // ── 6. 향후 7일 예측 ──
+  const DOW_LABEL = ['일','월','화','수','목','금','토'];
+  const forecastHtml = `
+    <div class="card">
+      <div class="chdr"><div class="cdot" style="background:var(--a3)"></div><div class="ctitle">🔮 향후 7일 예상물량</div><div class="csub">요일×날짜 패턴 기반</div></div>
+      <div class="cbody">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
+          ⚠️ 예측값은 과거 패턴 기반 추정치입니다. 실제와 다를 수 있어요.
+        </div>
+        <table class="detail-table">
+          <tr>
+            <th>날짜</th><th>요일</th><th style="text-align:right">예상 수량</th><th style="text-align:right">평균 대비</th>
+          </tr>
+          ${a.forecast.map(f=>{
+            const diff = f.predicted - a.overall;
+            const pct  = a.overall > 0 ? Math.round(diff/a.overall*100) : 0;
+            const isHigh = pct >= 10;
+            const isLow  = pct <= -10;
+            const isMon = f.dow === 1;
+            const isEarly = f.dom <= 5;
+            return `<tr>
+              <td style="${isEarly?'color:var(--a6);font-weight:800':''}">
+                ${f.key.slice(5)}${isEarly?'<span style="font-size:9px;color:var(--a6);margin-left:3px;">월초</span>':''}
+              </td>
+              <td style="color:${DOW_COLOR[f.dow]};font-weight:800">
+                ${DOW_LABEL[f.dow]}${isMon?'<span style="font-size:9px;margin-left:2px;">🔥</span>':''}
+              </td>
+              <td class="num" style="color:${isHigh?'var(--a6)':isLow?'var(--muted)':'var(--a1)'};font-size:17px">${f.predicted}</td>
+              <td class="num" style="color:${isHigh?'var(--a6)':isLow?'var(--red)':'var(--muted)'}">
+                ${pct>=0?'+':''}${pct}%
+              </td>
+            </tr>`;
+          }).join('')}
+        </table>
+        <div style="margin-top:14px;padding:10px 12px;background:rgba(255,214,0,.06);border:1px solid rgba(255,214,0,.2);border-radius:9px;font-size:11px;color:var(--a5);line-height:1.8;">
+          🔥 <strong>월요일</strong> 평균: ${a.dowAvg[1]}개 &nbsp;|&nbsp;
+          📅 <strong>월초 1~3일</strong> 평균: ${Math.round(([1,2,3].reduce((s,i)=>s+(a.domAvg[i]||0),0))/3)}개 &nbsp;|&nbsp;
+          📊 전체 평균: ${a.overall}개
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('ana-result').innerHTML = summaryHtml + earlyHtml + dowHtml + forecastHtml + domHtml + (monHtml||'');
 }
 
 // 초기 로드

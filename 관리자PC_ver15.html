@@ -254,6 +254,47 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 .prod-stat-unit { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .prod-divider { width: 1px; height: 40px; background: var(--border); }
 
+/* ══ 관리자 예측·분석 위젯 ══ */
+.adm-pred-wrap{margin-bottom:16px;}
+.adm-anomaly{border-radius:12px;padding:12px 16px;border:2px solid;margin-bottom:10px;}
+.adm-anomaly.lv-warn{background:rgba(255,214,0,.09);border-color:rgba(255,214,0,.45);}
+.adm-anomaly.lv-danger{background:rgba(255,107,157,.1);border-color:rgba(255,107,157,.5);animation:admPulse 2s infinite;}
+@keyframes admPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,157,.3);}50%{box-shadow:0 0 0 10px rgba(255,107,157,0);}}
+.adm-pred-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.adm-pred{background:linear-gradient(135deg,rgba(46,204,113,.08),rgba(255,214,0,.06));border:1.5px solid rgba(46,204,113,.35);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden;}
+.adm-pred::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--a3),var(--a5),var(--a6));}
+.adm-month{background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(59,158,255,.06));border:1.5px solid rgba(167,139,250,.3);border-radius:12px;padding:14px 16px;}
+.adm-pred-label{font-size:9px;font-weight:800;letter-spacing:.8px;margin-bottom:8px;}
+.adm-pred-tags{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;}
+.adm-tag{font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;border:1px solid;}
+.adm-tag.mon{background:rgba(59,158,255,.15);color:var(--a1);border-color:rgba(59,158,255,.35);}
+.adm-tag.early{background:rgba(255,107,157,.15);color:var(--a6);border-color:rgba(255,107,157,.35);}
+.adm-tag.fri{background:rgba(148,163,184,.1);color:#94a3b8;border-color:rgba(148,163,184,.3);}
+.adm-tag.normal{background:rgba(46,204,113,.1);color:var(--a3);border-color:rgba(46,204,113,.3);}
+.adm-pred-numbers{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;}
+.adm-pred-cur{font-size:28px;font-weight:900;color:#fff;line-height:1;}
+.adm-pred-sep{font-size:14px;color:var(--muted);font-weight:700;}
+.adm-pred-exp{font-size:22px;font-weight:900;color:var(--a5);line-height:1;}
+.adm-pred-rem{font-size:12px;font-weight:700;color:var(--a3);margin-left:4px;}
+.adm-bar-bg{background:rgba(255,255,255,.08);border-radius:6px;height:10px;overflow:hidden;margin-bottom:8px;}
+.adm-bar{height:100%;border-radius:6px;transition:width .6s ease;background:linear-gradient(90deg,var(--a3),var(--a5));}
+.adm-bar.over{background:linear-gradient(90deg,var(--a5),var(--a6));}
+.adm-pred-bottom{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.adm-pred-pct{font-size:15px;font-weight:900;color:var(--a5);}
+.adm-pred-eta{font-size:11px;font-weight:700;}
+.adm-chips{display:flex;gap:5px;flex-wrap:wrap;}
+.adm-chip{font-size:10px;font-weight:800;padding:3px 9px;border-radius:7px;border:1px solid;white-space:nowrap;}
+.adm-chip.ok{background:rgba(46,204,113,.1);color:var(--a3);border-color:rgba(46,204,113,.3);}
+.adm-chip.warn{background:rgba(255,214,0,.12);color:var(--a5);border-color:rgba(255,214,0,.4);}
+.adm-chip.danger{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.35);animation:chipBlink .8s infinite;}
+@keyframes chipBlink{0%,100%{opacity:1;}50%{opacity:.5;}}
+.adm-chip.purple{background:rgba(167,139,250,.12);color:var(--a4);border-color:rgba(167,139,250,.35);}
+.adm-chip.blue{background:rgba(59,158,255,.12);color:var(--a1);border-color:rgba(59,158,255,.35);}
+.adm-chip.pink{background:rgba(255,107,157,.12);color:var(--a6);border-color:rgba(255,107,157,.35);}
+.adm-snaps{display:flex;gap:5px;overflow-x:auto;padding:4px 0;margin-top:6px;}
+.adm-snap{flex-shrink:0;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:7px;padding:5px 10px;text-align:center;}
+.adm-snap-t{font-size:9px;color:var(--muted);font-weight:700;}
+.adm-snap-v{font-size:13px;font-weight:900;color:var(--a1);}
 </style>
 </head>
 <body>
@@ -287,6 +328,40 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
     <div style="font-size:20px;">⚠️</div>
     <div class="offline-banner-text">
       <strong>Firebase가 설정되지 않았습니다.</strong> 우측 상단 "⚙️ Firebase 설정" 버튼을 눌러 URL을 입력해주세요.
+    </div>
+  </div>
+
+  <!-- 🔮 예측·분석 위젯 -->
+  <div class="adm-pred-wrap" id="admPredWrap" style="display:none;">
+    <!-- 이상물량 배너 -->
+    <div id="admAnomalyBanner" style="display:none;margin-bottom:10px;"></div>
+    <!-- 예측 + 이달 예상 2열 그리드 -->
+    <div class="adm-pred-grid">
+      <div class="adm-pred" id="admPredWidget">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="adm-pred-label" style="color:var(--a3);">🔮 오늘 예상물량</div>
+          <div class="adm-pred-tags" id="admPredTags"></div>
+        </div>
+        <div class="adm-pred-numbers">
+          <div class="adm-pred-cur" id="admPredCur">—</div>
+          <div class="adm-pred-sep">/</div>
+          <div class="adm-pred-exp" id="admPredExp">—</div>
+          <div class="adm-pred-rem" id="admPredRem"></div>
+        </div>
+        <div class="adm-bar-bg"><div class="adm-bar" id="admPredBar" style="width:0%"></div></div>
+        <div class="adm-pred-bottom">
+          <div class="adm-pred-pct" id="admPredPct">—</div>
+          <div class="adm-pred-eta" id="admPredEta" style="color:var(--muted);">예측 데이터 로딩 중...</div>
+        </div>
+        <div class="adm-chips" id="admPredChips"></div>
+        <div class="adm-snaps" id="admPredSnaps" style="display:none;"></div>
+      </div>
+      <div id="admMonthCard">
+        <div class="adm-month" style="height:100%;box-sizing:border-box;">
+          <div class="adm-pred-label" style="color:var(--a4);">📊 이달 예상 총량</div>
+          <div id="admMonthContent" style="color:var(--muted);font-size:12px;margin-top:8px;">분석 데이터 로딩 중...</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -577,8 +652,19 @@ async function loadFbUrl() {
     if (cfg) {
       if (cfg.workers && cfg.workers.length) { ATT_MEMBERS_DASH.length = 0; cfg.workers.forEach(w => ATT_MEMBERS_DASH.push(w)); }
       if (cfg.startTime) window.SYS_START_TIME = cfg.startTime;
+      // 🔮 예측 데이터 추출
+      if (cfg.prediction && cfg.prediction.overall > 0) {
+        admPredConfig = cfg.prediction;
+        admLoadMonthForecast();
+      } else {
+        // config.json에 prediction 없으면 자체 계산
+        setTimeout(admLoadQuickPred, 500);
+      }
     }
-  } catch {}
+  } catch {
+    // config.json 로드 실패시에도 자체 계산 시도
+    setTimeout(admLoadQuickPred, 500);
+  }
   // 로컬 폴백
   try {
     const s = localStorage.getItem('sys_config_v1');
@@ -676,6 +762,9 @@ function renderLive(d) {
   const jkg = d.종근당 || {};
   const etc = d.기타업체 || {};
   const add = d.추가 || {};
+
+  // 🔮 예측 위젯 업데이트
+  admUpdatePredWidget(d);
 
   // 요약
   setText('s-total', d.totalQty ?? '—');
@@ -1131,6 +1220,244 @@ document.getElementById('admin-confirm-overlay').addEventListener('click', e => 
   if (e.target === document.getElementById('admin-confirm-overlay')) closeAdminConfirm();
 });
 
+// ══════════════════════════════════════════════
+// 🔮 관리자PC 예측·분석 엔진 (관리자폰과 동일 로직)
+// ══════════════════════════════════════════════
+let admPredConfig = null;
+const DOW_KR_ADM = ['일','월','화','수','목','금','토'];
+
+function admCalcPredicted(netQty) {
+  const now=new Date(), dow=now.getDay(), dom=now.getDate(), mon=now.getMonth()+1;
+  if(dow===0||dow===6||!admPredConfig) return null;
+  const {overall=0,recent4wAvg=[],recent4wCnt=[],dowAvg=[],domFactor=[],monAvg=[],monCnt=[]}=admPredConfig;
+  if(overall<=0) return null;
+  let baseVal,method;
+  if(recent4wAvg[dow]>0&&(recent4wCnt[dow]||0)>=2){baseVal=recent4wAvg[dow];method=`최근${recent4wCnt[dow]}주 ${DOW_KR_ADM[dow]}요일 평균`;}
+  else if(dowAvg[dow]>0){baseVal=dowAvg[dow];method=`전체 ${DOW_KR_ADM[dow]}요일 평균`;}
+  else{baseVal=overall;method='전체 평균';}
+  const domF=domFactor[dom]||1, monF=(monCnt[mon]>=2&&monAvg[mon]>0)?monAvg[mon]/overall:1;
+  return {predicted:Math.round(baseVal*domF*monF), overall, dow, dom, method};
+}
+function admCalcEta(cur,pred) {
+  if(cur<=0||pred<=0) return null;
+  const now=new Date(), start=new Date(now); start.setHours(9,0,0,0);
+  const el=now-start; if(el<=0) return null;
+  const rem=pred-cur; if(rem<=0) return '✅ 목표 달성!';
+  const eta=new Date(now.getTime()+rem/(cur/el));
+  const h=eta.getHours(),m=eta.getMinutes(),ap=h<12?'오전':'오후',hh=h>12?h-12:(h===0?12:h);
+  return `${ap} ${hh}시 ${String(m).padStart(2,'0')}분 완료 예상`;
+}
+function admGetPaceLevel(e) {
+  if(!e||e.includes('달성')) return 'ok';
+  const m=e.match(/(\d+)시\s*(\d+)?분?/); if(!m) return 'ok';
+  let h=parseInt(m[1]); const mn=parseInt(m[2]||'0');
+  if(e.includes('오후')&&h!==12) h+=12;
+  const t=h*60+mn; if(t<=17*60+30) return 'ok'; if(t<=18*60+30) return 'warn'; return 'danger';
+}
+function admUpdateAnomalyBanner(predicted,overall) {
+  const banner=document.getElementById('admAnomalyBanner');
+  if(!banner||!predicted||!overall){if(banner)banner.style.display='none';return;}
+  const ratio=predicted/overall;
+  if(ratio<1.3){banner.style.display='none';return;}
+  const isVery=ratio>=1.6, color=isVery?'var(--a6)':'var(--a5)';
+  banner.style.display=''; banner.className=`adm-anomaly ${isVery?'lv-danger':'lv-warn'}`;
+  banner.innerHTML=`<div style="display:flex;align-items:center;gap:12px;">
+    <div style="font-size:26px">${isVery?'🔥':'⚠️'}</div>
+    <div><div style="font-size:14px;font-weight:900;color:${color}">${isVery?'오늘 매우 많은 날!':'오늘 평소보다 많은 날'}</div>
+    <div style="font-size:12px;color:var(--muted)">예상 <strong style="color:#fff">${predicted}개</strong> · 평균의 <strong style="color:${color}">${(ratio*100).toFixed(0)}%</strong></div></div>
+  </div>`;
+}
+function admUpdatePredWidget(liveData) {
+  const wrap=document.getElementById('admPredWrap'); if(!wrap) return;
+  const now=new Date(), dow=now.getDay();
+  if(dow===0||dow===6){wrap.style.display='none';return;}
+  wrap.style.display='';
+  const hanjin=liveData?.기타업체?.한진||0, jikbae=liveData?.종근당?.직배||0;
+  const netQty=(liveData?.totalQty||0)-hanjin-jikbae;
+  const pInfo=admCalcPredicted(netQty);
+  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+
+  // 태그
+  const tagsEl=document.getElementById('admPredTags');
+  if(tagsEl){
+    const tags=[`<div class="adm-tag ${dow===1?'mon':dow===5?'fri':'normal'}">${DOW_KR_ADM[dow]}요일</div>`];
+    if(now.getDate()<=3) tags.push('<div class="adm-tag early">월초🔥</div>');
+    else if(now.getDate()<=5) tags.push('<div class="adm-tag early">월초</div>');
+    tagsEl.innerHTML=tags.join('');
+  }
+
+  if(!pInfo){
+    setEl('admPredCur',netQty); setEl('admPredExp','—'); setEl('admPredRem','');
+    setEl('admPredPct','—'); setEl('admPredEta','리포트 앱에서 분석 먼저 실행');
+    const b=document.getElementById('admPredBar'); if(b) b.style.width='0%';
+    admUpdateAnomalyBanner(0,0);
+  } else {
+    const pct=Math.min(Math.round(netQty/pInfo.predicted*100),999), over=netQty>=pInfo.predicted, rem=Math.max(pInfo.predicted-netQty,0);
+    const eta=admCalcEta(netQty,pInfo.predicted), paceLevel=eta?admGetPaceLevel(eta):'ok';
+    const paceColors={ok:'var(--a3)',warn:'var(--a5)',danger:'#ef4444'};
+    setEl('admPredCur',netQty); setEl('admPredExp',pInfo.predicted);
+    setEl('admPredRem',over?'🎉초과달성':`(남은: ${rem})`);
+    const barEl=document.getElementById('admPredBar');
+    if(barEl){barEl.style.width=Math.min(pct,100)+'%';barEl.classList.toggle('over',over);}
+    const pctEl=document.getElementById('admPredPct');
+    if(pctEl){pctEl.textContent=pct+'%';pctEl.style.color=over?'var(--a6)':'var(--a5)';}
+    const etaEl=document.getElementById('admPredEta');
+    if(etaEl){etaEl.textContent=eta||`${pInfo.method} 기준`;etaEl.style.color=paceColors[paceLevel];}
+    admUpdateAnomalyBanner(pInfo.predicted,pInfo.overall);
+
+    // 칩
+    const chips=[];
+    const paceIcon={ok:'✅ 정상페이스',warn:'⚠️ 조금늦을수도',danger:'🚨 페이스주의'};
+    chips.push(`<div class="adm-chip ${paceLevel}">${paceIcon[paceLevel]}</div>`);
+    const att=liveData?.출근부;
+    if(att&&att.presentCount>0){
+      const pp=Math.round(netQty/att.presentCount);
+      chips.push(`<div class="adm-chip purple">👷 ${att.presentCount}명 · 인당 ${pp}개</div>`);
+      const start=new Date();start.setHours(9,0,0,0);
+      const elH=Math.max((now-start)/3600000,0.5);
+      chips.push(`<div class="adm-chip blue">⚡ 시간당 인당 ${Math.round(pp/elH)}개</div>`);
+    }
+    if(liveData?.orderTotal>0) chips.push(`<div class="adm-chip pink">📦 주문 ${liveData.orderTotal}개</div>`);
+    const chipsEl=document.getElementById('admPredChips');
+    if(chipsEl){chipsEl.style.display=chips.length?'flex':'none';chipsEl.innerHTML=chips.join('');}
+  }
+
+  // 스냅샷
+  const snaps=liveData?.snaps||[], snapsEl=document.getElementById('admPredSnaps');
+  if(snapsEl){
+    if(snaps.length>=2){snapsEl.style.display='flex';snapsEl.innerHTML=snaps.slice(-8).map(s=>`<div class="adm-snap"><div class="adm-snap-t">${s.t}</div><div class="adm-snap-v">${s.qty}</div></div>`).join('');}
+    else snapsEl.style.display='none';
+  }
+
+  // 월별 예상 (5분마다)
+  const now2=Date.now();
+  if(admPredConfig&&(!_admMonthLoaded||(now2-_admMonthTs)>5*60*1000)){_admMonthLoaded=true;_admMonthTs=now2;admLoadMonthForecast();}
+}
+let _admMonthLoaded=false, _admMonthTs=0;
+
+async function admLoadMonthForecast() {
+  if(!admPredConfig) return;
+  const now=new Date(), year=now.getFullYear(), month=now.getMonth()+1, today=now.getDate();
+  const dim=new Date(year,month,0).getDate();
+  let doneWD=0,remWD=0;
+  for(let d=1;d<today;d++){const dw=new Date(year,month-1,d).getDay();if(dw!==0&&dw!==6)doneWD++;}
+  for(let d=today+1;d<=dim;d++){const dw=new Date(year,month-1,d).getDay();if(dw!==0&&dw!==6)remWD++;}
+  try {
+    const last5=[];
+    for(let d=Math.max(1,today-7);d<today;d++){const dw=new Date(year,month-1,d).getDay();if(dw!==0&&dw!==6)last5.push(`${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`);}
+    const res=await Promise.all(last5.slice(-5).map(dk=>fetch(`${FB_URL}/history/${dk}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null)));
+    const valid=res.filter(d=>d&&(d.totalQty||0)>0);
+    const mAvg=valid.length>0?valid.reduce((s,d)=>s+(d.totalQty||0)-(d?.기타업체?.한진||0)-(d?.종근당?.직배||0),0)/valid.length:(admPredConfig.overall||0);
+    const curQty=(cachedLiveData?.totalQty||0)-(cachedLiveData?.기타업체?.한진||0)-(cachedLiveData?.종근당?.직배||0);
+    const estDone=Math.round(mAvg*doneWD)+curQty, estRem=Math.round((admPredConfig.overall||mAvg)*remWD), total=estDone+estRem;
+    if(total<=0) return;
+    const mc=document.getElementById('admMonthContent');
+    if(mc) mc.innerHTML=`
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;">
+        <div style="font-size:28px;font-weight:900;color:var(--a4)">${total.toLocaleString()}<span style="font-size:12px;color:var(--muted)">개</span></div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.6;">완료 ${doneWD}일 · 남은 ${remWD}일</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <div style="flex:1;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 10px;text-align:center;">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">지금까지 약</div><div style="font-size:15px;font-weight:900;color:var(--a1)">${estDone.toLocaleString()}</div>
+        </div>
+        <div style="flex:1;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 10px;text-align:center;">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">앞으로 약</div><div style="font-size:15px;font-weight:900;color:var(--a3)">${estRem.toLocaleString()}</div>
+        </div>
+        <div style="flex:1;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 10px;text-align:center;">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">이달 평균</div><div style="font-size:15px;font-weight:900;color:var(--a5)">${Math.round(mAvg)}</div>
+        </div>
+      </div>`;
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════
+// 🔮 자동 예측 계산 (리포트 분석 없이도 동작)
+// ══════════════════════════════════════════════
+async function admLoadQuickPred() {
+  if (admPredConfig || !FB_URL) return;
+  try {
+    const now = new Date(), today = now.getDate();
+    const dates = [];
+    for (let i = 1; i <= 42 && dates.length < 20; i++) {
+      const d = new Date(now); d.setDate(today - i);
+      const dw = d.getDay();
+      if (dw !== 0 && dw !== 6) {
+        dates.push({
+          key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
+          dow: dw, dom: d.getDate(), mon: d.getMonth()+1
+        });
+      }
+    }
+    if (dates.length < 3) return;
+
+    const results = await Promise.all(dates.map(d =>
+      fetch(`${FB_URL}/history/${d.key}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null)
+    ));
+
+    const pairs = dates.map((d,i)=>({...d,data:results[i]}))
+      .filter(p=>p.data&&(p.data.totalQty||0)>50)
+      .map(p=>({...p,qty:(p.data.totalQty||0)-(p.data?.기타업체?.한진||0)-(p.data?.종근당?.직배||0)}))
+      .filter(p=>p.qty>0);
+    if (pairs.length < 3) return;
+
+    const overall = pairs.reduce((s,p)=>s+p.qty,0)/pairs.length;
+
+    const dowSum=Array(7).fill(0),dowCnt=Array(7).fill(0);
+    pairs.forEach(p=>{dowSum[p.dow]+=p.qty;dowCnt[p.dow]++;});
+    const dowAvg=dowSum.map((s,i)=>dowCnt[i]>0?s/dowCnt[i]:0);
+
+    const byDow=Array.from({length:7},()=>[]);
+    pairs.forEach(p=>byDow[p.dow].push(p.qty));
+    const recent4wAvg=Array(7).fill(0),recent4wCnt=Array(7).fill(0);
+    byDow.forEach((arr,dw)=>{const last4=arr.slice(0,4);if(last4.length>=2){recent4wAvg[dw]=last4.reduce((s,v)=>s+v,0)/last4.length;recent4wCnt[dw]=last4.length;}});
+
+    const domSum2=Array(32).fill(0),domCnt2=Array(32).fill(0);
+    pairs.forEach(p=>{domSum2[p.dom]+=p.qty;domCnt2[p.dom]++;});
+    const domFactor=domSum2.map((s,i)=>domCnt2[i]>=2?(s/domCnt2[i])/overall:1);
+
+    const monSum2=Array(13).fill(0),monCnt2=Array(13).fill(0);
+    pairs.forEach(p=>{monSum2[p.mon]+=p.qty;monCnt2[p.mon]++;});
+    const monAvg=monSum2.map((s,i)=>monCnt2[i]>0?s/monCnt2[i]:0);
+
+    admPredConfig={overall,dowAvg,recent4wAvg,recent4wCnt,domFactor,monAvg,monCnt:monCnt2,orderRatio:0,autoCalc:true};
+    admLoadMonthForecast();
+    // config.json에 저장 → work.html 등 다른 앱도 바로 사용 가능
+    admSavePredToConfig(admPredConfig);
+  } catch(e) {}
+}
+
+// 자동계산 prediction을 config.json에 저장 (리포트 분석 결과는 보호)
+async function admSavePredToConfig(pred) {
+  if (!FB_URL) return;
+  try {
+    const r = await fetch(`${FB_URL}/config.json?t=${Date.now()}`);
+    const cfg = (await r.json().catch(()=>null)) || {};
+    if (cfg.prediction && cfg.prediction.overall > 0 && !cfg.prediction.autoCalc) return;
+    cfg.prediction = {
+      overall:pred.overall, dowAvg:pred.dowAvg, domFactor:pred.domFactor,
+      monAvg:pred.monAvg, monCnt:pred.monCnt, recent4wAvg:pred.recent4wAvg,
+      recent4wCnt:pred.recent4wCnt, orderRatio:pred.orderRatio||0,
+      updatedAt:new Date().toISOString().slice(0,10), autoCalc:true
+    };
+    await fetch(`${FB_URL}/config.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});
+  } catch(e) {}
+}
+
+// 30분마다 prediction 설정 자동 갱신 (리포트 분석 결과 반영)
+setInterval(async () => {
+  if (!FB_URL) return;
+  try {
+    const r = await fetch(`${FB_URL}/config.json?t=${Date.now()}`);
+    const cfg = await r.json().catch(()=>null);
+    if (cfg && cfg.prediction && cfg.prediction.overall > 0) {
+      if (!admPredConfig || !cfg.prediction.autoCalc) {
+        admPredConfig = cfg.prediction;
+        if (cachedLiveData) admUpdatePredWidget(cachedLiveData);
+      }
+    }
+  } catch(e) {}
+}, 30 * 60 * 1000);
 
 
 </script>

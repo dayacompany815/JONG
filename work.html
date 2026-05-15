@@ -442,6 +442,52 @@ input[type="number"].has-val{border-color:var(--a3);color:var(--a3);}
 .order-save-btn{background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;width:100%;margin-bottom:8px;}
 .order-save-status{font-size:11px;color:var(--muted);text-align:center;min-height:16px;}
 
+/* ── 예측 위젯 ── */
+.pred-widget{margin:8px 10px 0;background:linear-gradient(135deg,rgba(46,204,113,.08),rgba(255,214,0,.06));border:1.5px solid rgba(46,204,113,.35);border-radius:13px;padding:11px 13px;position:relative;overflow:hidden;}
+.pred-widget::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--a3),var(--a5),var(--a6));border-radius:13px 13px 0 0;}
+.pred-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.pred-title{font-size:9px;font-weight:800;color:var(--a3);letter-spacing:.8px;}
+.pred-tag{font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;border:1px solid;}
+.pred-tag.mon{background:rgba(59,158,255,.15);color:var(--a1);border-color:rgba(59,158,255,.35);}
+.pred-tag.early{background:rgba(255,107,157,.15);color:var(--a6);border-color:rgba(255,107,157,.35);}
+.pred-tag.fri{background:rgba(148,163,184,.1);color:#94a3b8;border-color:rgba(148,163,184,.3);}
+.pred-tag.normal{background:rgba(46,204,113,.1);color:var(--a3);border-color:rgba(46,204,113,.3);}
+.pred-numbers{display:flex;gap:6px;align-items:baseline;margin-bottom:8px;}
+.pred-cur{font-size:26px;font-weight:900;color:#fff;line-height:1;}
+.pred-sep{font-size:13px;color:var(--muted);font-weight:700;}
+.pred-exp{font-size:20px;font-weight:900;color:var(--a5);line-height:1;}
+.pred-remain{font-size:12px;font-weight:700;color:var(--a3);margin-left:4px;}
+.pred-bar-bg{background:rgba(255,255,255,.08);border-radius:6px;height:8px;overflow:hidden;margin-bottom:7px;}
+.pred-bar{height:100%;border-radius:6px;transition:width .6s ease;background:linear-gradient(90deg,var(--a3),var(--a5));}
+.pred-bar.over{background:linear-gradient(90deg,var(--a5),var(--a6));}
+.pred-bottom{display:flex;justify-content:space-between;align-items:center;}
+.pred-pct{font-size:13px;font-weight:900;color:var(--a5);}
+.pred-eta{font-size:10px;color:var(--muted);font-weight:700;}
+.pred-snap-row{display:flex;gap:6px;margin-top:7px;overflow-x:auto;padding-bottom:2px;}
+.pred-snap{flex-shrink:0;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:7px;padding:4px 8px;text-align:center;}
+.pred-snap-t{font-size:9px;color:var(--muted);font-weight:700;}
+.pred-snap-v{font-size:12px;font-weight:900;color:var(--a1);}
+.pred-no-data{font-size:11px;color:var(--muted);text-align:center;padding:6px 0;}
+
+/* ── 이상물량 배너 ── */
+.anomaly-banner{margin:8px 10px 0;border-radius:13px;padding:12px 14px;border:2px solid;}
+.anomaly-banner.lv-warn{background:rgba(255,214,0,.09);border-color:rgba(255,214,0,.45);}
+.anomaly-banner.lv-danger{background:rgba(255,107,157,.1);border-color:rgba(255,107,157,.5);animation:anomalyPulse 2s infinite;}
+@keyframes anomalyPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,157,.3);}50%{box-shadow:0 0 0 8px rgba(255,107,157,0);}}
+
+/* ── 월말 예상 ── */
+.month-cast{margin:6px 10px 0;background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(59,158,255,.06));border:1.5px solid rgba(167,139,250,.3);border-radius:13px;padding:10px 13px;}
+
+/* ── 페이스 / 인당 정보 ── */
+.pred-extra{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;}
+.pred-chip{font-size:10px;font-weight:800;padding:3px 9px;border-radius:8px;border:1px solid;white-space:nowrap;}
+.pred-chip.ok{background:rgba(46,204,113,.1);color:var(--a3);border-color:rgba(46,204,113,.3);}
+.pred-chip.warn{background:rgba(255,214,0,.12);color:var(--a5);border-color:rgba(255,214,0,.4);}
+.pred-chip.danger{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.35);animation:chipBlink .8s infinite;}
+@keyframes chipBlink{0%,100%{opacity:1;}50%{opacity:.5;}}
+.pred-chip.purple{background:rgba(167,139,250,.12);color:var(--a4);border-color:rgba(167,139,250,.35);}
+.pred-chip.blue{background:rgba(59,158,255,.12);color:var(--a1);border-color:rgba(59,158,255,.35);}
+
 /* ── 로그인 오버레이 ── */
 #loginOverlay{position:fixed;inset:0;background:#0d1a2a;z-index:9999;display:flex;align-items:center;justify-content:center;}
 .login-box{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px 24px;width:300px;max-width:92vw;}
@@ -609,6 +655,34 @@ input[type="number"].has-val{border-color:var(--a3);color:var(--a3);}
 <!-- ══ 페이지 0: 요약 ══ -->
 <div class="page" id="page0">
 <div class="page-inner">
+
+  <!-- 🚨 이상물량 배너 (평소보다 많은 날) -->
+  <div id="anomalyBanner" style="display:none;"></div>
+
+  <!-- 🔮 오늘 예측 위젯 -->
+  <div class="pred-widget" id="predWidget" style="display:none;">
+    <div class="pred-top">
+      <div class="pred-title">🔮 오늘 예상물량</div>
+      <div style="display:flex;gap:5px;" id="predTags"></div>
+    </div>
+    <div class="pred-numbers">
+      <div class="pred-cur" id="predCur">0</div>
+      <div class="pred-sep">/</div>
+      <div class="pred-exp" id="predExp">—</div>
+      <div class="pred-remain" id="predRemain"></div>
+    </div>
+    <div class="pred-bar-bg"><div class="pred-bar" id="predBar" style="width:0%"></div></div>
+    <div class="pred-bottom">
+      <div class="pred-pct" id="predPct">0%</div>
+      <div class="pred-eta" id="predEta">예측 데이터 로딩 중...</div>
+    </div>
+    <!-- 추가 정보 칩: 페이스·인당·주문량 -->
+    <div class="pred-extra" id="predExtra" style="display:none;"></div>
+    <div class="pred-snap-row" id="predSnaps" style="display:none;"></div>
+  </div>
+
+  <!-- 📊 이달 예상 총량 카드 -->
+  <div id="monthCastCard" style="display:none;"></div>
 
   <!-- 시간당 생산량 표시 -->
   <div style="margin:8px 10px 0;background:linear-gradient(135deg,rgba(59,158,255,.12),rgba(167,139,250,.1));border:1.5px solid rgba(59,158,255,.3);border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
@@ -1583,8 +1657,26 @@ function syncToFirebase(entry, forceSync) {
     if (!forceSync && hash === lastFirebaseHash) return;
     lastFirebaseHash = hash;
 
-    fetch(`${FB_URL}/live.json`, {method:'PUT', body:JSON.stringify(live)}).catch(()=>{});
-    fetch(`${FB_URL}/history/${dateKey}.json`, {method:'PUT', body:JSON.stringify(live)}).catch(()=>{});
+    // 🔮 시간별 스냅샷 기록 + 예측 위젯 갱신
+    if (typeof addSnapIfNeeded === 'function') addSnapIfNeeded(live.totalQty);
+    if (typeof updatePredWidget === 'function') updatePredWidget();
+
+    // 오늘 주문량도 같이 저장 (예측 정확도 향상용)
+    const orderGrand = (() => {
+      try {
+        if (typeof ORDER_COMPANIES === 'undefined' || typeof orderData === 'undefined') return 0;
+        return ORDER_COMPANIES.reduce((sum, co) =>
+          sum + (orderData[co.id]?.rounds || []).reduce((a, b) => a + (b || 0), 0), 0);
+      } catch(e) { return 0; }
+    })();
+
+    // snaps + 주문량 포함해서 저장
+    const liveWithSnaps = Object.assign({}, live, {
+      snaps: (typeof todaySnaps !== 'undefined' ? todaySnaps : []),
+      orderTotal: orderGrand || undefined
+    });
+    fetch(`${FB_URL}/live.json`, {method:'PUT', body:JSON.stringify(liveWithSnaps)}).catch(()=>{});
+    fetch(`${FB_URL}/history/${dateKey}.json`, {method:'PUT', body:JSON.stringify(liveWithSnaps)}).catch(()=>{});
   } catch(e){}
 }
 
@@ -2258,9 +2350,560 @@ function checkAlarms() {
 // 페이지 로드 후 알람 설정 불러오고, 30초마다 체크
 loadAlarmConfig().then(() => {
   setInterval(checkAlarms, 30000);
-  // 첫 체크 (페이지 로드 시점 정각 1분 이내 알람 잡기)
   checkAlarms();
+  // 예측 위젯 초기 렌더
+  updatePredWidget();
 });
+
+// ══════════════════════════════════════════════
+// 🔮 오늘 예측 위젯
+// ══════════════════════════════════════════════
+let predConfig = null;   // config.json에서 로드한 prediction 데이터
+let todaySnaps = [];     // 오늘의 시간별 스냅샷 [{t:'09:30', qty:50}, ...]
+let lastSnapQty = -1;    // 마지막 스냅 당시 수량
+let lastSnapTime = 0;    // 마지막 스냅 타임스탬프
+
+const DOW_KR_PRED = ['일','월','화','수','목','금','토'];
+
+// config.json 로드 시 prediction 데이터 추출 (loadAlarmConfig에서 호출됨)
+const _origLoadAlarmConfig = loadAlarmConfig;
+// prediction 데이터 별도 로드
+let todayOrderTotal = 0; // 오늘 주문량
+
+async function loadPredConfig() {
+  try {
+    const today = new Date();
+    const dk = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+    // config + 오늘 히스토리 + 오늘 주문량 병렬 로드
+    const [cfgRes, histRes, orderRes] = await Promise.all([
+      fetch(`${FB_URL}/config.json?t=${Date.now()}`),
+      fetch(`${FB_URL}/history/${dk}.json?t=${Date.now()}`),
+      fetch(`${FB_URL}/order.json?t=${Date.now()}`)
+    ]);
+
+    // 예측 설정
+    const cfg = await cfgRes.json().catch(()=>null);
+    if (cfg && cfg.prediction && cfg.prediction.overall > 0) {
+      predConfig = cfg.prediction;
+    } else {
+      // config.json에 prediction 없으면 자동 계산 (비동기)
+      setTimeout(loadQuickPred, 800);
+    }
+
+    // 오늘 히스토리에서 snaps 복원
+    const hd = await histRes.json().catch(()=>null);
+    if (hd && Array.isArray(hd.snaps) && hd.snaps.length) {
+      todaySnaps = hd.snaps;
+      lastSnapQty = todaySnaps[todaySnaps.length-1].qty;
+    }
+
+    // 오늘 주문량 로드
+    const od = await orderRes.json().catch(()=>null);
+    if (od && od.date === dk && od.grandTotal > 0) {
+      todayOrderTotal = od.grandTotal;
+    }
+  } catch(e) {
+    setTimeout(loadQuickPred, 800);
+  }
+}
+loadPredConfig().then(() => updatePredWidget());
+
+// 30분마다 prediction 설정 자동 갱신 (리포트 분석 결과 반영)
+setInterval(async () => {
+  try {
+    const r = await fetch(`${FB_URL}/config.json?t=${Date.now()}`);
+    const cfg = await r.json().catch(()=>null);
+    if (cfg && cfg.prediction && cfg.prediction.overall > 0) {
+      // 없거나, 새 데이터가 리포트 분석 결과(더 정확)일 때만 업데이트
+      if (!predConfig || !cfg.prediction.autoCalc) {
+        predConfig = cfg.prediction;
+        updatePredWidget();
+      }
+    }
+  } catch(e) {}
+}, 30 * 60 * 1000);
+
+// ══════════════════════════════════════════════
+// 🔮 자동 예측 계산 (리포트 분석 없이도 동작)
+// ══════════════════════════════════════════════
+async function loadQuickPred() {
+  if (predConfig && !predConfig.autoCalc) return; // 리포트 분석 결과 보호
+  if (!FB_URL) return;
+  try {
+    const now = new Date(), today = now.getDate();
+    const dates = [];
+    for (let i = 1; i <= 42 && dates.length < 20; i++) {
+      const d = new Date(now); d.setDate(today - i);
+      const dw = d.getDay();
+      if (dw !== 0 && dw !== 6) {
+        dates.push({
+          key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
+          dow: dw, dom: d.getDate(), mon: d.getMonth()+1
+        });
+      }
+    }
+    if (dates.length < 3) return;
+
+    const results = await Promise.all(dates.map(d =>
+      fetch(`${FB_URL}/history/${d.key}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null)
+    ));
+    const pairs = dates.map((d,i)=>({...d,data:results[i]}))
+      .filter(p=>p.data&&(p.data.totalQty||0)>50)
+      .map(p=>({...p,qty:(p.data.totalQty||0)-(p.data?.기타업체?.한진||0)-(p.data?.종근당?.직배||0)}))
+      .filter(p=>p.qty>0);
+    if (pairs.length < 3) return;
+
+    const overall = pairs.reduce((s,p)=>s+p.qty,0)/pairs.length;
+    const dowSum=Array(7).fill(0),dowCnt=Array(7).fill(0);
+    pairs.forEach(p=>{dowSum[p.dow]+=p.qty;dowCnt[p.dow]++;});
+    const dowAvg=dowSum.map((s,i)=>dowCnt[i]>0?s/dowCnt[i]:0);
+
+    const byDow=Array.from({length:7},()=>[]);
+    pairs.forEach(p=>byDow[p.dow].push(p.qty));
+    const recent4wAvg=Array(7).fill(0),recent4wCnt=Array(7).fill(0);
+    byDow.forEach((arr,dw)=>{const last4=arr.slice(0,4);if(last4.length>=2){recent4wAvg[dw]=last4.reduce((s,v)=>s+v,0)/last4.length;recent4wCnt[dw]=last4.length;}});
+
+    const domSum2=Array(32).fill(0),domCnt2=Array(32).fill(0);
+    pairs.forEach(p=>{domSum2[p.dom]+=p.qty;domCnt2[p.dom]++;});
+    const domFactor=domSum2.map((s,i)=>domCnt2[i]>=2?(s/domCnt2[i])/overall:1);
+
+    const monSum2=Array(13).fill(0),monCnt2=Array(13).fill(0);
+    pairs.forEach(p=>{monSum2[p.mon]+=p.qty;monCnt2[p.mon]++;});
+    const monAvg=monSum2.map((s,i)=>monCnt2[i]>0?s/monCnt2[i]:0);
+
+    predConfig = {overall,dowAvg,recent4wAvg,recent4wCnt,domFactor,monAvg,monCnt:monCnt2,orderRatio:0,autoCalc:true};
+    updatePredWidget();
+    // config.json에 저장 → 다른 앱도 바로 사용 가능
+    savePredToConfig(predConfig);
+  } catch(e) {}
+}
+
+// 자동계산 prediction을 config.json에 저장 (리포트 분석 결과는 보호)
+async function savePredToConfig(pred) {
+  if (!FB_URL) return;
+  try {
+    const r = await fetch(`${FB_URL}/config.json?t=${Date.now()}`);
+    const cfg = (await r.json().catch(()=>null)) || {};
+    // 리포트가 제대로 분석한 데이터 있으면 덮어쓰지 않음
+    if (cfg.prediction && cfg.prediction.overall > 0 && !cfg.prediction.autoCalc) return;
+    cfg.prediction = {
+      overall: pred.overall,
+      dowAvg: pred.dowAvg,
+      domFactor: pred.domFactor,
+      monAvg: pred.monAvg,
+      monCnt: pred.monCnt,
+      recent4wAvg: pred.recent4wAvg,
+      recent4wCnt: pred.recent4wCnt,
+      orderRatio: pred.orderRatio || 0,
+      updatedAt: new Date().toISOString().slice(0,10),
+      autoCalc: true
+    };
+    await fetch(`${FB_URL}/config.json`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(cfg)
+    });
+  } catch(e) {}
+}
+
+// 시간별 스냅샷 추가 (syncToServer에서 호출)
+function addSnapIfNeeded(currentQty) {
+  const now = Date.now();
+  const qtyChanged = Math.abs(currentQty - lastSnapQty) >= 5;
+  const timeElapsed = now - lastSnapTime > 10 * 60 * 1000; // 10분
+  if (currentQty <= 0) return;
+  if (!qtyChanged && !timeElapsed) return;
+  if (lastSnapQty < 0) { lastSnapQty = 0; }
+
+  const d = new Date();
+  const t = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  // 같은 시간대 중복 제거
+  const idx = todaySnaps.findIndex(s => s.t === t);
+  if (idx >= 0) { todaySnaps[idx].qty = currentQty; }
+  else { todaySnaps.push({ t, qty: currentQty }); }
+
+  lastSnapQty = currentQty;
+  lastSnapTime = now;
+  updatePredWidget();
+}
+
+// 오늘 예측 수량 계산
+function calcPredicted() {
+  const now = new Date();
+  const dow = now.getDay();
+  const dom = now.getDate();
+  const mon = now.getMonth() + 1;
+
+  // 주말이면 예측 없음
+  if (dow === 0 || dow === 6) return null;
+
+  if (!predConfig) return null;
+
+  const overall = predConfig.overall || 0;
+  if (overall <= 0) return null;
+
+  const domFactor  = predConfig.domFactor  || [];
+  const monAvg     = predConfig.monAvg     || [];
+  const monCnt     = predConfig.monCnt     || [];
+  const recent4w   = predConfig.recent4wAvg || [];
+  const recent4wCnt= predConfig.recent4wCnt || [];
+  const dowAvg     = predConfig.dowAvg     || [];
+
+  // ① 최근 4주 같은 요일 평균 (데이터 2개 이상이면 우선 사용)
+  let baseVal;
+  let method;
+  if (recent4w[dow] > 0 && (recent4wCnt[dow] || 0) >= 2) {
+    baseVal = recent4w[dow];
+    method  = `최근${recent4wCnt[dow]}주 ${['일','월','화','수','목','금','토'][dow]}요일 평균`;
+  } else if (dowAvg[dow] > 0) {
+    baseVal = dowAvg[dow];
+    method  = `전체 ${['일','월','화','수','목','금','토'][dow]}요일 평균`;
+  } else {
+    baseVal = overall;
+    method  = '전체 평균';
+  }
+
+  // ② 날짜 보정 (월초 등)
+  const domF = domFactor[dom] || 1;
+  // ③ 월 보정 (데이터 2개월 이상일 때만)
+  const monF = (monCnt[mon] >= 2 && monAvg[mon] > 0) ? monAvg[mon] / overall : 1;
+
+  let predicted = Math.round(baseVal * domF * monF);
+  let orderNote = '';
+
+  // ④ 주문량 연동 (orderRatio가 학습되어 있고, 오늘 주문량이 있으면 보정)
+  const orderRatio = predConfig.orderRatio || 0;
+  if (todayOrderTotal > 0 && orderRatio > 0.3) {
+    const orderPred = Math.round(todayOrderTotal * orderRatio);
+    // 주문량 기반 70% + 요일 기반 30% 블렌드
+    predicted = Math.round(orderPred * 0.7 + predicted * 0.3);
+    orderNote = ` (주문량${todayOrderTotal}→비율${(orderRatio).toFixed(2)})`;
+    method = `주문량 연동` + orderNote;
+  } else if (todayOrderTotal > 0) {
+    // 비율 아직 없을 때: 주문량만 참고 표시
+    orderNote = ` · 주문량 ${todayOrderTotal}개 입력됨`;
+  }
+
+  return { predicted, overall, dow, dom, mon, method: method + orderNote };
+}
+
+// 완료 예상 시각 계산
+function calcEta(currentQty, predicted) {
+  if (currentQty <= 0 || predicted <= 0) return null;
+  const now = new Date();
+  // 9시를 시작으로 elapsed 계산
+  const start = new Date(now);
+  start.setHours(9, 0, 0, 0);
+  const elapsedMs = now - start;
+  if (elapsedMs <= 0) return null;
+  const ratePerMs = currentQty / elapsedMs;
+  if (ratePerMs <= 0) return null;
+  const remaining = predicted - currentQty;
+  if (remaining <= 0) return '✅ 목표 달성!';
+  const msLeft = remaining / ratePerMs;
+  const eta = new Date(now.getTime() + msLeft);
+  const h = eta.getHours(), m = eta.getMinutes();
+  const ampm = h < 12 ? '오전' : '오후';
+  const hh = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+  return `${ampm} ${hh}시 ${String(m).padStart(2,'0')}분 완료 예상`;
+}
+
+// ══════════════════════════════════════════════
+// 🔥 추천 기능 전체 엔진
+// ══════════════════════════════════════════════
+
+// ① 진행률 음성 알람 - 50% / 80% / 100% / 페이스경고
+const _predMilestones = new Set();
+function checkMilestones(pct, remaining, etaStr) {
+  const today = new Date().toISOString().slice(0,10);
+  const now = new Date();
+  if (now.getHours() < 8) return; // 업무시간 아님
+
+  if (pct >= 100 && !_predMilestones.has(today+'_100')) {
+    _predMilestones.add(today+'_100');
+    speakAlarm('오늘 목표 달성! 수고하셨습니다');
+    showToast('🎉 오늘 목표 달성!');
+  } else if (pct >= 80 && !_predMilestones.has(today+'_80')) {
+    _predMilestones.add(today+'_80');
+    speakAlarm('80퍼센트 달성했습니다. 거의 다 왔습니다. 조금만 더 힘내세요');
+    showToast('🔥 80% 달성!');
+  } else if (pct >= 50 && !_predMilestones.has(today+'_50')) {
+    _predMilestones.add(today+'_50');
+    speakAlarm(`절반 달성했습니다. 남은 예상 물량은 약 ${remaining}개입니다`);
+    showToast('✅ 50% 달성!');
+  }
+
+  // 페이스 경고 알람 (오후 2시 이후, 늦을 것 같을 때)
+  if (now.getHours() >= 14 && etaStr && !_predMilestones.has(today+'_paceWarn')) {
+    const pace = getPaceLevel(etaStr);
+    if (pace === 'danger') {
+      _predMilestones.add(today+'_paceWarn');
+      speakAlarm('현재 속도로는 작업이 늦게 끝날 것 같습니다. 페이스를 높여주세요');
+      showToast('⚠️ 페이스 주의!');
+    }
+  }
+}
+
+// ② 이상 물량 감지
+function updateAnomalyBanner(predicted, overall) {
+  const banner = document.getElementById('anomalyBanner');
+  if (!banner) return;
+  if (!predicted || !overall || overall === 0) { banner.style.display='none'; return; }
+
+  const ratio = predicted / overall;
+  if (ratio < 1.3) { banner.style.display='none'; return; }
+
+  const isVeryHigh = ratio >= 1.6;
+  banner.style.display = '';
+  banner.className = `anomaly-banner ${isVeryHigh ? 'lv-danger' : 'lv-warn'}`;
+  const emoji = isVeryHigh ? '🔥' : '⚠️';
+  const label = isVeryHigh ? '오늘 매우 많은 날!' : '오늘 평소보다 많은 날';
+  const color = isVeryHigh ? 'var(--a6)' : 'var(--a5)';
+  banner.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="font-size:24px;flex-shrink:0;">${emoji}</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:900;color:${color}">${label}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">예상 <strong style="color:#fff">${predicted}개</strong> · 평균의 <strong style="color:${color}">${(ratio*100).toFixed(0)}%</strong> 수준</div>
+      </div>
+      <button onclick="speakAlarm('오늘은 평소보다 ${Math.round((ratio-1)*100)}퍼센트 많은 날입니다. 예상 물량은 ${predicted}개입니다. 미리 준비하세요')" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:6px 9px;font-size:13px;cursor:pointer;flex-shrink:0;">🔊</button>
+    </div>`;
+}
+
+// ③ 페이스 판정 (ETA 시각 기반)
+function getPaceLevel(etaStr) {
+  if (!etaStr || etaStr.includes('달성')) return 'ok';
+  const m = etaStr.match(/(\d+)시\s*(\d+)?분?/);
+  if (!m) return 'ok';
+  let h = parseInt(m[1]);
+  const mn = parseInt(m[2]||'0');
+  if (etaStr.includes('오후') && h !== 12) h += 12;
+  const totalMin = h * 60 + mn;
+  if (totalMin <= 17 * 60 + 30) return 'ok';
+  if (totalMin <= 18 * 60 + 30) return 'warn';
+  return 'danger';
+}
+
+// ④ 인당 생산성 계산
+function getPerPersonStats(currentQty) {
+  try {
+    if (typeof attLoad !== 'function' || typeof ATT_MEMBERS === 'undefined') return null;
+    const attData = attLoad();
+    const tk = attTodayKey();
+    const todayAtt = attData[tk] || {};
+    const presentCount = ATT_MEMBERS.filter(n => ['present','late'].includes(todayAtt[n]?.status||'')).length;
+    if (presentCount <= 0) return null;
+    const perPerson = Math.round(currentQty / presentCount);
+    // 시간당 인당
+    const now = new Date();
+    const start = new Date(now); start.setHours(9,0,0,0);
+    const elapsedH = Math.max((now - start) / 3600000, 0.5);
+    const perPersonPerH = Math.round(perPerson / elapsedH);
+    return { presentCount, perPerson, perPersonPerH };
+  } catch(e) { return null; }
+}
+
+// ⑤ 월말 예상 총량 (비동기, 독립 로드)
+let _monthCastLoaded = false;
+async function loadMonthForecast() {
+  if (!predConfig) return;
+  const card = document.getElementById('monthCastCard');
+  if (!card) return;
+
+  try {
+    const now = new Date();
+    const year = now.getFullYear(), month = now.getMonth()+1, today = now.getDate();
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    // 이달 지난 평일 수
+    let doneWorkDays = 0;
+    for (let d=1; d < today; d++) {
+      const dow = new Date(year, month-1, d).getDay();
+      if (dow !== 0 && dow !== 6) doneWorkDays++;
+    }
+    // 남은 평일 수
+    let remainWorkDays = 0;
+    for (let d=today+1; d <= daysInMonth; d++) {
+      const dow = new Date(year, month-1, d).getDay();
+      if (dow !== 0 && dow !== 6) remainWorkDays++;
+    }
+
+    // 최근 5일 히스토리 로드 (이달 평균 계산용)
+    const recentDates = [];
+    for (let d=Math.max(1, today-7); d < today; d++) {
+      const dow = new Date(year, month-1, d).getDay();
+      if (dow !== 0 && dow !== 6) recentDates.push(
+        `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+      );
+    }
+    const last5 = recentDates.slice(-5);
+    const histResults = await Promise.all(last5.map(dk =>
+      fetch(`${FB_URL}/history/${dk}.json?t=${Date.now()}`)
+        .then(r => r.ok ? r.json() : null).catch(()=>null)
+    ));
+    const valid = histResults.filter(d => d && (d.totalQty||0) > 0);
+    const monthAvg = valid.length > 0
+      ? valid.reduce((s,d) => {
+          const hanjin = d?.기타업체?.한진||0, jikbae = d?.종근당?.직배||0;
+          return s + (d.totalQty||0) - hanjin - jikbae;
+        }, 0) / valid.length
+      : (predConfig.overall||0);
+
+    const currentTodayQty = parseInt(document.getElementById('total-all')?.textContent)||0;
+    const estimatedDone = Math.round(monthAvg * doneWorkDays) + currentTodayQty;
+    const overallAvg = predConfig.overall || monthAvg;
+    const estimatedRemain = Math.round(overallAvg * remainWorkDays);
+    const monthTotal = estimatedDone + estimatedRemain;
+
+    if (monthTotal <= 0) { card.style.display='none'; return; }
+
+    card.style.display = '';
+    card.innerHTML = `
+      <div class="month-cast">
+        <div style="font-size:9px;font-weight:800;color:var(--a4);letter-spacing:.8px;margin-bottom:7px;">📊 이달 예상 총량</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px;">
+          <div style="font-size:26px;font-weight:900;color:var(--a4)">${monthTotal.toLocaleString()}<span style="font-size:12px;color:var(--muted)">개</span></div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6;">완료 ${doneWorkDays}일<br>남은 ${remainWorkDays}일</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div style="flex:1;background:rgba(255,255,255,.04);border-radius:7px;padding:5px 9px;text-align:center;">
+            <div style="font-size:9px;color:var(--muted);margin-bottom:2px;">지금까지 약</div>
+            <div style="font-size:14px;font-weight:900;color:var(--a1)">${estimatedDone.toLocaleString()}</div>
+          </div>
+          <div style="flex:1;background:rgba(255,255,255,.04);border-radius:7px;padding:5px 9px;text-align:center;">
+            <div style="font-size:9px;color:var(--muted);margin-bottom:2px;">앞으로 약</div>
+            <div style="font-size:14px;font-weight:900;color:var(--a3)">${estimatedRemain.toLocaleString()}</div>
+          </div>
+          <div style="flex:1;background:rgba(255,255,255,.04);border-radius:7px;padding:5px 9px;text-align:center;">
+            <div style="font-size:9px;color:var(--muted);margin-bottom:2px;">이달 평균</div>
+            <div style="font-size:14px;font-weight:900;color:var(--a5)">${Math.round(monthAvg)}</div>
+          </div>
+        </div>
+      </div>`;
+  } catch(e) { if(card) card.style.display='none'; }
+}
+
+// ══ 위젯 통합 렌더링 ══
+function updatePredWidget() {
+  const widget = document.getElementById('predWidget');
+  if (!widget) return;
+
+  const now = new Date();
+  const dow = now.getDay();
+  if (dow === 0 || dow === 6) {
+    widget.style.display = 'none';
+    const ab = document.getElementById('anomalyBanner');
+    const mc = document.getElementById('monthCastCard');
+    if (ab) ab.style.display = 'none';
+    if (mc) mc.style.display = 'none';
+    return;
+  }
+
+  const currentQty = parseInt(document.getElementById('total-all')?.textContent) || 0;
+  const pInfo = calcPredicted();
+
+  widget.style.display = '';
+
+  // 태그
+  const tagsEl = document.getElementById('predTags');
+  if (tagsEl) {
+    const tags = [];
+    tags.push(`<div class="pred-tag ${dow===1?'mon':'normal'}">${DOW_KR_PRED[dow]}요일</div>`);
+    if (now.getDate() <= 3)      tags.push('<div class="pred-tag early">월초🔥</div>');
+    else if (now.getDate() <= 5) tags.push('<div class="pred-tag early">월초</div>');
+    if (dow === 5) tags.push('<div class="pred-tag fri">금요일</div>');
+    tagsEl.innerHTML = tags.join('');
+  }
+
+  const predEl  = document.getElementById('predExp');
+  const curEl   = document.getElementById('predCur');
+  const remEl   = document.getElementById('predRemain');
+  const barEl   = document.getElementById('predBar');
+  const pctEl   = document.getElementById('predPct');
+  const etaEl   = document.getElementById('predEta');
+  const extraEl = document.getElementById('predExtra');
+  const snapsEl = document.getElementById('predSnaps');
+
+  if (curEl) curEl.textContent = currentQty;
+
+  if (!pInfo) {
+    if (predEl)  predEl.textContent = '—';
+    if (remEl)   remEl.textContent = '';
+    if (barEl)   barEl.style.width = '0%';
+    if (pctEl)   pctEl.textContent = '—';
+    if (etaEl)   etaEl.textContent = '리포트 앱에서 분석 먼저 실행하세요';
+    if (extraEl) extraEl.style.display = 'none';
+    updateAnomalyBanner(0, 0);
+  } else {
+    const pct     = Math.min(Math.round(currentQty / pInfo.predicted * 100), 100);
+    const over    = currentQty >= pInfo.predicted;
+    const rem     = Math.max(pInfo.predicted - currentQty, 0);
+    const eta     = calcEta(currentQty, pInfo.predicted);
+    const paceLevel = eta ? getPaceLevel(eta) : 'ok';
+
+    if (predEl) predEl.textContent = pInfo.predicted;
+    if (remEl)  remEl.textContent  = over ? '🎉초과달성' : `(남은예상: ${rem})`;
+    if (barEl)  { barEl.style.width = pct + '%'; barEl.classList.toggle('over', over); }
+    if (pctEl)  { pctEl.textContent = pct + '%'; pctEl.style.color = over ? 'var(--a6)' : 'var(--a5)'; }
+
+    // ETA + 페이스 색상
+    const paceColors = { ok:'var(--a3)', warn:'var(--a5)', danger:'#ef4444' };
+    if (etaEl) {
+      etaEl.textContent = eta ? eta : `${pInfo.method} 기준`;
+      etaEl.style.color = eta ? paceColors[paceLevel] : 'var(--muted)';
+    }
+
+    // 진행률 음성 알람 + 페이스 경고
+    checkMilestones(pct, rem, eta);
+
+    // 이상물량 감지
+    updateAnomalyBanner(pInfo.predicted, pInfo.overall);
+
+    // 추가 칩: 페이스·인당·주문량
+    if (extraEl) {
+      const chips = [];
+      const paceIcon = { ok:'✅ 정상페이스', warn:'⚠️ 조금늦을수도', danger:'🚨 페이스주의' };
+      chips.push(`<div class="pred-chip ${paceLevel}">${paceIcon[paceLevel]}</div>`);
+
+      // 인당 생산성
+      const pp = getPerPersonStats(currentQty);
+      if (pp) {
+        chips.push(`<div class="pred-chip purple">👷 ${pp.presentCount}명 · 인당 ${pp.perPerson}개</div>`);
+        chips.push(`<div class="pred-chip blue">⚡ 시간당 인당 ${pp.perPersonPerH}개</div>`);
+      }
+
+      // 주문량 참고
+      if (todayOrderTotal > 0) {
+        chips.push(`<div class="pred-chip blue">📦 주문 ${todayOrderTotal}개</div>`);
+      }
+
+      extraEl.style.display = chips.length ? 'flex' : 'none';
+      extraEl.innerHTML = chips.join('');
+    }
+  }
+
+  // 스냅샷
+  if (snapsEl) {
+    if (todaySnaps.length >= 2) {
+      snapsEl.style.display = 'flex';
+      snapsEl.innerHTML = todaySnaps.slice(-8).map(s =>
+        `<div class="pred-snap"><div class="pred-snap-t">${s.t}</div><div class="pred-snap-v">${s.qty}</div></div>`
+      ).join('');
+    } else {
+      snapsEl.style.display = 'none';
+    }
+  }
+
+  // 월말 예상 (5분마다 갱신)
+  const mcNow = Date.now();
+  if (predConfig && (!_monthCastLoaded || mcNow - (_lastMonthCastTs||0) > 5*60*1000)) {
+    _monthCastLoaded = true;
+    _lastMonthCastTs = mcNow;
+    loadMonthForecast();
+  }
+}
+let _lastMonthCastTs = 0;
 
 // 앱 시작 시 Firebase → 로컬 순으로 데이터 복원
 // ══ 로그인 시스템 ══
