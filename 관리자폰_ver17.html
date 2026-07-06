@@ -1095,15 +1095,15 @@ function renderBoxCompanyRows() {
       <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px;">${name}</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
         ${[
-          ['total', '전체'],
-          ['holding', '보유'],
-          ['inbound', '입고'],
-          ['outbound', '출고'],
-        ].map(([key, label]) => `
+          ['total', '전체', true],
+          ['holding', '보유', false],
+          ['inbound', '입고', false],
+          ['outbound', '출고', false],
+        ].map(([key, label, readonly]) => `
           <div style="background:rgba(0,0,0,.16);border-radius:8px;padding:7px 6px;">
             <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;text-align:center;">${label}</div>
-            <input id="box_${key}_${name}" type="number" min="0" inputmode="numeric" placeholder="0" oninput="updateBoxSummary()"
-              style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:17px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:3px 0;">
+            <input id="box_${key}_${name}" type="number" min="0" inputmode="numeric" placeholder="0" ${readonly ? 'readonly tabindex="-1"' : 'oninput="updateBoxSummary()"'}
+              style="width:100%;background:${readonly ? 'rgba(255,255,255,.04)' : 'transparent'};border:none;border-bottom:1.5px solid var(--border);color:${readonly ? 'var(--a1)' : 'var(--text)'};font-size:17px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:3px 0;">
           </div>
         `).join('')}
       </div>
@@ -1127,7 +1127,7 @@ function fillBoxForm(data) {
   const items = data?.items || {};
   BOX_COMPANIES.forEach(name => {
     const item = items[name] || {};
-    ['total', 'holding', 'inbound', 'outbound'].forEach(key => {
+    ['holding', 'inbound', 'outbound'].forEach(key => {
       const el = document.getElementById(`box_${key}_${name}`);
       if (el) el.value = item[key] ?? '';
     });
@@ -1138,11 +1138,15 @@ function fillBoxForm(data) {
 function collectBoxPayload() {
   const items = {};
   BOX_COMPANIES.forEach(name => {
+    const holding = boxNum(`box_holding_${name}`);
+    const inbound = boxNum(`box_inbound_${name}`);
+    const outbound = boxNum(`box_outbound_${name}`);
+    const total = holding + inbound + outbound;
     items[name] = {
-      total: boxNum(`box_total_${name}`),
-      holding: boxNum(`box_holding_${name}`),
-      inbound: boxNum(`box_inbound_${name}`),
-      outbound: boxNum(`box_outbound_${name}`)
+      total,
+      holding,
+      inbound,
+      outbound
     };
   });
   const summary = BOX_COMPANIES.reduce((acc, name) => {
@@ -1164,7 +1168,12 @@ function collectBoxPayload() {
 function updateBoxSummary() {
   const el = document.getElementById('boxSummary');
   if (!el) return;
-  const s = collectBoxPayload().summary;
+  const payload = collectBoxPayload();
+  const s = payload.summary;
+  BOX_COMPANIES.forEach(name => {
+    const totalEl = document.getElementById(`box_total_${name}`);
+    if (totalEl) totalEl.value = payload.items[name].total || 0;
+  });
   el.innerHTML = `
     <div style="background:var(--card2);border-radius:10px;padding:10px;text-align:center;">
       <div style="font-size:10px;color:var(--muted);font-weight:700;">전체 합계</div>

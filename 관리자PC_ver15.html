@@ -1361,7 +1361,22 @@ async function admLoadMonthForecast() {
       return;
     }
 
-    const sum=data.summary||{total:0,holding:0,inbound:0,outbound:0};
+    const normalizedItems={};
+    companies.forEach(name=>{
+      const item=data.items?.[name]||{};
+      const holding=Number(item.holding||0);
+      const inbound=Number(item.inbound||0);
+      const outbound=Number(item.outbound||0);
+      normalizedItems[name]={holding,inbound,outbound,total:holding+inbound+outbound};
+    });
+    const sum=companies.reduce((acc,name)=>{
+      const item=normalizedItems[name];
+      acc.total+=item.total;
+      acc.holding+=item.holding;
+      acc.inbound+=item.inbound;
+      acc.outbound+=item.outbound;
+      return acc;
+    },{total:0,holding:0,inbound:0,outbound:0});
     mc.innerHTML=`
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px;">
         <div style="font-size:12px;color:var(--muted);">${key}</div>
@@ -1383,7 +1398,7 @@ async function admLoadMonthForecast() {
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;">
         ${companies.map(name=>{
-          const item=data.items?.[name]||{};
+          const item=normalizedItems[name]||{};
           return `<div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr 1fr;gap:6px;align-items:center;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;">
             <div style="font-size:11px;font-weight:800;color:${name==='종근당'?'var(--a6)':'var(--text)'};">${name}</div>
             <div style="font-size:11px;text-align:center;"><span style="color:var(--muted);font-size:9px;">전체</span><br><span style="font-weight:900;">${(item.total||0).toLocaleString()}</span></div>
