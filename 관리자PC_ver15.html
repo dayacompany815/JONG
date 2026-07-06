@@ -781,7 +781,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 <script src="daya-predict.js?v=20250519"></script>
 <script>
 // ══ API (daya-api.js) ══
-const APP_VERSION_PC = 'admin-pc-v2.6';
+const APP_VERSION_PC = 'admin-pc-v2.6.1';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -829,6 +829,8 @@ async function loadFbUrl() {
   if (FB_URL) {
     document.getElementById('fb-url-input').value = FB_URL;
     fetchLive(); fetchHistory();
+    admLoadMonthForecast();   // 📦 박스현황: 예측설정과 무관하게 항상 로드
+    initAdmBoxRealtime();     // ⚡ 박스 실시간(SSE) 갱신 시작
   } else {
     document.getElementById('offline-banner').classList.add('show');
     setOffline('설정관리에서 Firebase URL을 설정하세요');
