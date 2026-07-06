@@ -781,7 +781,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 <script src="daya-predict.js?v=20250519"></script>
 <script>
 // ══ API (daya-api.js) ══
-const APP_VERSION_PC = 'admin-pc-v2.6.5';
+const APP_VERSION_PC = 'admin-pc-v2.6.6';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -2221,38 +2221,32 @@ async function admRenderBoxPeriod(mc){
   if(s>e){ const t=s; s=e; e=t; }
   const inRange=_boxDates.filter(k=>k>=s&&k<=e);  // 최신순
   if(inRange.length===0){ mc.innerHTML='<div style="font-size:12px;color:var(--muted);">선택 기간에 데이터가 없습니다.</div>'; return; }
-  mc.innerHTML='<div style="font-size:12px;color:var(--muted);">기간 집계 중...</div>';
+  mc.innerHTML='<div style="font-size:12px;color:var(--muted);">기간 조회 중...</div>';
   const datas=await Promise.all(inRange.map(k=>admFetchBox(k)));
   if(_boxMode!=='period') return;
-  const valid=inRange.map((k,i)=>({k,d:datas[i]})).filter(x=>x.d&&x.d.items);
-  if(valid.length===0){ mc.innerHTML='<div style="font-size:12px;color:var(--muted);">선택 기간에 데이터가 없습니다.</div>'; return; }
-  // 입고/출고=기간 합계, 보유=기말(가장 최근일)
-  const latest=valid[0].d;
-  const agg={sumIn:0,sumOut:0,endHold:0};
-  BOX_COMPANIES.forEach(n=>{ agg.endHold+=admBoxNorm(latest.items?.[n]).holding; });
-  valid.forEach(x=>{ BOX_COMPANIES.forEach(n=>{ const it=admBoxNorm(x.d.items?.[n]); agg.sumIn+=it.inbound; agg.sumOut+=it.outbound; }); });
-  const comp={}; BOX_COMPANIES.forEach(n=>{comp[n]={in:0,out:0,hold:admBoxNorm(latest.items?.[n]).holding};});
-  valid.forEach(x=>{BOX_COMPANIES.forEach(n=>{const it=admBoxNorm(x.d.items?.[n]);comp[n].in+=it.inbound;comp[n].out+=it.outbound;});});
-  const net=agg.sumIn-agg.sumOut;
+  // 일자별로 하루씩 나열 (합계 아님)
+  const cell=(v,c)=>`<div style="font-size:11px;text-align:center;font-weight:900;color:${c||'inherit'};">${(v||0).toLocaleString()}</div>`;
+  const rows=inRange.map((k,i)=>{
+    const d=datas[i], has=!!(d&&d.items);
+    let t=0,h=0,ib=0,ob=0;
+    if(has) BOX_COMPANIES.forEach(n=>{const it=admBoxNorm(d.items[n]); t+=it.total; h+=it.holding; ib+=it.inbound; ob+=it.outbound;});
+    return `<div onclick="admBoxJumpDate('${k}')" title="클릭 시 ${k} 상세" style="cursor:pointer;display:grid;grid-template-columns:58px 1fr 1fr 1fr 1fr;gap:6px;align-items:center;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;">
+      <div style="font-size:11px;font-weight:800;color:var(--text);">${k.slice(5)}</div>
+      ${cell(t,'var(--a1)')}${cell(h,'var(--a4)')}${cell(ib,'var(--a3)')}${cell(ob,'var(--a2)')}
+    </div>`;
+  }).join('');
+  const hdr=`<div style="display:grid;grid-template-columns:58px 1fr 1fr 1fr 1fr;gap:6px;padding:0 8px 4px;">
+    <div style="font-size:9px;color:var(--muted);">날짜</div>
+    ${['전체','보유','입고','출고'].map(l=>`<div style="font-size:9px;color:var(--muted);text-align:center;">${l}</div>`).join('')}
+  </div>`;
   mc.innerHTML=`
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px;">
       <div style="font-size:12px;color:var(--muted);">📆 ${s} ~ ${e}</div>
-      <div style="font-size:11px;color:var(--muted);">${valid.length}일치</div>
-    </div>`+
-    admBoxSummaryGrid([
-      {label:'입고합계',v:agg.sumIn,color:'var(--a3)'},
-      {label:'출고합계',v:agg.sumOut,color:'var(--a2)'},
-      {label:'순증감',v:net,color:net>=0?'var(--a3)':'var(--a5)'},
-      {label:'기말보유',v:agg.endHold,color:'var(--a4)'},
-    ])+
-    `<div style="display:flex;flex-direction:column;gap:6px;">`+
-    BOX_COMPANIES.map(name=>admBoxCompanyRow(name,[
-      {label:'입고',v:comp[name].in,color:'var(--a3)'},
-      {label:'출고',v:comp[name].out,color:'var(--a2)'},
-      {label:'순증감',v:comp[name].in-comp[name].out},
-      {label:'기말보유',v:comp[name].hold,color:'var(--a4)'},
-    ])).join('')+`</div>`;
+      <div style="font-size:11px;color:var(--muted);">${inRange.length}일 · 일자별</div>
+    </div>`+hdr+
+    `<div style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;">`+rows+`</div>`;
 }
+function admBoxJumpDate(k){ _boxMode='date'; _boxSelKey=k; admRenderBoxTabs(); admRenderBoxControls(); admRenderBoxBody(); }
 
 // ══════════════════════════════════════════════
 // 🔮 자동 예측 계산 (리포트 분석 없이도 동작)
