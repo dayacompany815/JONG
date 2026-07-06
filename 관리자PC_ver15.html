@@ -781,7 +781,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 <script src="daya-predict.js?v=20250519"></script>
 <script>
 // ══ API (daya-api.js) ══
-const APP_VERSION_PC = 'admin-pc-v2.6.2';
+const APP_VERSION_PC = 'admin-pc-v2.6.3';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -2068,7 +2068,7 @@ function admUpdatePaceWidget(liveData,pInfo) {
 
 // ══ 📦 박스현황: 날짜별 / 기간별 조회 ══
 function admBoxTodayKey(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-let admBoxStream=null, admBoxReloadTimer=null;
+var admBoxStream=null, admBoxReloadTimer=null;
 function admReloadBoxSoon(){ clearTimeout(admBoxReloadTimer); admBoxReloadTimer=setTimeout(()=>{ _admMonthLoaded=false; admLoadMonthForecast(); },250); }
 function initAdmBoxRealtime(){
   if(!FB_URL||admBoxStream||typeof EventSource==='undefined') return;
@@ -2078,8 +2078,8 @@ function initAdmBoxRealtime(){
     admBoxStream.onerror=()=>{ if(admBoxStream) admBoxStream.close(); admBoxStream=null; setTimeout(initAdmBoxRealtime,5000); };
   }catch(e){}
 }
-const BOX_COMPANIES=['종근당','국제','삼천당','비씨','대우'];
-let _boxDates=[], _boxCache={}, _boxMode='date', _boxSelKey=null, _boxRangeStart=null, _boxRangeEnd=null, _boxInit=false;
+var BOX_COMPANIES=['종근당','국제','삼천당','비씨','대우'];
+var _boxDates=[], _boxCache={}, _boxMode='date', _boxSelKey=null, _boxRangeStart=null, _boxRangeEnd=null, _boxInit=false;
 
 function admBoxNorm(item){ // 전체=보유+입고+출고 (GitHub 자동계산 방식 유지)
   const holding=Number(item?.holding||0), inbound=Number(item?.inbound||0), outbound=Number(item?.outbound||0);
