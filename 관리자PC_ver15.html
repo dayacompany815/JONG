@@ -781,7 +781,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 <script src="daya-predict.js?v=20250519"></script>
 <script>
 // ══ API (daya-api.js) ══
-const APP_VERSION_PC = 'admin-pc-v2.6.6';
+const APP_VERSION_PC = 'admin-pc-v2.6.7';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -2150,12 +2150,17 @@ function admRenderBoxControls(){
   const selStyle='background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 6px;font-size:11px;';
   const opts=sel=>_boxDates.map(k=>`<option value="${k}"${k===sel?' selected':''}>${k}</option>`).join('');
   const btn=(onclick,label)=>`<button onclick="${onclick}" style="border:none;cursor:pointer;font-size:11px;font-weight:800;padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--muted);">${label}</button>`;
+  // 조회결과 내보내기 툴바 (엑셀 / A4 인쇄) — 두 모드 공통
+  const toolbar=`<div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;">
+      <button onclick="admBoxExport()" style="border:none;cursor:pointer;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;background:rgba(46,204,113,.18);color:var(--a3);">📥 엑셀</button>
+      <button onclick="admBoxPrint()" style="border:none;cursor:pointer;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;background:rgba(52,152,219,.18);color:var(--a2);">🖨️ 인쇄(A4)</button>
+    </div>`;
   if(_boxMode==='date'){
     el.innerHTML=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
       ${btn('admBoxNav(1)','◀ 이전')}
       <select onchange="admBoxSelectDate(this.value)" style="${selStyle}">${opts(_boxSelKey)}</select>
       ${btn('admBoxNav(-1)','다음 ▶')}
-    </div>`;
+    </div>`+toolbar;
   } else {
     el.innerHTML=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
       <select onchange="admBoxRangeChange('start',this.value)" style="${selStyle}">${opts(_boxRangeStart)}</select>
@@ -2166,8 +2171,74 @@ function admRenderBoxControls(){
       ${btn('admBoxPreset(7)','최근 7일')}
       ${btn('admBoxPreset(30)','최근 30일')}
       ${btn('admBoxPreset(0)','전체')}
-    </div>`;
+    </div>`+toolbar;
   }
+}
+
+// 현재 조회 상태(날짜별/기간별)를 표 데이터로 수집
+async function admBoxGatherTable(){
+  if(_boxMode==='date'){
+    const key=_boxSelKey; const d=await admFetchBox(key); const has=!!(d&&d.items);
+    const rows=BOX_COMPANIES.map(n=>{const it=admBoxNorm(has?d.items[n]:{});return [n,it.total,it.holding,it.inbound,it.outbound];});
+    const tot=rows.reduce((a,r)=>['합계',a[1]+r[1],a[2]+r[2],a[3]+r[3],a[4]+r[4]],['합계',0,0,0,0]);
+    rows.push(tot);
+    return {headers:['회사','전체','보유','입고','출고'], rows, boldLast:true,
+            title:`박스현황 ${key}`+(has?'':' (입력 전·0)'), fname:`박스현황_${key}`};
+  } else {
+    let s=_boxRangeStart,e=_boxRangeEnd; if(s>e){const t=s;s=e;e=t;}
+    const inRange=_boxDates.filter(k=>k>=s&&k<=e);
+    const datas=await Promise.all(inRange.map(k=>admFetchBox(k)));
+    const rows=inRange.map((k,i)=>{const d=datas[i],has=!!(d&&d.items);let t=0,h=0,ib=0,ob=0;if(has)BOX_COMPANIES.forEach(n=>{const it=admBoxNorm(d.items[n]);t+=it.total;h+=it.holding;ib+=it.inbound;ob+=it.outbound;});return [k,t,h,ib,ob];});
+    return {headers:['날짜','전체','보유','입고','출고'], rows, boldLast:false,
+            title:`박스현황 ${s} ~ ${e} (일자별)`, fname:`박스현황_${s}_${e}`};
+  }
+}
+function _boxEsc(v){ return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// 📥 엑셀 다운로드 (Excel이 여는 .xls, 외부 라이브러리 없음)
+async function admBoxExport(){
+  try{
+    const t=await admBoxGatherTable();
+    const thead='<tr>'+t.headers.map(h=>`<th style="background:#e8e8e8;border:1px solid #999;padding:5px 10px;">${_boxEsc(h)}</th>`).join('')+'</tr>';
+    const tbody=t.rows.map((r,ri)=>{const bold=(t.boldLast&&ri===t.rows.length-1)?'font-weight:bold;background:#f4f4f4;':'';
+      return '<tr>'+r.map((c,ci)=>`<td style="border:1px solid #999;padding:5px 10px;${ci?'mso-number-format:\\#\\,\\#\\#0;text-align:right;':''}${bold}">${_boxEsc(c)}</td>`).join('')+'</tr>';}).join('');
+    const html=`<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body><h3>${_boxEsc(t.title)}</h3><table>${thead}${tbody}</table></body></html>`;
+    const blob=new Blob(['﻿'+html],{type:'application/vnd.ms-excel;charset=utf-8'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=t.fname+'.xls';
+    document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+  }catch(e){ alert('엑셀 내보내기 오류: '+((e&&e.message)||e)); }
+}
+
+// 🖨️ A4 인쇄
+async function admBoxPrint(){
+  try{
+    const t=await admBoxGatherTable();
+    const thead='<tr>'+t.headers.map(h=>`<th>${_boxEsc(h)}</th>`).join('')+'</tr>';
+    const tbody=t.rows.map((r,ri)=>{const bold=(t.boldLast&&ri===t.rows.length-1)?' class="tot"':'';
+      return `<tr${bold}>`+r.map((c,ci)=>`<td class="${ci?'num':''}">${_boxEsc(typeof c==='number'?c.toLocaleString():c)}</td>`).join('')+'</tr>';}).join('');
+    const w=window.open('','_blank','width=900,height=700');
+    if(!w){ alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.'); return; }
+    w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${_boxEsc(t.title)}</title>
+<style>
+  @page{ size:A4 portrait; margin:16mm; }
+  *{ box-sizing:border-box; }
+  body{ font-family:'Malgun Gothic','맑은 고딕',AppleGothic,sans-serif; color:#111; margin:0; }
+  h1{ font-size:19px; margin:0 0 4px; }
+  .sub{ font-size:11px; color:#555; margin-bottom:14px; }
+  table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  th,td{ border:1px solid #555; padding:6px 9px; }
+  th{ background:#e8e8e8; }
+  td.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  tr.tot td{ font-weight:bold; background:#f4f4f4; }
+  @media print{ .noprint{ display:none; } }
+</style></head><body>
+  <h1>📦 박스현황</h1>
+  <div class="sub">${_boxEsc(t.title)} · 출력 ${new Date().toLocaleString('ko-KR')}</div>
+  <table>${thead}${tbody}</table>
+  <scr`+`ipt>window.onload=function(){ setTimeout(function(){ window.focus(); window.print(); }, 200); };<\/scr`+`ipt>
+</body></html>`);
+    w.document.close();
+  }catch(e){ alert('인쇄 오류: '+((e&&e.message)||e)); }
 }
 
 function admBoxSummaryGrid(cols){
