@@ -643,6 +643,34 @@ const FB_BACKUP = 'https://ice-work-d8045-default-rtdb.asia-southeast1.firebased
   },3000);
 })();
 let cachedLiveData = null;
+let admBoxStream = null;
+let admBoxReloadTimer = null;
+
+function admReloadBoxSoon() {
+  clearTimeout(admBoxReloadTimer);
+  admBoxReloadTimer = setTimeout(() => {
+    _admMonthLoaded = false;
+    admLoadMonthForecast();
+  }, 250);
+}
+
+function initAdmBoxRealtime() {
+  if (!FB_URL || admBoxStream || typeof EventSource === 'undefined') return;
+  try {
+    admBoxStream = new EventSource(`${FB_URL}/stream`);
+    admBoxStream.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg && msg.type === 'box_history') admReloadBoxSoon();
+      } catch(e) {}
+    };
+    admBoxStream.onerror = () => {
+      if (admBoxStream) admBoxStream.close();
+      admBoxStream = null;
+      setTimeout(initAdmBoxRealtime, 5000);
+    };
+  } catch(e) {}
+}
 
 async function loadFbUrl() {
   // 로컬 API에서 설정 로드
@@ -666,6 +694,7 @@ async function loadFbUrl() {
     setTimeout(admLoadQuickPred, 500);
   }
   admLoadMonthForecast();
+  initAdmBoxRealtime();
   // 로컬 폴백
   try {
     const s = localStorage.getItem('sys_config_v1');
