@@ -1078,13 +1078,17 @@ async function saveHistoryEdit() {
 
 // ══ 박스 현황 ══
 const BOX_COMPANIES = ['종근당', '국제', '삼천당', '비씨', '대우'];
+let boxTabInitialized = false;
+let boxLoadSeq = 0;
+let boxFormDirty = false;
 
 function boxTodayKey() {
-  return new Date().toISOString().slice(0,10);
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 function boxNum(id) {
-  return parseInt(document.getElementById(id)?.value, 10) || 0;
+  return Math.max(parseInt(document.getElementById(id)?.value, 10) || 0, 0);
 }
 
 function renderBoxCompanyRows() {
@@ -1105,7 +1109,7 @@ function renderBoxCompanyRows() {
         ].map(([key, label]) => `
           <div style="background:rgba(0,0,0,.16);border-radius:8px;padding:7px 6px;">
             <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;text-align:center;">${label}</div>
-            <input id="box_${key}_${name}" type="number" min="0" inputmode="numeric" placeholder="0" oninput="updateBoxSummary()"
+            <input id="box_${key}_${name}" type="number" min="0" inputmode="numeric" placeholder="0" oninput="boxFormDirty=true;updateBoxSummary()"
               style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:17px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:3px 0;">
           </div>
         `).join('')}
@@ -1114,7 +1118,8 @@ function renderBoxCompanyRows() {
   `).join('');
 }
 
-function resetBoxForm() {
+function resetBoxForm(fromLoad = false) {
+  boxFormDirty = !fromLoad;
   BOX_COMPANIES.forEach(name => {
     ['holding', 'inbound', 'outbound'].forEach(key => {
       const el = document.getElementById(`box_${key}_${name}`);
@@ -1129,6 +1134,7 @@ function resetBoxForm() {
 }
 
 function fillBoxForm(data) {
+  boxFormDirty = false;
   const items = data?.items || {};
   BOX_COMPANIES.forEach(name => {
     const item = items[name] || {};
@@ -1201,21 +1207,25 @@ function updateBoxSummary() {
 
 async function loadBoxHistory() {
   const dk = document.getElementById('boxDate')?.value || boxTodayKey();
+  const seq = ++boxLoadSeq;
+  boxFormDirty = false;
   try {
     const res = await fetch(`${FB_URL}/box_history/${dk}.json?t=${Date.now()}`);
     if (!res.ok) throw new Error(String(res.status));
     const data = await res.json();
+    if (seq !== boxLoadSeq || boxFormDirty) return;
     if (data) {
       fillBoxForm(data);
       const status = document.getElementById('boxSaveStatus');
       if (status) status.textContent = `${dk} 기록을 불러왔습니다.`;
     } else {
-      resetBoxForm();
+      resetBoxForm(true);
       const status = document.getElementById('boxSaveStatus');
       if (status) status.textContent = `${dk} 기록이 없습니다.`;
     }
   } catch(e) {
-    resetBoxForm();
+    if (seq !== boxLoadSeq || boxFormDirty) return;
+    resetBoxForm(true);
     const status = document.getElementById('boxSaveStatus');
     if (status) status.textContent = `${dk} 기록이 없습니다.`;
   }
@@ -1231,6 +1241,7 @@ async function saveBoxHistory() {
       body: JSON.stringify(payload)
     });
     if (!res.ok) throw new Error(String(res.status));
+    boxFormDirty = false;
     if (status) status.textContent = `${payload.date} 저장 완료`;
     showToast('✅ 박스 현황 저장 완료');
     await loadBoxRecentList();
@@ -1246,7 +1257,8 @@ async function loadBoxRecentList() {
   try {
     const res = await fetch(`${FB_URL}/box_history?t=${Date.now()}`);
     if (!res.ok) throw new Error(String(res.status));
-    const dates = await res.json();
+    const rawDates = await res.json();
+    const dates = Array.isArray(rawDates) ? rawDates : Object.keys(rawDates || {}).sort().reverse();
     if (!Array.isArray(dates) || dates.length === 0) {
       el.innerHTML = '<div class="jb-empty">저장된 기록 없음</div>';
       return;
@@ -1265,10 +1277,13 @@ async function loadBoxRecentList() {
 function openBoxHistoryDate(dateKey) {
   const dateEl = document.getElementById('boxDate');
   if (dateEl) dateEl.value = dateKey;
+  boxFormDirty = false;
   loadBoxHistory();
 }
 
 function initBoxTab() {
+  if (boxTabInitialized) return;
+  boxTabInitialized = true;
   const dateEl = document.getElementById('boxDate');
   if (dateEl && !dateEl.value) dateEl.value = boxTodayKey();
   renderBoxCompanyRows();

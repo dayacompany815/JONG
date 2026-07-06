@@ -665,6 +665,7 @@ async function loadFbUrl() {
     // config.json 로드 실패시에도 자체 계산 시도
     setTimeout(admLoadQuickPred, 500);
   }
+  admLoadMonthForecast();
   // 로컬 폴백
   try {
     const s = localStorage.getItem('sys_config_v1');
@@ -1329,11 +1330,16 @@ function admUpdatePredWidget(liveData) {
     else snapsEl.style.display='none';
   }
 
-  // 월별 예상 (5분마다)
+  // 박스현황 (5분마다)
   const now2=Date.now();
-  if(admPredConfig&&(!_admMonthLoaded||(now2-_admMonthTs)>5*60*1000)){_admMonthLoaded=true;_admMonthTs=now2;admLoadMonthForecast();}
+  if(!_admMonthLoaded||(now2-_admMonthTs)>5*60*1000){_admMonthLoaded=true;_admMonthTs=now2;admLoadMonthForecast();}
 }
 let _admMonthLoaded=false, _admMonthTs=0;
+
+function admBoxTodayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 
 async function admLoadMonthForecast() {
   if(!FB_URL) return;
@@ -1341,7 +1347,7 @@ async function admLoadMonthForecast() {
     const mc=document.getElementById('admMonthContent');
     if(!mc) return;
     const companies=['종근당','국제','삼천당','비씨','대우'];
-    const todayKey=new Date().toISOString().slice(0,10);
+    const todayKey=admBoxTodayKey();
     let key=todayKey;
     let data=null;
 
@@ -1349,7 +1355,8 @@ async function admLoadMonthForecast() {
     if(todayRes&&todayRes.items) data=todayRes;
 
     if(!data){
-      const keys=await fetch(`${FB_URL}/box_history?t=${Date.now()}`).then(r=>r.ok?r.json():[]).catch(()=>[]);
+      const rawKeys=await fetch(`${FB_URL}/box_history?t=${Date.now()}`).then(r=>r.ok?r.json():[]).catch(()=>[]);
+      const keys=Array.isArray(rawKeys)?rawKeys:Object.keys(rawKeys||{}).sort().reverse();
       if(Array.isArray(keys)&&keys.length>0){
         key=keys[0];
         data=await fetch(`${FB_URL}/box_history/${key}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null);
