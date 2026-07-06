@@ -781,7 +781,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 <script src="daya-predict.js?v=20250519"></script>
 <script>
 // ══ API (daya-api.js) ══
-const APP_VERSION_PC = 'admin-pc-v2.6.3';
+const APP_VERSION_PC = 'admin-pc-v2.6.4';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -2105,13 +2105,13 @@ async function admLoadMonthForecast(){
       const raw=await Promise.race([listP, new Promise(res=>setTimeout(()=>res('__t__'),4500))]);
       if(raw!=='__t__') dates=Array.isArray(raw)?raw.slice():(raw&&typeof raw==='object'?Object.keys(raw).sort().reverse():[]);
     }catch(e){}
-    if(dates.length===0) dates=[todayKey];          // 목록 실패해도 오늘 데이터는 표시
+    if(!dates.includes(todayKey)) dates=[todayKey,...dates]; // 오늘을 항상 목록 맨앞(최신)에 → 데이터 없어도 0으로 표시
     _boxDates=dates;
     _boxCache={};                                    // 실시간/새로고침 시 데이터 재조회
     try{ initAdmBoxRealtime(); }catch(e){}           // 박스 실시간(SSE) 갱신 (중복 방지 가드)
     if(!_boxInit){
       _boxInit=true;
-      _boxSelKey=_boxDates.includes(todayKey)?todayKey:_boxDates[0];
+      _boxSelKey=todayKey;                           // 기본 = 오늘
       _boxRangeEnd=_boxDates[0];
       _boxRangeStart=_boxDates[Math.min(_boxDates.length-1,29)]; // 기본 최근 30일
     }
@@ -2192,13 +2192,13 @@ async function admRenderBoxDate(mc){
   const key=_boxSelKey;
   const data=await admFetchBox(key);
   if(_boxMode!=='date') return;
-  if(!data||!data.items){ mc.innerHTML=`<div style="font-size:12px;color:var(--muted);line-height:1.7;">${key} 박스현황 데이터가 없습니다.</div>`; return; }
-  const items={}; BOX_COMPANIES.forEach(n=>{items[n]=admBoxNorm(data.items?.[n]);});
+  const hasData=!!(data&&data.items);        // 데이터 없으면 0으로 표시 (당일 미입력 시)
+  const items={}; BOX_COMPANIES.forEach(n=>{items[n]=admBoxNorm(hasData?data.items[n]:{});});
   const sum=BOX_COMPANIES.reduce((a,n)=>{a.total+=items[n].total;a.holding+=items[n].holding;a.inbound+=items[n].inbound;a.outbound+=items[n].outbound;return a;},{total:0,holding:0,inbound:0,outbound:0});
   mc.innerHTML=`
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px;">
       <div style="font-size:12px;color:var(--muted);">📅 ${key}</div>
-      <div style="font-size:11px;color:var(--muted);">${data.updatedAt||''}</div>
+      <div style="font-size:11px;color:var(--muted);">${hasData?(data.updatedAt||''):'입력 전 · 0 표시'}</div>
     </div>`+
     admBoxSummaryGrid([
       {label:'전체',v:sum.total,color:'var(--a1)'},
