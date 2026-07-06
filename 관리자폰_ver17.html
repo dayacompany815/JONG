@@ -56,7 +56,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
 
 /* ── 페이지 슬라이더 ── */
 .pages-outer{overflow:hidden;width:100%;}
-.pages-slider{display:flex;width:400vw;transition:transform .32s cubic-bezier(.4,0,.2,1);}
+.pages-slider{display:flex;width:500vw;transition:transform .32s cubic-bezier(.4,0,.2,1);}
 .page{width:100vw;min-width:100vw;padding-bottom:80px;}
 .page-inner{padding:10px;display:flex;flex-direction:column;gap:10px;}
 
@@ -356,8 +356,9 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
 <div class="tab-nav" id="tab-nav">
   <button class="tab-btn active" onclick="goTab(0)"><div class="tab-icon">📊</div><div class="tab-label">현황</div></button>
   <button class="tab-btn" onclick="goTab(1)"><div class="tab-icon">📋</div><div class="tab-label">직배확정</div></button>
-  <button class="tab-btn" onclick="goTab(2)"><div class="tab-icon">📅</div><div class="tab-label">기록</div></button>
-  <button class="tab-btn" onclick="goTab(3)"><div class="tab-icon">⚙️</div><div class="tab-label">설정</div></button>
+  <button class="tab-btn" onclick="goTab(2)"><div class="tab-icon">📦</div><div class="tab-label">박스</div></button>
+  <button class="tab-btn" onclick="goTab(3)"><div class="tab-icon">📅</div><div class="tab-label">기록</div></button>
+  <button class="tab-btn" onclick="goTab(4)"><div class="tab-icon">⚙️</div><div class="tab-label">설정</div></button>
   <a href="리포트_ver1.html" class="tab-btn" style="text-decoration:none;"><div class="tab-icon">📈</div><div class="tab-label">리포트</div></a>
 </div>
 
@@ -568,7 +569,42 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
   </div>
   </div>
 
-  <!-- ③ 날짜별 기록 페이지 -->
+  <!-- ③ 박스 페이지 -->
+  <div class="page">
+  <div class="page-inner">
+
+    <div class="card c-blue">
+      <div class="sec-title">📦 제약사별 박스 현황</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;">날짜별로 각 제약사 박스 현황을 저장합니다.</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--muted);font-weight:700;">날짜</div>
+        <input type="date" id="boxDate" style="flex:1;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
+        <button onclick="loadBoxHistory()" style="background:rgba(59,158,255,.15);border:1px solid rgba(59,158,255,.4);color:var(--a1);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">조회</button>
+      </div>
+      <div id="boxSummary" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;"></div>
+    </div>
+
+    <div class="card c-orange">
+      <div class="sec-title">📝 입력</div>
+      <div id="boxCompanyRows"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button onclick="saveBoxHistory()" style="flex:1;background:linear-gradient(135deg,var(--a3),#16a34a);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">💾 저장</button>
+        <button onclick="resetBoxForm()" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:var(--text);border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">초기화</button>
+      </div>
+      <div id="boxSaveStatus" style="margin-top:8px;font-size:11px;text-align:center;color:var(--muted);min-height:16px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">📚 최근 기록</div>
+      <div id="boxRecentList" style="display:flex;flex-direction:column;gap:7px;">
+        <div class="jb-empty">기록을 불러오는 중...</div>
+      </div>
+    </div>
+
+  </div>
+  </div>
+
+  <!-- ④ 날짜별 기록 페이지 -->
   <div class="page">
   <div class="page-inner">
 
@@ -620,7 +656,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
   </div>
   </div>
 
-  <!-- ④ 설정 페이지 -->
+  <!-- ⑤ 설정 페이지 -->
   <div class="page">
   <div class="page-inner">
 
@@ -679,7 +715,8 @@ function goTab(i) {
   window.scrollTo({top: 0, behavior: 'smooth'});
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
-  if (i === 2) setTimeout(() => fetchHistory(), 100);
+  if (i === 2) setTimeout(() => initBoxTab(), 100);
+  if (i === 3) setTimeout(() => fetchHistory(), 100);
 }
 
 // ══ 로컬 NAS API (Firebase 대체) ══
@@ -1037,6 +1074,193 @@ async function saveHistoryEdit() {
   } catch(e) {
     showToast('❌ 저장 실패');
   }
+}
+
+// ══ 박스 현황 ══
+const BOX_COMPANIES = ['종근당', '국제', '삼천당', '비씨', '대우'];
+
+function boxTodayKey() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function boxNum(id) {
+  return parseInt(document.getElementById(id)?.value, 10) || 0;
+}
+
+function renderBoxCompanyRows() {
+  const wrap = document.getElementById('boxCompanyRows');
+  if (!wrap) return;
+  wrap.innerHTML = BOX_COMPANIES.map((name, idx) => `
+    <div style="background:var(--card2);border-radius:12px;padding:10px 10px 12px;margin-bottom:8px;border-left:3px solid ${idx===0 ? 'var(--a6)' : 'var(--a2)'};">
+      <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px;">${name}</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+        ${[
+          ['total', '전체'],
+          ['holding', '보유'],
+          ['inbound', '입고'],
+          ['outbound', '출고'],
+        ].map(([key, label]) => `
+          <div style="background:rgba(0,0,0,.16);border-radius:8px;padding:7px 6px;">
+            <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;text-align:center;">${label}</div>
+            <input id="box_${key}_${name}" type="number" min="0" inputmode="numeric" placeholder="0" oninput="updateBoxSummary()"
+              style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:17px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:3px 0;">
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function resetBoxForm() {
+  BOX_COMPANIES.forEach(name => {
+    ['total', 'holding', 'inbound', 'outbound'].forEach(key => {
+      const el = document.getElementById(`box_${key}_${name}`);
+      if (el) el.value = '';
+    });
+  });
+  const status = document.getElementById('boxSaveStatus');
+  if (status) status.textContent = '';
+  updateBoxSummary();
+}
+
+function fillBoxForm(data) {
+  const items = data?.items || {};
+  BOX_COMPANIES.forEach(name => {
+    const item = items[name] || {};
+    ['total', 'holding', 'inbound', 'outbound'].forEach(key => {
+      const el = document.getElementById(`box_${key}_${name}`);
+      if (el) el.value = item[key] ?? '';
+    });
+  });
+  updateBoxSummary();
+}
+
+function collectBoxPayload() {
+  const items = {};
+  BOX_COMPANIES.forEach(name => {
+    items[name] = {
+      total: boxNum(`box_total_${name}`),
+      holding: boxNum(`box_holding_${name}`),
+      inbound: boxNum(`box_inbound_${name}`),
+      outbound: boxNum(`box_outbound_${name}`)
+    };
+  });
+  const summary = BOX_COMPANIES.reduce((acc, name) => {
+    const item = items[name];
+    acc.total += item.total;
+    acc.holding += item.holding;
+    acc.inbound += item.inbound;
+    acc.outbound += item.outbound;
+    return acc;
+  }, { total:0, holding:0, inbound:0, outbound:0 });
+  return {
+    date: document.getElementById('boxDate')?.value || boxTodayKey(),
+    items,
+    summary,
+    updatedAt: new Date().toLocaleString('ko-KR')
+  };
+}
+
+function updateBoxSummary() {
+  const el = document.getElementById('boxSummary');
+  if (!el) return;
+  const s = collectBoxPayload().summary;
+  el.innerHTML = `
+    <div style="background:var(--card2);border-radius:10px;padding:10px;text-align:center;">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;">전체 합계</div>
+      <div style="font-size:21px;font-weight:900;color:var(--a1);">${s.total}</div>
+    </div>
+    <div style="background:var(--card2);border-radius:10px;padding:10px;text-align:center;">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;">보유 합계</div>
+      <div style="font-size:21px;font-weight:900;color:var(--a4);">${s.holding}</div>
+    </div>
+    <div style="background:var(--card2);border-radius:10px;padding:10px;text-align:center;">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;">입고 합계</div>
+      <div style="font-size:21px;font-weight:900;color:var(--a3);">${s.inbound}</div>
+    </div>
+    <div style="background:var(--card2);border-radius:10px;padding:10px;text-align:center;">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;">출고 합계</div>
+      <div style="font-size:21px;font-weight:900;color:var(--a2);">${s.outbound}</div>
+    </div>
+  `;
+}
+
+async function loadBoxHistory() {
+  const dk = document.getElementById('boxDate')?.value || boxTodayKey();
+  try {
+    const res = await fetch(`${FB_URL}/box_history/${dk}.json?t=${Date.now()}`);
+    if (!res.ok) throw new Error(String(res.status));
+    const data = await res.json();
+    if (data) {
+      fillBoxForm(data);
+      const status = document.getElementById('boxSaveStatus');
+      if (status) status.textContent = `${dk} 기록을 불러왔습니다.`;
+    } else {
+      resetBoxForm();
+      const status = document.getElementById('boxSaveStatus');
+      if (status) status.textContent = `${dk} 기록이 없습니다.`;
+    }
+  } catch(e) {
+    resetBoxForm();
+    const status = document.getElementById('boxSaveStatus');
+    if (status) status.textContent = `${dk} 기록이 없습니다.`;
+  }
+}
+
+async function saveBoxHistory() {
+  const payload = collectBoxPayload();
+  const status = document.getElementById('boxSaveStatus');
+  try {
+    const res = await fetch(`${FB_URL}/box_history/${payload.date}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(String(res.status));
+    if (status) status.textContent = `${payload.date} 저장 완료`;
+    showToast('✅ 박스 현황 저장 완료');
+    await loadBoxRecentList();
+  } catch(e) {
+    if (status) status.textContent = `저장 실패: ${e.message}`;
+    showToast('❌ 박스 현황 저장 실패');
+  }
+}
+
+async function loadBoxRecentList() {
+  const el = document.getElementById('boxRecentList');
+  if (!el) return;
+  try {
+    const res = await fetch(`${FB_URL}/box_history?t=${Date.now()}`);
+    if (!res.ok) throw new Error(String(res.status));
+    const dates = await res.json();
+    if (!Array.isArray(dates) || dates.length === 0) {
+      el.innerHTML = '<div class="jb-empty">저장된 기록 없음</div>';
+      return;
+    }
+    const recent = dates.slice(0, 10);
+    el.innerHTML = recent.map(dateKey => `
+      <button onclick="openBoxHistoryDate('${dateKey}')" style="background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:10px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left;">
+        📅 ${dateKey}
+      </button>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="jb-empty">기록 목록을 불러오지 못했습니다</div>';
+  }
+}
+
+function openBoxHistoryDate(dateKey) {
+  const dateEl = document.getElementById('boxDate');
+  if (dateEl) dateEl.value = dateKey;
+  loadBoxHistory();
+}
+
+function initBoxTab() {
+  const dateEl = document.getElementById('boxDate');
+  if (dateEl && !dateEl.value) dateEl.value = boxTodayKey();
+  renderBoxCompanyRows();
+  updateBoxSummary();
+  loadBoxHistory();
+  loadBoxRecentList();
 }
 
 

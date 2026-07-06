@@ -358,8 +358,8 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
       </div>
       <div id="admMonthCard">
         <div class="adm-month" style="height:100%;box-sizing:border-box;">
-          <div class="adm-pred-label" style="color:var(--a4);">📊 이달 예상 총량</div>
-          <div id="admMonthContent" style="color:var(--muted);font-size:12px;margin-top:8px;">분석 데이터 로딩 중...</div>
+          <div class="adm-pred-label" style="color:var(--a4);">📦 박스현황</div>
+          <div id="admMonthContent" style="color:var(--muted);font-size:12px;margin-top:8px;">박스 데이터 로딩 중...</div>
         </div>
       </div>
     </div>
@@ -1336,37 +1336,62 @@ function admUpdatePredWidget(liveData) {
 let _admMonthLoaded=false, _admMonthTs=0;
 
 async function admLoadMonthForecast() {
-  if(!admPredConfig) return;
-  const now=new Date(), year=now.getFullYear(), month=now.getMonth()+1, today=now.getDate();
-  const dim=new Date(year,month,0).getDate();
-  let doneWD=0,remWD=0;
-  for(let d=1;d<today;d++){const dw=new Date(year,month-1,d).getDay();if(dw!==0&&dw!==6)doneWD++;}
-  for(let d=today+1;d<=dim;d++){const dw=new Date(year,month-1,d).getDay();if(dw!==0&&dw!==6)remWD++;}
+  if(!FB_URL) return;
   try {
-    const last5=[];
-    for(let d=Math.max(1,today-7);d<today;d++){const dw=new Date(year,month-1,d).getDay();if(dw!==0&&dw!==6)last5.push(`${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`);}
-    const res=await Promise.all(last5.slice(-5).map(dk=>fetch(`${FB_URL}/history/${dk}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null)));
-    const valid=res.filter(d=>d&&(d.totalQty||0)>0);
-    const mAvg=valid.length>0?valid.reduce((s,d)=>s+(d.totalQty||0)-(d?.기타업체?.한진||0)-(d?.종근당?.직배||0),0)/valid.length:(admPredConfig.overall||0);
-    const curQty=(cachedLiveData?.totalQty||0)-(cachedLiveData?.기타업체?.한진||0)-(cachedLiveData?.종근당?.직배||0);
-    const estDone=Math.round(mAvg*doneWD)+curQty, estRem=Math.round((admPredConfig.overall||mAvg)*remWD), total=estDone+estRem;
-    if(total<=0) return;
     const mc=document.getElementById('admMonthContent');
-    if(mc) mc.innerHTML=`
-      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;">
-        <div style="font-size:28px;font-weight:900;color:var(--a4)">${total.toLocaleString()}<span style="font-size:12px;color:var(--muted)">개</span></div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.6;">완료 ${doneWD}일 · 남은 ${remWD}일</div>
+    if(!mc) return;
+    const companies=['종근당','국제','삼천당','비씨','대우'];
+    const todayKey=new Date().toISOString().slice(0,10);
+    let key=todayKey;
+    let data=null;
+
+    const todayRes=await fetch(`${FB_URL}/box_history/${todayKey}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null);
+    if(todayRes&&todayRes.items) data=todayRes;
+
+    if(!data){
+      const keys=await fetch(`${FB_URL}/box_history?t=${Date.now()}`).then(r=>r.ok?r.json():[]).catch(()=>[]);
+      if(Array.isArray(keys)&&keys.length>0){
+        key=keys[0];
+        data=await fetch(`${FB_URL}/box_history/${key}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null);
+      }
+    }
+
+    if(!data||!data.items){
+      mc.innerHTML='<div style="font-size:12px;color:var(--muted);line-height:1.7;">저장된 박스현황이 없습니다.</div>';
+      return;
+    }
+
+    const sum=data.summary||{total:0,holding:0,inbound:0,outbound:0};
+    mc.innerHTML=`
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px;">
+        <div style="font-size:12px;color:var(--muted);">${key}</div>
+        <div style="font-size:11px;color:var(--muted);">${data.updatedAt||''}</div>
       </div>
-      <div style="display:flex;gap:6px;">
-        <div style="flex:1;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 10px;text-align:center;">
-          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">지금까지 약</div><div style="font-size:15px;font-weight:900;color:var(--a1)">${estDone.toLocaleString()}</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px;">
+        <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;text-align:center;">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">전체</div><div style="font-size:15px;font-weight:900;color:var(--a1)">${(sum.total||0).toLocaleString()}</div>
         </div>
-        <div style="flex:1;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 10px;text-align:center;">
-          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">앞으로 약</div><div style="font-size:15px;font-weight:900;color:var(--a3)">${estRem.toLocaleString()}</div>
+        <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;text-align:center;">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">보유</div><div style="font-size:15px;font-weight:900;color:var(--a4)">${(sum.holding||0).toLocaleString()}</div>
         </div>
-        <div style="flex:1;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 10px;text-align:center;">
-          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">이달 평균</div><div style="font-size:15px;font-weight:900;color:var(--a5)">${Math.round(mAvg)}</div>
+        <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;text-align:center;">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">입고</div><div style="font-size:15px;font-weight:900;color:var(--a3)">${(sum.inbound||0).toLocaleString()}</div>
         </div>
+        <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;text-align:center;">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">출고</div><div style="font-size:15px;font-weight:900;color:var(--a2)">${(sum.outbound||0).toLocaleString()}</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        ${companies.map(name=>{
+          const item=data.items?.[name]||{};
+          return `<div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr 1fr;gap:6px;align-items:center;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;">
+            <div style="font-size:11px;font-weight:800;color:${name==='종근당'?'var(--a6)':'var(--text)'};">${name}</div>
+            <div style="font-size:11px;text-align:center;"><span style="color:var(--muted);font-size:9px;">전체</span><br><span style="font-weight:900;">${(item.total||0).toLocaleString()}</span></div>
+            <div style="font-size:11px;text-align:center;"><span style="color:var(--muted);font-size:9px;">보유</span><br><span style="font-weight:900;">${(item.holding||0).toLocaleString()}</span></div>
+            <div style="font-size:11px;text-align:center;"><span style="color:var(--muted);font-size:9px;">입고</span><br><span style="font-weight:900;color:var(--a3);">${(item.inbound||0).toLocaleString()}</span></div>
+            <div style="font-size:11px;text-align:center;"><span style="color:var(--muted);font-size:9px;">출고</span><br><span style="font-weight:900;color:var(--a2);">${(item.outbound||0).toLocaleString()}</span></div>
+          </div>`;
+        }).join('')}
       </div>`;
   } catch(e) {}
 }
