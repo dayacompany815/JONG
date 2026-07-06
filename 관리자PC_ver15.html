@@ -781,7 +781,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 <script src="daya-predict.js?v=20250519"></script>
 <script>
 // ══ API (daya-api.js) ══
-const APP_VERSION_PC = 'admin-pc-v2.6.4';
+const APP_VERSION_PC = 'admin-pc-v2.6.5';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -1304,6 +1304,9 @@ renderWeekdayReport();
 loadCompareBar();
 
 // 배치 패널 초기 렌더 (데이터 없는 경우 빈 슬롯 표시)
+// TDZ 방지: renderBatchPanel 호출 전에 배치 상수 선언
+const JKG_BATCH_TIMES = ['09:00','11:30','14:40','16:00'];
+const JKG_BATCH_RATIOS = [0.25, 0.35, 0.25, 0.15]; // 기본 비율 (역사 데이터로 학습 예정)
 renderBatchPanel({});
 
 // ══ 오늘 vs 같은 요일 4주 평균 비교 ══
@@ -1404,9 +1407,7 @@ function updateCompareBar() {
 }
 
 // ══ 종근당 배치 주문 입력 ══
-const JKG_BATCH_TIMES = ['09:00','11:30','14:40','16:00'];
-const JKG_BATCH_RATIOS = [0.25, 0.35, 0.25, 0.15]; // 기본 비율 (역사 데이터로 학습 예정)
-// JKG_BOX_SIZE 선언은 상단으로 이동(TDZ 방지)
+// JKG_BATCH_TIMES / JKG_BATCH_RATIOS / JKG_BOX_SIZE 선언은 상단으로 이동(TDZ 방지)
 
 function renderBatchPanel(jkg) {
   const grid = document.getElementById('batchGrid');
