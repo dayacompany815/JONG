@@ -358,7 +358,11 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
       </div>
       <div id="admMonthCard">
         <div class="adm-month" style="height:100%;box-sizing:border-box;">
-          <div class="adm-pred-label" style="color:var(--a4);">📦 박스현황</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            <div class="adm-pred-label" style="color:var(--a4);">📦 박스현황</div>
+            <div id="admBoxTabs" style="display:flex;gap:4px;"></div>
+          </div>
+          <div id="admBoxControls" style="margin-top:8px;"></div>
           <div id="admMonthContent" style="color:var(--muted);font-size:12px;margin-top:8px;">박스 데이터 로딩 중...</div>
         </div>
       </div>
@@ -1370,81 +1374,178 @@ function admBoxTodayKey() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-async function admLoadMonthForecast() {
+// ══ 📦 박스현황: 날짜별 / 기간별 조회 ══
+const BOX_COMPANIES=['종근당','국제','삼천당','비씨','대우'];
+let _boxDates=[], _boxCache={}, _boxMode='date', _boxSelKey=null, _boxRangeStart=null, _boxRangeEnd=null, _boxInit=false;
+
+function admBoxNorm(item){ // 전체=보유+입고+출고 (GitHub 자동계산 방식 유지)
+  const holding=Number(item?.holding||0), inbound=Number(item?.inbound||0), outbound=Number(item?.outbound||0);
+  return {holding,inbound,outbound,total:holding+inbound+outbound};
+}
+async function admFetchBox(key){
+  if(!key||!FB_URL) return null;
+  if(_boxCache[key]!==undefined) return _boxCache[key];
+  const d=await fetch(`${FB_URL}/box_history/${key}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null);
+  _boxCache[key]=d; return d;
+}
+
+// 진입점 (기존 호출부·SSE 실시간 갱신 호환) — 날짜목록 갱신 후 현재 모드/선택 유지하며 재렌더
+async function admLoadMonthForecast(){
   if(!FB_URL) return;
-  try {
-    const mc=document.getElementById('admMonthContent');
-    if(!mc) return;
-    const companies=['종근당','국제','삼천당','비씨','대우'];
-    const todayKey=admBoxTodayKey();
-    let key=todayKey;
-    let data=null;
-
-    const todayRes=await fetch(`${FB_URL}/box_history/${todayKey}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null);
-    if(todayRes&&todayRes.items) data=todayRes;
-
-    if(!data){
-      const rawKeys=await fetch(`${FB_URL}/box_history?t=${Date.now()}`).then(r=>r.ok?r.json():[]).catch(()=>[]);
-      const keys=Array.isArray(rawKeys)?rawKeys:Object.keys(rawKeys||{}).sort().reverse();
-      if(Array.isArray(keys)&&keys.length>0){
-        key=keys[0];
-        data=await fetch(`${FB_URL}/box_history/${key}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null);
-      }
-    }
-
-    if(!data||!data.items){
+  const mc=document.getElementById('admMonthContent'); if(!mc) return;
+  try{
+    const rawKeys=await fetch(`${FB_URL}/box_history?t=${Date.now()}`).then(r=>r.ok?r.json():[]).catch(()=>[]);
+    _boxDates=Array.isArray(rawKeys)?rawKeys.slice():Object.keys(rawKeys||{}).sort().reverse();
+    _boxCache={};                                    // 실시간/새로고침 시 데이터 재조회
+    const tabs=document.getElementById('admBoxTabs'), ctl=document.getElementById('admBoxControls');
+    if(_boxDates.length===0){
+      if(tabs) tabs.innerHTML=''; if(ctl) ctl.innerHTML='';
       mc.innerHTML='<div style="font-size:12px;color:var(--muted);line-height:1.7;">저장된 박스현황이 없습니다.</div>';
       return;
     }
+    const todayKey=admBoxTodayKey();
+    if(!_boxInit){
+      _boxInit=true;
+      _boxSelKey=_boxDates.includes(todayKey)?todayKey:_boxDates[0];
+      _boxRangeEnd=_boxDates[0];
+      _boxRangeStart=_boxDates[Math.min(_boxDates.length-1,29)]; // 기본 최근 30일
+    }
+    if(!_boxDates.includes(_boxSelKey)) _boxSelKey=_boxDates[0];
+    if(!_boxDates.includes(_boxRangeEnd)) _boxRangeEnd=_boxDates[0];
+    if(!_boxDates.includes(_boxRangeStart)) _boxRangeStart=_boxDates[Math.min(_boxDates.length-1,29)];
+    admRenderBoxTabs();
+    admRenderBoxControls();
+    await admRenderBoxBody();
+  }catch(e){}
+}
 
-    const normalizedItems={};
-    companies.forEach(name=>{
-      const item=data.items?.[name]||{};
-      const holding=Number(item.holding||0);
-      const inbound=Number(item.inbound||0);
-      const outbound=Number(item.outbound||0);
-      normalizedItems[name]={holding,inbound,outbound,total:holding+inbound+outbound};
-    });
-    const sum=companies.reduce((acc,name)=>{
-      const item=normalizedItems[name];
-      acc.total+=item.total;
-      acc.holding+=item.holding;
-      acc.inbound+=item.inbound;
-      acc.outbound+=item.outbound;
-      return acc;
-    },{total:0,holding:0,inbound:0,outbound:0});
-    mc.innerHTML=`
-      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px;">
-        <div style="font-size:12px;color:var(--muted);">${key}</div>
-        <div style="font-size:11px;color:var(--muted);">${data.updatedAt||''}</div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px;">
-        <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;text-align:center;">
-          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">전체</div><div style="font-size:15px;font-weight:900;color:var(--a1)">${(sum.total||0).toLocaleString()}</div>
-        </div>
-        <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;text-align:center;">
-          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">보유</div><div style="font-size:15px;font-weight:900;color:var(--a4)">${(sum.holding||0).toLocaleString()}</div>
-        </div>
-        <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;text-align:center;">
-          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">입고</div><div style="font-size:15px;font-weight:900;color:var(--a3)">${(sum.inbound||0).toLocaleString()}</div>
-        </div>
-        <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;text-align:center;">
-          <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">출고</div><div style="font-size:15px;font-weight:900;color:var(--a2)">${(sum.outbound||0).toLocaleString()}</div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        ${companies.map(name=>{
-          const item=normalizedItems[name]||{};
-          return `<div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr 1fr;gap:6px;align-items:center;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;">
-            <div style="font-size:11px;font-weight:800;color:${name==='종근당'?'var(--a6)':'var(--text)'};">${name}</div>
-            <div style="font-size:11px;text-align:center;"><span style="color:var(--muted);font-size:9px;">전체</span><br><span style="font-weight:900;">${(item.total||0).toLocaleString()}</span></div>
-            <div style="font-size:11px;text-align:center;"><span style="color:var(--muted);font-size:9px;">보유</span><br><span style="font-weight:900;">${(item.holding||0).toLocaleString()}</span></div>
-            <div style="font-size:11px;text-align:center;"><span style="color:var(--muted);font-size:9px;">입고</span><br><span style="font-weight:900;color:var(--a3);">${(item.inbound||0).toLocaleString()}</span></div>
-            <div style="font-size:11px;text-align:center;"><span style="color:var(--muted);font-size:9px;">출고</span><br><span style="font-weight:900;color:var(--a2);">${(item.outbound||0).toLocaleString()}</span></div>
-          </div>`;
-        }).join('')}
-      </div>`;
-  } catch(e) {}
+function admBoxSetMode(m){ _boxMode=m; admRenderBoxTabs(); admRenderBoxControls(); admRenderBoxBody(); }
+function admBoxSelectDate(k){ _boxSelKey=k; admRenderBoxBody(); }
+function admBoxNav(dir){
+  const i=_boxDates.indexOf(_boxSelKey);
+  const ni=Math.max(0,Math.min(_boxDates.length-1, i+(dir>0?1:-1))); // dir>0=이전(과거), 목록 최신순이라 +1
+  _boxSelKey=_boxDates[ni]; admRenderBoxControls(); admRenderBoxBody();
+}
+function admBoxRangeChange(which,v){ if(which==='start')_boxRangeStart=v; else _boxRangeEnd=v; admRenderBoxBody(); }
+function admBoxPreset(n){
+  _boxRangeEnd=_boxDates[0];
+  _boxRangeStart = n<=0 ? _boxDates[_boxDates.length-1] : _boxDates[Math.min(_boxDates.length-1,n-1)];
+  admRenderBoxControls(); admRenderBoxBody();
+}
+
+function admRenderBoxTabs(){
+  const el=document.getElementById('admBoxTabs'); if(!el) return;
+  const btn=(m,label)=>{const on=_boxMode===m;return `<button onclick="admBoxSetMode('${m}')" style="border:none;cursor:pointer;font-size:10px;font-weight:800;padding:3px 9px;border-radius:8px;background:${on?'var(--a4)':'rgba(255,255,255,.06)'};color:${on?'#fff':'var(--muted)'};">${label}</button>`;};
+  el.innerHTML=btn('date','날짜별')+btn('period','기간별');
+}
+
+function admRenderBoxControls(){
+  const el=document.getElementById('admBoxControls'); if(!el) return;
+  const selStyle='background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 6px;font-size:11px;';
+  const opts=sel=>_boxDates.map(k=>`<option value="${k}"${k===sel?' selected':''}>${k}</option>`).join('');
+  const btn=(onclick,label)=>`<button onclick="${onclick}" style="border:none;cursor:pointer;font-size:11px;font-weight:800;padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--muted);">${label}</button>`;
+  if(_boxMode==='date'){
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      ${btn('admBoxNav(1)','◀ 이전')}
+      <select onchange="admBoxSelectDate(this.value)" style="${selStyle}">${opts(_boxSelKey)}</select>
+      ${btn('admBoxNav(-1)','다음 ▶')}
+    </div>`;
+  } else {
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <select onchange="admBoxRangeChange('start',this.value)" style="${selStyle}">${opts(_boxRangeStart)}</select>
+      <span style="color:var(--muted);font-size:11px;">~</span>
+      <select onchange="admBoxRangeChange('end',this.value)" style="${selStyle}">${opts(_boxRangeEnd)}</select>
+    </div>
+    <div style="display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;">
+      ${btn('admBoxPreset(7)','최근 7일')}
+      ${btn('admBoxPreset(30)','최근 30일')}
+      ${btn('admBoxPreset(0)','전체')}
+    </div>`;
+  }
+}
+
+function admBoxSummaryGrid(cols){
+  return `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px;">`+
+    cols.map(c=>`<div style="background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;text-align:center;">
+      <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">${c.label}</div><div style="font-size:15px;font-weight:900;color:${c.color}">${(c.v||0).toLocaleString()}</div>
+    </div>`).join('')+`</div>`;
+}
+function admBoxCompanyRow(name,cols){
+  return `<div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr 1fr;gap:6px;align-items:center;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;">
+    <div style="font-size:11px;font-weight:800;color:${name==='종근당'?'var(--a6)':'var(--text)'};">${name}</div>
+    ${cols.map(c=>`<div style="font-size:11px;text-align:center;"><span style="color:var(--muted);font-size:9px;">${c.label}</span><br><span style="font-weight:900;color:${c.color||'inherit'};">${(c.v||0).toLocaleString()}</span></div>`).join('')}
+  </div>`;
+}
+
+async function admRenderBoxBody(){
+  const mc=document.getElementById('admMonthContent'); if(!mc) return;
+  if(_boxMode==='date') return admRenderBoxDate(mc);
+  return admRenderBoxPeriod(mc);
+}
+
+async function admRenderBoxDate(mc){
+  const key=_boxSelKey;
+  const data=await admFetchBox(key);
+  if(_boxMode!=='date') return;
+  if(!data||!data.items){ mc.innerHTML=`<div style="font-size:12px;color:var(--muted);line-height:1.7;">${key} 박스현황 데이터가 없습니다.</div>`; return; }
+  const items={}; BOX_COMPANIES.forEach(n=>{items[n]=admBoxNorm(data.items?.[n]);});
+  const sum=BOX_COMPANIES.reduce((a,n)=>{a.total+=items[n].total;a.holding+=items[n].holding;a.inbound+=items[n].inbound;a.outbound+=items[n].outbound;return a;},{total:0,holding:0,inbound:0,outbound:0});
+  mc.innerHTML=`
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px;">
+      <div style="font-size:12px;color:var(--muted);">📅 ${key}</div>
+      <div style="font-size:11px;color:var(--muted);">${data.updatedAt||''}</div>
+    </div>`+
+    admBoxSummaryGrid([
+      {label:'전체',v:sum.total,color:'var(--a1)'},
+      {label:'보유',v:sum.holding,color:'var(--a4)'},
+      {label:'입고',v:sum.inbound,color:'var(--a3)'},
+      {label:'출고',v:sum.outbound,color:'var(--a2)'},
+    ])+
+    `<div style="display:flex;flex-direction:column;gap:6px;">`+
+    BOX_COMPANIES.map(name=>{const it=items[name];return admBoxCompanyRow(name,[
+      {label:'전체',v:it.total},
+      {label:'보유',v:it.holding},
+      {label:'입고',v:it.inbound,color:'var(--a3)'},
+      {label:'출고',v:it.outbound,color:'var(--a2)'},
+    ]);}).join('')+`</div>`;
+}
+
+async function admRenderBoxPeriod(mc){
+  let s=_boxRangeStart, e=_boxRangeEnd;
+  if(s>e){ const t=s; s=e; e=t; }
+  const inRange=_boxDates.filter(k=>k>=s&&k<=e);  // 최신순
+  if(inRange.length===0){ mc.innerHTML='<div style="font-size:12px;color:var(--muted);">선택 기간에 데이터가 없습니다.</div>'; return; }
+  mc.innerHTML='<div style="font-size:12px;color:var(--muted);">기간 집계 중...</div>';
+  const datas=await Promise.all(inRange.map(k=>admFetchBox(k)));
+  if(_boxMode!=='period') return;
+  const valid=inRange.map((k,i)=>({k,d:datas[i]})).filter(x=>x.d&&x.d.items);
+  if(valid.length===0){ mc.innerHTML='<div style="font-size:12px;color:var(--muted);">선택 기간에 데이터가 없습니다.</div>'; return; }
+  // 입고/출고=기간 합계, 보유=기말(가장 최근일)
+  const latest=valid[0].d;
+  const agg={sumIn:0,sumOut:0,endHold:0};
+  BOX_COMPANIES.forEach(n=>{ agg.endHold+=admBoxNorm(latest.items?.[n]).holding; });
+  valid.forEach(x=>{ BOX_COMPANIES.forEach(n=>{ const it=admBoxNorm(x.d.items?.[n]); agg.sumIn+=it.inbound; agg.sumOut+=it.outbound; }); });
+  const comp={}; BOX_COMPANIES.forEach(n=>{comp[n]={in:0,out:0,hold:admBoxNorm(latest.items?.[n]).holding};});
+  valid.forEach(x=>{BOX_COMPANIES.forEach(n=>{const it=admBoxNorm(x.d.items?.[n]);comp[n].in+=it.inbound;comp[n].out+=it.outbound;});});
+  const net=agg.sumIn-agg.sumOut;
+  mc.innerHTML=`
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px;">
+      <div style="font-size:12px;color:var(--muted);">📆 ${s} ~ ${e}</div>
+      <div style="font-size:11px;color:var(--muted);">${valid.length}일치</div>
+    </div>`+
+    admBoxSummaryGrid([
+      {label:'입고합계',v:agg.sumIn,color:'var(--a3)'},
+      {label:'출고합계',v:agg.sumOut,color:'var(--a2)'},
+      {label:'순증감',v:net,color:net>=0?'var(--a3)':'var(--a5)'},
+      {label:'기말보유',v:agg.endHold,color:'var(--a4)'},
+    ])+
+    `<div style="display:flex;flex-direction:column;gap:6px;">`+
+    BOX_COMPANIES.map(name=>admBoxCompanyRow(name,[
+      {label:'입고',v:comp[name].in,color:'var(--a3)'},
+      {label:'출고',v:comp[name].out,color:'var(--a2)'},
+      {label:'순증감',v:comp[name].in-comp[name].out},
+      {label:'기말보유',v:comp[name].hold,color:'var(--a4)'},
+    ])).join('')+`</div>`;
 }
 
 // ══════════════════════════════════════════════
