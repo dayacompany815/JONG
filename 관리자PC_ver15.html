@@ -108,7 +108,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 .biz-name { font-size: 13px; font-weight: 700; width: 60px; flex-shrink: 0; }
 .biz-bar-wrap { flex: 1; background: var(--card2); border-radius: 6px; height: 24px; overflow: hidden; position: relative; }
 .biz-bar { height: 100%; border-radius: 6px; transition: width .6s cubic-bezier(.4,0,.2,1); min-width: 4px; }
-.biz-val { font-size: 14px; font-weight: 800; width: 40px; text-align: right; flex-shrink: 0; }
+.biz-val { font-size: 12px; font-weight: 800; width: 72px; text-align: right; flex-shrink: 0; }
 
 /* ── 작업자 카드 ── */
 .worker-card { background: var(--card2); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 14px; }
@@ -295,6 +295,18 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 .adm-snap{flex-shrink:0;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:7px;padding:5px 10px;text-align:center;}
 .adm-snap-t{font-size:9px;color:var(--muted);font-weight:700;}
 .adm-snap-v{font-size:13px;font-weight:900;color:var(--a1);}
+/* ── 공지 상세 모달 (PC) ── */
+.pc-nd-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.82);align-items:center;justify-content:center;padding:30px;}
+.pc-nd-overlay.show{display:flex;}
+.pc-nd-box{background:var(--card);border:2px solid var(--a1);border-radius:18px;padding:28px;width:100%;max-width:580px;max-height:80vh;display:flex;flex-direction:column;gap:8px;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.pc-nd-meta{font-size:12px;color:var(--muted);}
+.pc-nd-title{font-size:18px;font-weight:900;color:var(--text);padding-bottom:12px;border-bottom:1px solid var(--border);}
+.pc-nd-body{flex:1;overflow-y:auto;font-size:14px;color:var(--text);line-height:1.9;white-space:pre-wrap;padding:12px 0;}
+.pc-nd-close{align-self:flex-end;padding:10px 28px;background:var(--a1);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;}
+.pc-nd-close:hover{opacity:.85;}
+/* 공지 목록 아이템 클릭 스타일 */
+.pc-notice-clickable{cursor:pointer;transition:background .15s;}
+.pc-notice-clickable:hover{background:var(--card) !important;}
 </style>
 </head>
 <body>
@@ -313,10 +325,12 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
     <div>
       <div id="status-text" class="status-text" style="color:var(--red);">연결 안됨</div>
       <div id="last-update" class="last-update">—</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:1px;" id="pc-ver-display"></div>
     </div>
     <button class="refresh-btn" onclick="fetchLive()">🔄 새로고침</button>
     <a href="리포트_ver1.html" class="firebase-btn" style="text-decoration:none;">📊 리포트</a>
-    <button class="firebase-btn" onclick="openModal()">⚙️ Firebase 설정</button>
+    <a href="설정관리_ver1.html" class="firebase-btn" style="text-decoration:none;">⚙️ 설정</a>
+    <button class="firebase-btn" onclick="openModal()">🔗 API</button>
   </div>
 </div>
 
@@ -331,6 +345,9 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
     </div>
   </div>
 
+  <!-- 📦 주문량 예측 위젯 (요일 무관, 항상 표시) -->
+  <div id="orderPredWrap" style="margin-bottom:12px;background:linear-gradient(135deg,rgba(59,158,255,.06),rgba(46,204,113,.05));border:1.5px solid rgba(59,158,255,.3);border-radius:13px;padding:13px 16px;display:none;"></div>
+
   <!-- 🔮 예측·분석 위젯 -->
   <div class="adm-pred-wrap" id="admPredWrap" style="display:none;">
     <!-- 이상물량 배너 -->
@@ -339,13 +356,23 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
     <div class="adm-pred-grid">
       <div class="adm-pred" id="admPredWidget">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <div class="adm-pred-label" style="color:var(--a3);">🔮 오늘 예상물량</div>
+          <div class="adm-pred-label" style="color:var(--a3);">🔮 오늘 예상물량 <span style="font-size:10px;background:rgba(46,204,113,.2);border-radius:4px;padding:1px 5px;color:var(--a3);">박스수</span></div>
           <div class="adm-pred-tags" id="admPredTags"></div>
         </div>
+        <div style="display:flex;gap:16px;margin-bottom:4px;">
+          <div style="font-size:9px;font-weight:800;color:var(--a1);letter-spacing:.3px;">현재처리</div>
+          <div style="font-size:9px;font-weight:800;color:var(--a5);letter-spacing:.3px;">당일예측</div>
+        </div>
         <div class="adm-pred-numbers">
-          <div class="adm-pred-cur" id="admPredCur">—</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;">
+            <div class="adm-pred-cur" id="admPredCur">—</div>
+            <div style="font-size:9px;font-weight:700;color:var(--a1);margin-top:1px;">박스</div>
+          </div>
           <div class="adm-pred-sep">/</div>
-          <div class="adm-pred-exp" id="admPredExp">—</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;">
+            <div class="adm-pred-exp" id="admPredExp">—</div>
+            <div style="font-size:9px;font-weight:700;color:var(--a5);margin-top:1px;">박스</div>
+          </div>
           <div class="adm-pred-rem" id="admPredRem"></div>
         </div>
         <div class="adm-bar-bg"><div class="adm-bar" id="admPredBar" style="width:0%"></div></div>
@@ -366,6 +393,33 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
           <div id="admMonthContent" style="color:var(--muted);font-size:12px;margin-top:8px;">박스 데이터 로딩 중...</div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- 🏃 페이스 판단 위젯 -->
+  <div id="admPaceWidget" style="display:none;margin:0 0 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px;">🏃 작업 페이스 판단</div>
+      <div id="admPaceTeamBadge" style="font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,.08);color:var(--muted);"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <div style="flex:1;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;">
+          <span id="admPaceSpeed">—</span>
+          <span id="admPaceTarget">목표 —</span>
+        </div>
+        <div style="height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;">
+          <div id="admPaceBar" style="height:100%;border-radius:4px;transition:width .4s,background .4s;width:0%;background:var(--a3);"></div>
+        </div>
+      </div>
+      <div style="text-align:center;min-width:64px;">
+        <div id="admPaceIcon" style="font-size:20px;line-height:1;">—</div>
+        <div id="admPaceLabel" style="font-size:10px;font-weight:800;margin-top:2px;">—</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;">
+      <div id="admPaceTeamDetail" style="color:var(--muted);"></div>
+      <div id="admPaceEta" style="color:var(--muted);font-weight:600;"></div>
     </div>
   </div>
 
@@ -397,10 +451,51 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
     </div>
   </div>
 
+  <!-- 💊 종근당 매핑 히어로 (PC) — 1순위 -->
+  <div id="jkgHighlightPC" style="display:none;background:linear-gradient(135deg,rgba(233,30,140,.15),rgba(233,30,140,.04));border:2px solid rgba(233,30,140,.5);border-radius:16px;padding:18px 22px;margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div style="font-size:12px;color:rgba(233,30,140,.8);font-weight:800;letter-spacing:.5px;">💊 종근당 매핑 (위고비) — 1순위</div>
+          <div id="jkgPCHL-pace" style="font-size:11px;padding:1px 8px;border-radius:8px;background:rgba(233,30,140,.15);color:#e91e8c;font-weight:800;"></div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:10px;">
+          <div style="font-size:48px;font-weight:900;color:#e91e8c;line-height:1;" id="jkgPCHL-val">—</div>
+          <div style="font-size:14px;color:rgba(233,30,140,.6);">/ <span id="jkgPCHL-pred" style="color:rgba(233,30,140,.8);font-weight:800;">—</span> 예상</div>
+        </div>
+        <div style="font-size:11px;color:rgba(233,30,140,.5);margin-top:5px;" id="jkgPCHL-detail">매핑 0 | 직배 0 | 도매 0 | 용차 0</div>
+        <div style="font-size:11px;color:rgba(233,30,140,.6);margin-top:3px;" id="jkgPCHL-speed"></div>
+      </div>
+      <div style="text-align:right;min-width:80px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">진행률</div>
+        <div style="font-size:36px;font-weight:900;color:#e91e8c;" id="jkgPCHL-pct">—</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;" id="jkgPCHL-eta"></div>
+        <div style="font-size:11px;color:rgba(233,30,140,.7);margin-top:1px;" id="jkgPCHL-rem"></div>
+      </div>
+    </div>
+    <div style="height:9px;background:rgba(233,30,140,.12);border-radius:5px;overflow:hidden;">
+      <div id="jkgPCHL-bar" style="height:100%;background:linear-gradient(90deg,#e91e8c,#ff6b9d);border-radius:5px;transition:width .4s;width:0%"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <a href="jkg-live.html" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+        background:rgba(233,30,140,.15);border:1px solid rgba(233,30,140,.35);
+        border-radius:8px;padding:8px 12px;text-decoration:none;
+        font-size:12px;font-weight:800;color:#e91e8c;">
+        <span style="font-size:9px;animation:pulse 2s infinite;display:inline-block;">●</span> 실시간 현황
+      </a>
+      <a href="jkg-dashboard.html" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+        background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.25);
+        border-radius:8px;padding:8px 12px;text-decoration:none;
+        font-size:12px;font-weight:800;color:#3b9eff;">
+        📊 박스수 분석
+      </a>
+    </div>
+  </div>
+
   <div class="summary-grid">
     <div class="sum-card c-blue">
       <div class="sum-icon">📦</div>
-      <div class="sum-label">전체 수량</div>
+      <div class="sum-label">전체 박스수 <span style="font-size:9px;color:var(--muted);font-weight:500;">(작업자 입력)</span></div>
       <div class="sum-val c-blue" id="s-total">—</div>
       <div class="sum-sub">종근당+기타+직배+박스</div>
     </div>
@@ -434,6 +529,75 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
   <div id="compare-bar-wrap" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:20px;">
     <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:12px;">📊 오늘 vs 같은 요일 4주 평균 <span id="compare-weekday" style="font-size:11px;color:var(--muted);font-weight:500;"></span></div>
     <div id="compare-rows"></div>
+  </div>
+
+  <!-- 💊 위고비 실시간 현황 (사장님용) -->
+  <div id="jkgLiveCard" style="display:none;background:linear-gradient(135deg,rgba(233,30,140,.08),rgba(210,153,34,.06));border:2px solid rgba(233,30,140,.35);border-radius:16px;padding:16px 20px;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <div style="font-size:14px;font-weight:900;color:#e91e8c;letter-spacing:.3px;">💊 위고비 오늘 현황</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;" id="jkgLiveUpdated">—</div>
+      </div>
+      <a href="jkg-live.html" target="_blank" style="background:rgba(63,185,80,.15);border:1px solid rgba(63,185,80,.35);border-radius:8px;padding:5px 12px;font-size:11px;font-weight:800;color:#3fb950;text-decoration:none;">● 상세보기</a>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+      <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:12px 8px;text-align:center;">
+        <div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:5px;">현재 박스수</div>
+        <div style="font-size:26px;font-weight:900;color:#e91e8c;line-height:1;" id="jkgLiveBox">—</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px;">박스 <span style="opacity:.5;">(작업)</span></div>
+      </div>
+      <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:12px 8px;text-align:center;">
+        <div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:5px;">예측 박스수</div>
+        <div style="font-size:26px;font-weight:900;color:var(--a5);line-height:1;" id="jkgPredBox">—</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px;">박스 <span style="opacity:.5;">(주문÷비율)</span></div>
+      </div>
+      <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:12px 8px;text-align:center;">
+        <div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:5px;">달성률</div>
+        <div style="font-size:26px;font-weight:900;line-height:1;" id="jkgAchieve" style="color:var(--muted);">—</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px;" id="jkgAchieveUnit">%</div>
+      </div>
+      <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:12px 8px;text-align:center;">
+        <div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:5px;">주문 건수</div>
+        <div style="font-size:26px;font-weight:900;color:var(--a1);line-height:1;" id="jkgOrderCount">—</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px;">건</div>
+      </div>
+    </div>
+    <!-- 달성률 바 -->
+    <div style="margin-top:12px;background:rgba(233,30,140,.1);border-radius:6px;height:8px;overflow:hidden;">
+      <div id="jkgProgressBar" style="height:100%;background:linear-gradient(90deg,#e91e8c,#ff6b9d);border-radius:6px;transition:width .6s;width:0%;"></div>
+    </div>
+  </div>
+
+  <!-- 📦 종근당 배치 주문 입력 패널 -->
+  <div id="jkgBatchPanel" style="background:rgba(233,30,140,.04);border:2px solid rgba(233,30,140,.25);border-radius:16px;padding:16px 18px;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-size:13px;font-weight:900;color:#e91e8c;letter-spacing:.4px;">📦 종근당 배치 주문 현황</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">관리자 모바일에서 입력 → 실시간 반영</div>
+      </div>
+      <div id="batchRollingPred" style="display:none;background:rgba(233,30,140,.15);border:1.5px solid rgba(233,30,140,.4);border-radius:12px;padding:6px 14px;text-align:center;">
+        <div style="font-size:9px;color:rgba(233,30,140,.7);font-weight:700;">배치 기반 예측</div>
+        <div style="font-size:22px;font-weight:900;color:#e91e8c;line-height:1.2;" id="batchPredVal">—</div>
+        <div style="font-size:9px;color:rgba(233,30,140,.6);" id="batchPredDetail">—</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;" id="batchGrid">
+      <!-- JS로 렌더링 -->
+    </div>
+    <!-- 배치 기반 페이스 바 -->
+    <div id="batchPaceWrap" style="display:none;background:rgba(0,0,0,.2);border-radius:10px;padding:10px 12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-size:10px;color:var(--muted);font-weight:700;">⚡ 배치예측 기반 페이스</div>
+        <div style="font-size:13px;font-weight:900;" id="batchPaceIcon"></div>
+      </div>
+      <div style="height:8px;background:rgba(233,30,140,.1);border-radius:5px;overflow:hidden;margin-bottom:6px;">
+        <div id="batchPaceBar" style="height:100%;background:linear-gradient(90deg,#e91e8c,#ff6b9d);border-radius:5px;transition:width .5s;width:0%"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(233,30,140,.6);">
+        <span id="batchPaceLeft"></span>
+        <span id="batchPaceRight"></span>
+      </div>
+    </div>
   </div>
 
   <!-- 종근당 상세 + 기타업체 -->
@@ -492,34 +656,20 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
   <!-- 추가 수량 + 직배확정 + 특이사항 -->
   <div class="three-col">
     <!-- 추가 수량 -->
-    <div class="panel">
-      <div class="panel-title">📋 추가 수량</div>
-      <div class="jkg-detail-grid">
-        <div class="jkg-detail-item">
-          <div class="jkg-detail-name">⭐ 광교</div>
-          <div class="jkg-detail-val" id="d-gw">0</div>
-        </div>
-        <div class="jkg-detail-item">
-          <div class="jkg-detail-name">🏥 가산연합</div>
-          <div class="jkg-detail-val" id="d-gs">0</div>
-        </div>
-        <div class="jkg-detail-item">
-          <div class="jkg-detail-name">🚗 개별운송</div>
-          <div class="jkg-detail-val" id="d-gb">0</div>
-        </div>
-      </div>
-    </div>
 
-    <!-- 직배확정 메시지 전송 -->
-    <div class="panel">
-      <div class="panel-title">📢 직배확정 전송 <span style="font-size:11px;color:var(--muted);font-weight:500;">→ 작업자 앱 팝업+음성</span></div>
-      <textarea class="msg-textarea" id="msg-input" placeholder="직배확정 내용 입력... (예: 1번~5번 직배 확정)" maxlength="200" style="min-height:70px;margin-bottom:8px;"></textarea>
+    <!-- 직배확정 메시지 전송 (강화) -->
+    <div class="panel" style="border-color:rgba(59,158,255,.3);">
+      <div class="panel-title" style="color:var(--a1);">📢 직배 메시지 전송 <span style="font-size:11px;color:var(--muted);font-weight:500;">→ 작업자 앱 팝업+음성</span></div>
+      <textarea class="msg-textarea" id="msg-input" placeholder="직배확정 내용 입력... (예: 1번~5번 직배 확정)" maxlength="300" style="min-height:70px;margin-bottom:8px;"></textarea>
       <div class="msg-btn-row">
         <button class="msg-send-btn" id="msg-send-btn" onclick="sendMessage()">📤 전송</button>
         <span class="msg-status" id="msg-status"></span>
       </div>
       <div class="msg-history" id="msg-history-wrap" style="margin-top:10px;">
-        <div class="msg-history-title">📋 최근 전송 기록</div>
+        <div class="msg-history-title" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>📋 최근 전송 기록</span>
+          <button onclick="clearFirebaseMsg()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#ef4444;border-radius:7px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">🗑️ Firebase 메시지 삭제</button>
+        </div>
         <div id="msg-history-list"><div class="jb-empty">전송 기록 없음</div></div>
       </div>
     </div>
@@ -530,6 +680,32 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
       <div class="note-box" id="note-box"><span class="note-empty">특이사항 없음</span></div>
     </div>
   </div></div>
+
+  <!-- 공지사항 등록 패널 -->
+  <div class="history-panel" style="border:2px solid rgba(255,214,0,.25);background:rgba(255,214,0,.04);margin-bottom:20px;">
+    <div class="sec-title" style="color:var(--a5);">📢 공지사항 관리</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:flex-start;">
+      <!-- 등록 폼 -->
+      <div>
+        <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px;">새 공지 등록</div>
+        <input id="pcNoticeTitle" type="text" maxlength="30" placeholder="제목 (예: 오늘 작업 안내)" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;font-family:inherit;margin-bottom:8px;box-sizing:border-box;outline:none;">
+        <textarea id="pcNoticeContent" maxlength="300" placeholder="내용을 입력하세요..." style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;font-family:inherit;resize:none;height:80px;box-sizing:border-box;outline:none;margin-bottom:8px;"></textarea>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <input type="checkbox" id="pcNoticeImportant" style="width:16px;height:16px;accent-color:var(--a6);">
+          <label for="pcNoticeImportant" style="font-size:12px;color:var(--muted);cursor:pointer;">⚠️ 중요 공지로 표시</label>
+        </div>
+        <button id="pcNoticeBtn" onclick="pcSubmitNotice()" style="width:100%;padding:11px;background:linear-gradient(135deg,var(--a5),var(--a6));color:#000;border:none;border-radius:9px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;">📢 공지 등록</button>
+      </div>
+      <!-- 최근 공지 목록 -->
+      <div>
+        <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+          <span>최근 등록 공지</span>
+          <button onclick="pcLoadNotices()" style="background:rgba(59,158,255,.12);border:1px solid rgba(59,158,255,.3);color:var(--a1);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">🔄 새로고침</button>
+        </div>
+        <div id="pcNoticeList"><div style="color:var(--muted);font-size:12px;padding:10px 0;">로딩 중...</div></div>
+      </div>
+    </div>
+  </div>
 
   <!-- 날짜별 기록 -->
   <div class="history-panel">
@@ -590,7 +766,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 
     <div class="modal-label" style="margin-bottom:8px;">⚠️ 모바일 앱 수정 필요</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.7;">
-      모바일 앱(작업현황표_v1_5.html) 내 <code>const FB_URL = '...'</code> 부분도<br>동일한 URL로 변경해야 합니다.
+      모든 앱은 <code>daya-api.js</code>로 연동됩니다. URL 저장 시 작업앱·리포트·설정에도 동일하게 적용됩니다.
     </div>
 
     <div class="modal-btn-row">
@@ -600,81 +776,20 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
   </div>
 </div>
 
+<script src="daya-api.js?v=20250519"></script>
+<script src="daya-error-log.js?v=20250519"></script>
+<script src="daya-predict.js?v=20250519"></script>
 <script>
-// ══ 로컬 NAS API (Firebase 대체) ══
-const FB_URL = 'https://daya.sudalife.net/api';
-// ── Firebase 자동 폴백 + NAS 자동 동기화 ──
-const FB_BACKUP = 'https://ice-work-d8045-default-rtdb.asia-southeast1.firebasedatabase.app';
-(function(){
-  const _f = window.fetch.bind(window);
-  function toFb(u){const p=u.replace('https://daya.sudalife.net/api','').split('?')[0];return p.endsWith('/')?FB_BACKUP+p.slice(0,-1)+'.json':FB_BACKUP+p;}
-  async function fbGet(u){
-    const p=u.replace('https://daya.sudalife.net/api','').split('?')[0],isDir=p.endsWith('/');
-    const r=await _f(toFb(u)+'?t='+Date.now());
-    if(!isDir)return r;
-    const d=await r.clone().json().catch(()=>null);
-    return new Response(JSON.stringify(d?Object.keys(d).sort().reverse():[]),{status:200});
-  }
-  window.fetch=async(url,opt)=>{
-    if(typeof url!=='string'||!url.startsWith('https://daya.sudalife.net/api')||url.includes('/stream'))return _f(url,opt);
-    const m=((opt&&opt.method)||'GET').toUpperCase();
-    if(m==='GET'){try{const r=await _f(url,opt);if(r.ok)return r;}catch(e){}return fbGet(url).catch(()=>new Response('null',{status:200}));}
-    const fo=Object.assign({},opt,{headers:{'Content-Type':'application/json'}});
-    const[r1,r2]=await Promise.all([_f(url,opt).catch(()=>null),_f(toFb(url),fo).catch(()=>null)]);
-    return(r1&&r1.ok)?r1:(r2&&r2.ok)?r2:new Response('{"error":"both failed"}',{status:500});
-  };
-  setTimeout(async()=>{
-    try{
-      const ping=await _f('/api/live.json?t='+Date.now());
-      if(!ping.ok)return;
-      const today=new Date().toISOString().slice(0,10);
-      const dates=[today];
-      for(let i=1;i<=29;i++){const d=new Date();d.setDate(d.getDate()-i);dates.push(d.toISOString().slice(0,10));}
-      const paths=['/live.json',...dates.map(d=>'/history/'+d+'.json'),'/config.json'];
-      for(const p of paths){
-        try{
-          const[nr,fr]=await Promise.all([
-            _f('/api'+p+'?t='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
-            _f(FB_BACKUP+p+'?t='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
-          ]);
-          const nSaved=(nr&&(nr.savedAt||nr.ts||0))||0;
-          const fSaved=(fr&&(fr.savedAt||fr.ts||0))||0;
-          if(fr&&fSaved>nSaved){await _f('/api'+p,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(fr)});}
-          else if(nr&&nSaved>=fSaved&&(!fr||nSaved>0)){await _f(FB_BACKUP+p,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(nr)});}
-        }catch(e){}
-      }
-    }catch(e){}
-  },3000);
-})();
+// ══ API (daya-api.js) ══
+const APP_VERSION_PC = 'admin-pc-v2.6';
+var FB_URL = window.FB_URL;
+var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
-let admBoxStream = null;
-let admBoxReloadTimer = null;
-
-function admReloadBoxSoon() {
-  clearTimeout(admBoxReloadTimer);
-  admBoxReloadTimer = setTimeout(() => {
-    _admMonthLoaded = false;
-    admLoadMonthForecast();
-  }, 250);
-}
-
-function initAdmBoxRealtime() {
-  if (!FB_URL || admBoxStream || typeof EventSource === 'undefined') return;
-  try {
-    admBoxStream = new EventSource(`${FB_URL}/stream`);
-    admBoxStream.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg && msg.type === 'box_history') admReloadBoxSoon();
-      } catch(e) {}
-    };
-    admBoxStream.onerror = () => {
-      if (admBoxStream) admBoxStream.close();
-      admBoxStream = null;
-      setTimeout(initAdmBoxRealtime, 5000);
-    };
-  } catch(e) {}
-}
+let _pcNotices = [];
+let _pcNoticeListData = [];
+// TDZ 방지: 사용처(renderLive/renderBatchPanel/admCalcPredicted)보다 먼저 선언
+const JKG_BOX_SIZE = 18; // 위고비 1박스 = 18개 (관리자 주문수량 개 → 작업자 박스수 변환)
+let admPredConfig = null;
 
 async function loadFbUrl() {
   // 로컬 API에서 설정 로드
@@ -687,7 +802,9 @@ async function loadFbUrl() {
       // 🔮 예측 데이터 추출
       if (cfg.prediction && cfg.prediction.overall > 0) {
         admPredConfig = cfg.prediction;
+        if (cfg.jkgPrediction) admPredConfig._jkg = cfg.jkgPrediction;
         admLoadMonthForecast();
+        if (cachedLiveData) admUpdatePredWidget(cachedLiveData); // config 로드 후 즉시 위젯 갱신
       } else {
         // config.json에 prediction 없으면 자체 계산
         setTimeout(admLoadQuickPred, 500);
@@ -697,8 +814,6 @@ async function loadFbUrl() {
     // config.json 로드 실패시에도 자체 계산 시도
     setTimeout(admLoadQuickPred, 500);
   }
-  admLoadMonthForecast();
-  initAdmBoxRealtime();
   // 로컬 폴백
   try {
     const s = localStorage.getItem('sys_config_v1');
@@ -730,9 +845,11 @@ function closeModal() {
 function saveFirebaseUrl() {
   const url = document.getElementById('fb-url-input').value.trim().replace(/\/+$/, '');
   if (!url) { alert('URL을 입력해주세요.'); return; }
-  FB_URL = url;
+  if (typeof dayaSetApiBase === 'function') dayaSetApiBase(url);
+  FB_URL = window.FB_URL;
   localStorage.setItem('dashboard_fb_url', url);
   localStorage.setItem('sys_fb_url', url);
+  localStorage.setItem('daya_api_base', url);
   closeModal();
   fetchLive();
   fetchHistory();
@@ -756,40 +873,93 @@ function setOffline(msg) {
 // ══ 실시간 데이터 가져오기 ══
 const NAS_URL = 'https://dayawork.gumpmelong.workers.dev';
 
+// ── 위고비 현황 카드 (사장님용) ──
+async function fetchJkgLiveCard() {
+  if (!FB_URL) return;
+  const dk = (() => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+  try {
+    const [liveRes, orderRes] = await Promise.all([
+      fetch(`${FB_URL}/live.json?t=${Date.now()}`),
+      fetch(`${FB_URL}/jkg_orders/${dk}.json?t=${Date.now()}`)
+    ]);
+    const ld = liveRes.ok ? await liveRes.json() : null;
+    const od = orderRes.ok ? await orderRes.json() : null;
+
+    const box  = ld?.종근당?.매핑 || 0;
+    const qty  = od?.totalQty   || 0;
+    const cnt  = od?.totalCount || 0;
+
+    // 히스토리 비율로 예측 (config에서 로드 or 기본 14)
+    const ratio = parseFloat(localStorage.getItem('jkg_hist_ratio') || '14');
+    const pred  = qty > 0 ? Math.round(qty / ratio) : 0;
+    const pct   = pred > 0 ? Math.min(Math.round(box / pred * 100), 999) : 0;
+
+    const card = document.getElementById('jkgLiveCard');
+    if (!card) return;
+    card.style.display = '';
+
+    document.getElementById('jkgLiveBox').textContent     = box || '—';
+    document.getElementById('jkgPredBox').textContent     = pred || '—';
+    document.getElementById('jkgOrderCount').textContent  = cnt || '—';
+
+    const achEl   = document.getElementById('jkgAchieve');
+    const unitEl  = document.getElementById('jkgAchieveUnit');
+    const barEl   = document.getElementById('jkgProgressBar');
+    if (pred > 0) {
+      achEl.textContent  = pct + '%';
+      achEl.style.color  = pct >= 100 ? 'var(--a3)' : pct >= 70 ? 'var(--a5)' : 'var(--a6)';
+      unitEl.textContent = pct >= 100 ? '✅ 완료' : '진행중';
+      barEl.style.width  = Math.min(pct, 100) + '%';
+    } else {
+      achEl.textContent  = '—';
+      unitEl.textContent = '주문 입력 대기';
+      barEl.style.width  = '0%';
+    }
+    const now = new Date();
+    document.getElementById('jkgLiveUpdated').textContent =
+      `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} 갱신 · 30초마다 자동 갱신`;
+  } catch(e) {}
+}
+
 async function fetchLive() {
   if (!FB_URL) {
     document.getElementById('offline-banner').classList.add('show');
     setOffline('Firebase 미설정');
     return;
   }
-  try {
-    const res = await fetch(`${FB_URL}/live.json?t=${Date.now()}`);
-    if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
-    if (!data) {
-      setOffline('데이터 없음');
-      return;
-    }
-    cachedLiveData = data;
-    setOnline();
-    renderLive(data);
-    updateCompareBar();
-    const now = new Date();
-    document.getElementById('last-update').textContent = `최종 업데이트: ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-  } catch(e) {
-    // Firebase 실패 시 NAS에서 가져오기
+  let data = null;
+  if (typeof dayaFetchLive === 'function') {
     try {
-      const res2 = await fetch(`${NAS_URL}?action=get_live`);
-      const json2 = await res2.json();
-      if (json2.success && json2.data && json2.data.live) {
-        cachedLiveData = json2.data.live;
-        setOnline();
-        renderLive(json2.data.live);
-        const now = new Date();
-        document.getElementById('last-update').textContent = `NAS: ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-      } else { setOffline('연결 실패'); }
-    } catch(e2) { setOffline('연결 실패'); console.error(e2); }
+      data = await Promise.race([
+        dayaFetchLive(),
+        new Promise(r => setTimeout(() => r(null), 10000))
+      ]);
+    } catch(e) {}
   }
+  if (!data) {
+    try {
+      const r = await fetch(FB_URL + '/live.json?t=' + Date.now());
+      if (r.ok) data = await r.json();
+    } catch(e) {}
+  }
+  if (!data) { setOffline('연결 실패'); return; }
+
+  // 이전 캐시에 주문로그 있으면 유지 (dayaFetchLive가 이미 NAS+Firebase 병합함)
+  if (!data.주문로그 && cachedLiveData?.주문로그) {
+    data.주문로그 = cachedLiveData.주문로그;
+  }
+
+  cachedLiveData = data;
+  setOnline();
+  try { renderLive(data); } catch(e) {
+    console.error('[renderLive 에러]', e);
+    // 에러가 나도 배치 패널만이라도 렌더링
+    try { renderBatchPanel(data.종근당 || {}); } catch(e2) {}
+  }
+  updateCompareBar();
+  const now = new Date();
+  document.getElementById('last-update').textContent =
+    `동기화 업데이트: ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
 }
 
 function renderLive(d) {
@@ -798,7 +968,68 @@ function renderLive(d) {
   const add = d.추가 || {};
 
   // 🔮 예측 위젯 업데이트
-  admUpdatePredWidget(d);
+  try { admUpdatePredWidget(d); } catch(e) { console.warn('[admUpdatePredWidget 에러]', e); }
+  try { if (typeof dayaRenderOrderPred === 'function') dayaRenderOrderPred('orderPredWrap', d); } catch(e) {}
+
+  // ── 종근당 매핑 히어로 카드 (PC) ──
+  try { (function() {
+    const jkgMap = jkg.매핑 || 0;
+    const jkgJb  = jkg.직배  || 0;
+    const jkgDms = jkg.도매상 || 0;
+    const jkgYc  = jkg.용차  || 0;
+    const hlPC = document.getElementById('jkgHighlightPC');
+    if (!hlPC) return;
+    hlPC.style.display = '';
+    const setT = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+    setT('jkgPCHL-val', jkgMap);
+    setT('jkgPCHL-detail', `매핑 ${jkgMap} | 직배 ${jkgJb} | 도매 ${jkgDms} | 용차 ${jkgYc}`);
+    // 종근당 전용 예측 — 배치 입력 있으면 배치예측 우선 (단위: 박스수로 통일)
+    const batchPredFromLive = jkg.배치예측 || 0;
+    const batchPredBox = batchPredFromLive > 0 ? Math.round(batchPredFromLive / JKG_BOX_SIZE) : 0; // 개→박스
+    const _jkgP = admPredConfig?._jkg;
+    const _jkgRatio = (_jkgP && _jkgP.ratio) || 0.786;
+    const pred2 = admCalcPredicted(d.totalQty || 0);
+    const histPredEst = (_jkgP && _jkgP.overall > 0)
+      ? (() => { const dw=new Date().getDay(); return (_jkgP.recent4w&&_jkgP.recent4w[dw]>0) ? Math.round(_jkgP.recent4w[dw]*0.7+(_jkgP.dowAvg[dw]||_jkgP.overall)*0.3) : (_jkgP.dowAvg[dw]||_jkgP.overall); })()
+      : (pred2 ? Math.round(pred2.predicted * _jkgRatio) : 0);
+    let jkgPredEst = batchPredBox > 0 ? batchPredBox : histPredEst; // 모두 박스 단위
+    const batchCount = Object.values(jkg.배치||{}).filter(v=>v>0).length;
+    // 실제 매핑 박스가 예측을 초과하면 실제값이 더 정확 → 예측을 실제값으로 상향(실데이터 우선)
+    const _jkgPredOver = jkgMap > (jkgPredEst || 0);
+    if (_jkgPredOver) jkgPredEst = jkgMap;
+    const predLabel = _jkgPredOver
+      ? `${jkgMap}박스 ✅실제확정 (예측 초과)`
+      : (batchPredBox > 0
+        ? `${batchPredBox}박스 (주문 ${batchPredFromLive}개·${batchCount}차)`
+        : (jkgPredEst > 0 ? `${jkgPredEst}박스` : '—'));
+    setT('jkgPCHL-pred', predLabel);
+    if (jkgPredEst > 0) {
+      const jkgPct = Math.min(130, Math.round(jkgMap / jkgPredEst * 100)); // 박스/박스 ✅
+      const over = jkgMap >= jkgPredEst;
+      const rem = Math.max(jkgPredEst - jkgMap, 0); // 박스 단위
+      const pctEl = document.getElementById('jkgPCHL-pct');
+      if (pctEl) { pctEl.textContent = jkgPct+'%'; pctEl.style.color = over?'#22c55e':jkgPct>=70?'#ffd600':'#e91e8c'; }
+      document.getElementById('jkgPCHL-bar').style.width = Math.min(100,jkgPct)+'%';
+      setT('jkgPCHL-rem', over ? '🎉 달성!' : `남은 ${rem}개`);
+      // ETA & 페이스
+      const now2=new Date(), st2=new Date(now2); st2.setHours(9,0,0,0);
+      const elH2=(now2-st2)/3600000;
+      if (elH2 >= 0.1 && jkgMap > 0) {
+        const curR=Math.round(jkgMap/elH2), tgtR=Math.round(jkgPredEst/8);
+        const ratio2=tgtR>0?curR/tgtR:1;
+        setT('jkgPCHL-speed', `현재 ${curR}박스/h · 목표 ${tgtR}박스/h`);
+        const paceIcon=over?'🎉 달성':ratio2>=1.15?'🔥 빠름':ratio2>=0.9?'✅ 적정':ratio2>=0.7?'⚠️ 느림':'🚨 위험';
+        const paceEl=document.getElementById('jkgPCHL-pace'); if(paceEl) paceEl.textContent=paceIcon;
+        if (rem>0&&curR>0) {
+          const etaD=new Date(now2.getTime()+rem/curR*3600000);
+          const h=etaD.getHours(),m=etaD.getMinutes(),ap=h<12?'오전':'오후',hh=h>12?h-12:(h===0?12:h);
+          setT('jkgPCHL-eta', `완료 ${ap} ${hh}:${String(m).padStart(2,'0')}`);
+        } else { setT('jkgPCHL-eta', over?'✅ 완료':''); }
+      } else {
+        setT('jkgPCHL-speed',''); setT('jkgPCHL-pace','⏳ 준비중'); setT('jkgPCHL-eta','');
+      }
+    }
+  })(); } catch(e) { console.warn('[jkgHighlight 렌더 에러]', e); }
 
   // 요약
   setText('s-total', d.totalQty ?? '—');
@@ -833,32 +1064,43 @@ function renderLive(d) {
   setText('d-yc', jkg.용차 || 0);
   setText('d-ycbox', jkg.용차박스 || 0);
 
-  // 기타업체 바 차트
-  const bizData = [
-    {name:'국제', val:etc.국제||0, color:'#f97316'},
-    {name:'삼천당', val:etc.삼천당||0, color:'#3b9eff'},
-    {name:'비씨', val:etc.비씨||0, color:'#2ecc71'},
-    {name:'대우', val:etc.대우||0, color:'#ffd600'},
-    {name:'동구', val:etc.동구||0, color:'#a78bfa'},
-    {name:'한진', val:etc.한진||0, color:'#ff6b9d'},
-    {name:'아주', val:etc.아주||0, color:'#06b6d4'},
-    {name:'맥널티', val:etc.맥널티||0, color:'#84cc16'},
-  ];
-  const maxVal = Math.max(...bizData.map(b=>b.val), 1);
-  document.getElementById('biz-list').innerHTML = bizData.map(b => `
-    <div class="biz-row">
-      <div class="biz-name" style="color:${b.color}">${b.name}</div>
-      <div class="biz-bar-wrap">
-        <div class="biz-bar" style="width:${Math.max(b.val/maxVal*100,b.val>0?4:0)}%;background:${b.color};opacity:.85;"></div>
-      </div>
-      <div class="biz-val" style="color:${b.val>0?b.color:'var(--muted)'}">${b.val}</div>
-    </div>
-  `).join('');
+  // 종근당 배치 패널 갱신
+  renderBatchPanel(jkg);
 
-  // 추가
-  setText('d-gw', add.광교 || 0);
-  setText('d-gs', add.가산연합의원 || 0);
-  setText('d-gb', add.개별운송 || 0);
+  // 기타업체 바 차트 (주문 대비 실적 진행률)
+  const _ol = d.주문로그 || {};
+  const _getOrd = name => {
+    const log = _ol[name];
+    if (!log) return 0;
+    const arr = Array.isArray(log) ? log : Object.values(log);
+    return arr.reduce((s, e) => s + (parseInt(e.qty) || 0), 0);
+  };
+  const bizData = [
+    {name:'국제',  val:etc.국제||0,  color:'#f97316'},
+    {name:'삼천당', val:etc.삼천당||0, color:'#3b9eff'},
+    {name:'비씨',  val:etc.비씨||0,  color:'#2ecc71'},
+    {name:'대우',  val:etc.대우||0,  color:'#ffd600'},
+    {name:'동구',  val:etc.동구||0,  color:'#a78bfa'},
+    {name:'한진',  val:etc.한진||0,  color:'#ff6b9d'},
+    {name:'아주',  val:etc.아주||0,  color:'#06b6d4'},
+    {name:'맥널티', val:etc.맥널티||0, color:'#84cc16'},
+  ].map(b => ({...b, order: _getOrd(b.name)}));
+  document.getElementById('biz-list').innerHTML = bizData.map(b => {
+    const hasOrder = b.order > 0;
+    const pct = hasOrder ? Math.min(b.val / b.order * 100, 100) : (b.val > 0 ? 100 : 0);
+    const done = hasOrder && b.val >= b.order;
+    const barColor = done ? '#22c55e' : b.color;
+    const label = hasOrder ? `${b.val}/${b.order}` : (b.val > 0 ? `${b.val}` : '—');
+    const icon = done ? ' ✅' : '';
+    return `<div class="biz-row">
+      <div class="biz-name" style="color:${barColor}">${b.name}${icon}</div>
+      <div class="biz-bar-wrap">
+        <div class="biz-bar" style="width:${Math.max(pct,b.val>0?3:0)}%;background:${barColor};opacity:.9;"></div>
+      </div>
+      <div class="biz-val" style="color:${b.val>0?barColor:'var(--muted)'}">${label}</div>
+    </div>`;
+  }).join('');
+
 
   // 시간당 생산량 업데이트
   updateProdBanner(d);
@@ -974,7 +1216,7 @@ function updateProdBanner(d) {
   const membersEl = document.getElementById('prod-members');
   if (membersEl) {
     membersEl.innerHTML =
-      presentNames.map(m => `<span class="prod-member-chip">${m.name}</span>`).join('') +
+      presentNames.map(m => `<span class="prod-member-chip">${typeof m.name === 'string' ? m.name : (m.name?.name || '이름없음')}</span>`).join('') +
       (supportCount > 0 ? `<span class="prod-member-chip support">조출 ${supportCount}명</span>` : '');
   }
 }
@@ -1045,14 +1287,22 @@ function setText(id, val) {
   if (el) el.textContent = val;
 }
 
-setInterval(() => { fetchLive(); }, 30000);
+setInterval(() => { fetchLive(); }, 15000);   // 15초 (이전 30초 → 2배 빠름)
 setInterval(() => { fetchHistory(); }, 300000);
 setInterval(pollMessageConfirmation, 30000);
+setInterval(fetchJkgLiveCard, 30000);
+fetchJkgLiveCard();
 
 loadFbUrl();
+// 버전 화면 표시
+(function(){ const el = document.getElementById('pc-ver-display'); if(el) el.textContent = APP_VERSION_PC; })();
 renderMsgHistory();
+setTimeout(pollMessageConfirmation, 3000); // 페이지 로드 직후 Firebase 상태 즉시 반영
 renderWeekdayReport();
 loadCompareBar();
+
+// 배치 패널 초기 렌더 (데이터 없는 경우 빈 슬롯 표시)
+renderBatchPanel({});
 
 // ══ 오늘 vs 같은 요일 4주 평균 비교 ══
 const WEEKDAY_NAMES = ['일','월','화','수','목','금','토'];
@@ -1151,6 +1401,226 @@ function updateCompareBar() {
   wrap.style.display = 'block';
 }
 
+// ══ 종근당 배치 주문 입력 ══
+const JKG_BATCH_TIMES = ['09:00','11:30','14:40','16:00'];
+const JKG_BATCH_RATIOS = [0.25, 0.35, 0.25, 0.15]; // 기본 비율 (역사 데이터로 학습 예정)
+// JKG_BOX_SIZE 선언은 상단으로 이동(TDZ 방지)
+
+function renderBatchPanel(jkg) {
+  const grid = document.getElementById('batchGrid');
+  if (!grid) return;
+
+  // 주문로그(모바일 입력)가 있으면 우선 사용
+  const rawOrderLog = cachedLiveData?.주문로그?.종근당 || null;
+  // Firebase RTDB가 배열을 {"0":{...},"1":{...}} 객체로 변환하므로 둘 다 처리
+  const liveOrderLog = rawOrderLog
+    ? (Array.isArray(rawOrderLog) ? rawOrderLog : Object.values(rawOrderLog))
+    : null;
+  // jkg가 빈 객체({})로 호출될 때도 cachedLiveData에서 배치 데이터 읽기
+  const _jkgSrc = (jkg && Object.keys(jkg).length > 0) ? jkg : (cachedLiveData?.종근당 || {});
+  const batches = _jkgSrc.배치 || {};
+  const batchPred = _jkgSrc.배치예측 || 0;
+  const jkgCur = _jkgSrc.매핑 || 0;
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  // 주문로그 데이터가 있으면 그걸로 렌더링
+  if (liveOrderLog && liveOrderLog.length > 0) {
+    const predCard = document.getElementById('batchRollingPred');
+    const rpVal = document.getElementById('batchPredVal');
+    const rpDet = document.getElementById('batchPredDetail');
+    grid.innerHTML = liveOrderLog.map((e, i) => {
+      const color = '#22c55e';
+      return `<div style="background:rgba(46,204,113,.08);border:1.5px solid rgba(46,204,113,.4);border-radius:12px;padding:12px 10px;text-align:center;">
+        <div style="font-size:10px;color:rgba(233,30,140,.8);font-weight:800;margin-bottom:1px;">✅ ${i+1}차</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:8px;">${e.t}</div>
+        <div style="font-size:30px;font-weight:900;color:${color};line-height:1;">${e.qty}</div>
+      </div>`;
+    }).join('');
+    if (batchPred > 0 && predCard && rpVal && rpDet) {
+      predCard.style.display = '';
+      rpVal.textContent = batchPred;
+      rpDet.textContent = `${liveOrderLog.length}회차 기준`;
+    } else if (predCard) predCard.style.display = 'none';
+
+    // 페이스 바
+    const pw = document.getElementById('batchPaceWrap');
+    const pb = document.getElementById('batchPaceBar');
+    const pi = document.getElementById('batchPaceIcon');
+    const pl = document.getElementById('batchPaceLeft');
+    const pr = document.getElementById('batchPaceRight');
+    if (batchPred > 0 && jkgCur > 0 && pw) {
+      pw.style.display = '';
+      const batchPredBox = Math.round(batchPred / JKG_BOX_SIZE); // 개→박스
+      const pct = batchPredBox > 0 ? Math.round(jkgCur / batchPredBox * 100) : 0; // 박스/박스
+      if (pb) pb.style.width = Math.min(pct, 100) + '%';
+      const start = new Date(now); start.setHours(9,0,0,0);
+      const elH = (now - start) / 3600000;
+      if (elH >= 0.1) {
+        const curR = Math.round(jkgCur / elH);           // 박스/h
+        const tgtR = Math.round(batchPredBox / 8);        // 박스/h
+        const ratio = tgtR > 0 ? curR / tgtR : 1;
+        const rem = Math.max(batchPredBox - jkgCur, 0);   // 박스
+        const icon2 = jkgCur >= batchPredBox ? '🎉 달성' : ratio >= 1.15 ? '🔥 빠름' : ratio >= 0.9 ? '✅ 적정' : ratio >= 0.7 ? '⚠️ 느림' : '🚨 위험';
+        if (pi) pi.textContent = icon2;
+        if (pl) pl.textContent = `현재 ${curR}박스/h · 목표 ${tgtR}박스/h · 진행률 ${pct}%`;
+        if (pr) pr.textContent = rem > 0 ? `남은 ${rem}박스` : '🎉 달성!';
+      }
+    } else if (pw) pw.style.display = 'none';
+    return;
+  }
+
+  grid.innerHTML = JKG_BATCH_TIMES.map((time, i) => {
+    const n = i + 1;
+    const raw = batches[`b${n}`];
+    const qty = typeof raw === 'object' && raw && raw.qty != null ? (parseInt(raw.qty) || 0) : (parseInt(raw) || 0);
+    const [bh, bm] = time.split(':').map(Number);
+    const bMin = bh * 60 + bm;
+    const passed = nowMin >= bMin;
+    const hasDat = qty > 0;
+
+    const bdr = hasDat ? 'rgba(46,204,113,.5)' : passed ? 'rgba(255,214,0,.35)' : 'rgba(233,30,140,.18)';
+    const bg  = hasDat ? 'rgba(46,204,113,.08)' : passed ? 'rgba(255,214,0,.06)' : 'rgba(233,30,140,.04)';
+    const qColor = hasDat ? '#22c55e' : passed ? 'var(--a5)' : 'rgba(233,30,140,.35)';
+    const icon = hasDat ? '✅' : passed ? '⌛' : '⏳';
+    const ratioText = `비율 ${Math.round(JKG_BATCH_RATIOS[i]*100)}%`;
+
+    return `<div style="background:${bg};border:1.5px solid ${bdr};border-radius:12px;padding:12px 10px;text-align:center;">
+      <div style="font-size:10px;color:rgba(233,30,140,.8);font-weight:800;margin-bottom:1px;">${icon} ${n}차</div>
+      <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:8px;">${time}</div>
+      <div style="font-size:30px;font-weight:900;color:${qColor};line-height:1;margin-bottom:6px;">${hasDat ? qty : '—'}</div>
+      <div style="font-size:9px;color:var(--muted);">${hasDat ? `${time} 도착` : ratioText}</div>
+    </div>`;
+  }).join('');
+
+  // 롤링 예측 표시
+  const rpWrap = document.getElementById('batchRollingPred');
+  const rpVal  = document.getElementById('batchPredVal');
+  const rpDet  = document.getElementById('batchPredDetail');
+  const entered = Object.values(batches).filter(v=>v>0).length;
+  if (batchPred > 0 && rpWrap && rpVal && rpDet) {
+    rpWrap.style.display = '';
+    rpVal.textContent = batchPred;
+    rpDet.textContent = `${entered}차 도착 기준`;
+  } else if (rpWrap) {
+    rpWrap.style.display = 'none';
+  }
+
+  // 페이스 바
+  const paceWrap = document.getElementById('batchPaceWrap');
+  const paceBar  = document.getElementById('batchPaceBar');
+  const paceIcon = document.getElementById('batchPaceIcon');
+  const paceL    = document.getElementById('batchPaceLeft');
+  const paceR    = document.getElementById('batchPaceRight');
+  if (batchPred > 0 && jkgCur > 0 && paceWrap) {
+    paceWrap.style.display = '';
+    const pct = Math.round(jkgCur / batchPred * 100);
+    if (paceBar) paceBar.style.width = Math.min(pct, 100) + '%';
+    const start = new Date(now); start.setHours(9,0,0,0);
+    const elH = (now - start) / 3600000;
+    if (elH >= 0.1) {
+      const curR = Math.round(jkgCur / elH);
+      const tgtR = Math.round(batchPred / 8);
+      const ratio = tgtR > 0 ? curR / tgtR : 1;
+      const rem = Math.max(batchPred - jkgCur, 0);
+      const icon2 = jkgCur >= batchPred ? '🎉 달성' : ratio >= 1.15 ? '🔥 빠름' : ratio >= 0.9 ? '✅ 적정' : ratio >= 0.7 ? '⚠️ 느림' : '🚨 위험';
+      if (paceIcon) paceIcon.textContent = icon2;
+      if (paceL) paceL.textContent = `현재 ${curR}개/h · 목표 ${tgtR}개/h · 진행률 ${pct}%`;
+      if (paceR) paceR.textContent = rem > 0 ? `남은 ${rem}개` : '🎉 달성!';
+    }
+  } else if (paceWrap) {
+    paceWrap.style.display = 'none';
+  }
+}
+
+async function saveBatch(n) {
+  const inp = document.getElementById(`batch-input-${n}`);
+  const rawVal = inp ? inp.value.trim() : '';
+  if (rawVal === '') { inp && inp.focus(); return; }
+  const qty = parseInt(rawVal);
+  if (isNaN(qty) || qty < 0) { alert('올바른 수량을 입력하세요'); return; }
+
+  const live = cachedLiveData || {};
+  const jkg = { ...(live.종근당 || {}) };
+  const batches = { ...(jkg.배치 || {}) };
+  if (qty === 0) {
+    delete batches[`b${n}`];
+  } else {
+    batches[`b${n}`] = qty;
+  }
+
+  // 롤링 예측 계산
+  let entered = 0, ratioSum = 0;
+  for (let i = 0; i < 4; i++) {
+    const q = batches[`b${i+1}`] || 0;
+    if (q > 0) { entered += q; ratioSum += JKG_BATCH_RATIOS[i]; }
+  }
+  const batchPred = ratioSum > 0 ? Math.round(entered / ratioSum) : 0;
+
+  jkg.배치 = batches;
+  jkg.배치예측 = batchPred;
+
+  try {
+    const btn = inp?.parentElement?.querySelector('button');
+    if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+    const merged = typeof dayaWriteLive === 'function'
+      ? await dayaWriteLive({ 종근당: jkg }, cachedLiveData)
+      : (await (async () => {
+          await fetch(`${FB_URL}/live.json`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ 종근당: jkg }) });
+          return { ...live, 종근당: jkg };
+        })());
+
+    if (inp) inp.value = '';
+    cachedLiveData = merged;
+    renderLive(merged);
+
+    if (btn) { btn.disabled = false; btn.textContent = '입력'; }
+  } catch(e) {
+    alert('저장 실패: ' + e.message);
+  }
+}
+
+async function resetBatches() {
+  if (!confirm('오늘 배치 데이터를 초기화할까요?')) return;
+  const live = cachedLiveData || {};
+  const jkg = { ...(live.종근당 || {}), 배치: {}, 배치예측: 0 };
+  await fetch(`${FB_URL}/live.json`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 종근당: jkg })
+  });
+  cachedLiveData = { ...live, 종근당: jkg };
+  renderBatchPanel(jkg);
+}
+
+// ══ 직배 메시지 템플릿 ══
+function setMsgTemplate(type) {
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const el = document.getElementById('msg-input');
+  if (!el) return;
+  // 현재 종근당 데이터 읽기
+  const jbEl = document.getElementById('d-jb');
+  const dmsEl = document.getElementById('d-dms');
+  const ycEl = document.getElementById('d-yc');
+  const jbN = parseInt(jbEl?.textContent)||0;
+  const dmsN = parseInt(dmsEl?.textContent)||0;
+  const ycN = parseInt(ycEl?.textContent)||0;
+  const templates = {
+    '직배출발': `[${timeStr}] 직배 차량 출발합니다.\n직배 ${jbN}건 출발 예정\n확인 부탁드립니다.`,
+    '직배완료': `[${timeStr}] 직배 완료 안내\n직배 ${jbN}건 출발 완료되었습니다.\n수고하셨습니다!`,
+    '도매출발': `[${timeStr}] 도매상 출발 안내\n도매상 ${dmsN}건 출발합니다.\n확인 바랍니다.`,
+    '용차출발': `[${timeStr}] 용차 출발 안내\n용차 ${ycN}건 출발합니다.\n확인 바랍니다.`,
+    '작업시작': `[${timeStr}] 오늘 작업 시작합니다.\n직배 ${jbN}건 / 도매 ${dmsN}건 / 용차 ${ycN}건\n파이팅!`,
+    '자동': `[${timeStr}] 종근당 현황 안내\n직배 ${jbN}건 / 도매 ${dmsN}건 / 용차 ${ycN}건\n진행 현황 공유드립니다.`
+  };
+  el.value = templates[type] || '';
+  el.focus();
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
 // ══ 직배확정 메시지 전송 ══
 async function sendMessage() {
   const text = document.getElementById('msg-input').value.trim();
@@ -1168,11 +1638,15 @@ async function sendMessage() {
   };
 
   try {
-    const res = await fetch(`${FB_URL}/message.json`, {
-      method: 'PUT',
-      body: JSON.stringify(msgData)
-    });
-    if (!res.ok) throw new Error(res.status);
+    const base = window.DAYA_API_BASE || FB_URL;
+    const fbBackup = window.FB_BACKUP;
+    const body = JSON.stringify(msgData);
+    const headers = { 'Content-Type': 'application/json' };
+    const [r1, r2] = await Promise.all([
+      base ? _noticeFetch(base + '/message.json', { method:'PUT', headers, body }).catch(() => null) : Promise.resolve(null),
+      fbBackup ? _noticeFetch(fbBackup + '/message.json', { method:'PUT', headers, body }).catch(() => null) : Promise.resolve(null)
+    ]);
+    if ((!r1 || !r1.ok) && (!r2 || !r2.ok)) throw new Error('NAS·Firebase 모두 전송 실패');
     showMsgStatus('✅ 전송 완료!', false);
     document.getElementById('msg-input').value = '';
     saveLocalMsgHistory(msgData);
@@ -1202,42 +1676,105 @@ function renderMsgHistory() {
   const hist = JSON.parse(localStorage.getItem('msgHistory') || '[]');
   const el = document.getElementById('msg-history-list');
   if (!hist.length) { el.innerHTML = '<div class="jb-empty">전송 기록 없음</div>'; return; }
-  el.innerHTML = hist.map(m => {
+  el.innerHTML = hist.map((m, idx) => {
     const d = new Date(m.timestamp);
     const timeStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
     const badgeClass = m.confirmed ? 'confirmed' : 'pending';
     const badgeText = m.confirmed ? '확인완료' : '대기중';
-    return `<div class="msg-history-item ${badgeClass}">
-      <div class="msg-history-time">${timeStr}<span class="msg-history-badge ${badgeClass}">${badgeText}</span></div>
+    return `<div class="msg-history-item ${badgeClass}" style="position:relative;">
+      <div class="msg-history-time">${timeStr}<span class="msg-history-badge ${badgeClass}">${badgeText}</span>
+        <button onclick="deleteLocalMsg(${m.timestamp})" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:6px;">삭제</button>
+      </div>
       <div class="msg-history-text">${m.text.replace(/</g,'&lt;')}</div>
     </div>`;
   }).join('');
 }
 
+function deleteLocalMsg(timestamp) {
+  const hist = JSON.parse(localStorage.getItem('msgHistory') || '[]');
+  const filtered = hist.filter(m => m.timestamp !== timestamp);
+  localStorage.setItem('msgHistory', JSON.stringify(filtered));
+  renderMsgHistory();
+}
+
+async function clearFirebaseMsg() {
+  if (!confirm('Firebase에 저장된 메시지를 삭제하시겠습니까?\n작업자 앱에서 더 이상 메시지가 뜨지 않습니다.')) return;
+  try {
+    const base = window.DAYA_API_BASE || FB_URL;
+    const fbBackup = window.FB_BACKUP;
+    const headers = { 'Content-Type': 'application/json' };
+    await Promise.all([
+      base ? _noticeFetch(base + '/message.json', { method:'PUT', headers, body:'null' }).catch(() => {}) : Promise.resolve(),
+      fbBackup ? _noticeFetch(fbBackup + '/message.json', { method:'PUT', headers, body:'null' }).catch(() => {}) : Promise.resolve()
+    ]);
+    // 로컬 메시지 기록 전체 삭제
+    localStorage.setItem('msgHistory', JSON.stringify([]));
+    renderMsgHistory();
+    showMsgStatus('🗑️ 메시지 삭제 완료', false);
+  } catch(e) {
+    showMsgStatus('❌ 삭제 실패: ' + e.message, true);
+  }
+}
+
 // ══ 메시지 확인 폴링 ══
 let lastMsgTimestamp = 0;
-async function pollMessageConfirmation() {
-  if (!FB_URL) return;
-  try {
-    const res = await fetch(`${FB_URL}/message.json?t=${Date.now()}`);
-    if (!res.ok) return;
-    const msg = await res.json();
-    if (!msg) return;
+let _lastConfirmPopupTs = 0; // 확인완료 팝업 중복 방지
 
-    // 확인됐는데 아직 팝업 안 띄운 경우
-    if (msg.confirmed && msg.timestamp !== lastMsgTimestamp) {
-      lastMsgTimestamp = msg.timestamp;
-      // 로컬 히스토리 업데이트
-      const hist = JSON.parse(localStorage.getItem('msgHistory') || '[]');
-      const idx = hist.findIndex(m => m.timestamp === msg.timestamp);
-      if (idx >= 0 && !hist[idx].confirmed) {
-        hist[idx].confirmed = true;
-        hist[idx].confirmedAt = msg.confirmedAt;
+async function pollMessageConfirmation() {
+  if (!FB_URL && !window.DAYA_API_BASE && !window.FB_BACKUP) return;
+  try {
+    const base = window.DAYA_API_BASE || FB_URL;
+    const fbBackup = window.FB_BACKUP;
+    let msg = null;
+    // NAS 시도
+    if (base) {
+      try {
+        const r = await _noticeFetch(base + '/message.json?t=' + Date.now());
+        if (r.ok) msg = await r.json().catch(() => null);
+      } catch(e) {}
+    }
+    // NAS 실패 시 Firebase 직접
+    if (!msg && fbBackup) {
+      try {
+        const r = await _noticeFetch(fbBackup + '/message.json?t=' + Date.now());
+        if (r.ok) msg = await r.json().catch(() => null);
+      } catch(e) {}
+    }
+    if (!msg || !msg.timestamp) return;
+
+    const hist = JSON.parse(localStorage.getItem('msgHistory') || '[]');
+    const idx = hist.findIndex(m => m.timestamp === msg.timestamp);
+
+    if (msg.confirmed) {
+      // 확인됨 — 히스토리에 반영
+      if (idx >= 0) {
+        if (!hist[idx].confirmed) {
+          hist[idx].confirmed = true;
+          hist[idx].confirmedAt = msg.confirmedAt;
+          localStorage.setItem('msgHistory', JSON.stringify(hist));
+          renderMsgHistory();
+          if (msg.timestamp !== _lastConfirmPopupTs) {
+            _lastConfirmPopupTs = msg.timestamp;
+            showAdminConfirm(msg.text);
+          }
+        }
+      } else {
+        // 새로고침 후 히스토리 소실 → 확인완료 항목으로 복구
+        hist.unshift({ text: msg.text, timestamp: msg.timestamp, confirmed: true, confirmedAt: msg.confirmedAt });
+        if (hist.length > 10) hist.length = 10;
         localStorage.setItem('msgHistory', JSON.stringify(hist));
         renderMsgHistory();
-        showAdminConfirm(msg.text);
+      }
+    } else {
+      // 미확인 메시지 — 히스토리에 없으면 대기중으로 추가 (새로고침 복구)
+      if (idx < 0) {
+        hist.unshift({ text: msg.text, timestamp: msg.timestamp, confirmed: false, confirmedAt: null });
+        if (hist.length > 10) hist.length = 10;
+        localStorage.setItem('msgHistory', JSON.stringify(hist));
+        renderMsgHistory();
       }
     }
+    lastMsgTimestamp = msg.timestamp;
   } catch(e) {}
 }
 
@@ -1257,20 +1794,98 @@ document.getElementById('admin-confirm-overlay').addEventListener('click', e => 
 // ══════════════════════════════════════════════
 // 🔮 관리자PC 예측·분석 엔진 (관리자폰과 동일 로직)
 // ══════════════════════════════════════════════
-let admPredConfig = null;
+// admPredConfig 선언은 상단으로 이동(TDZ 방지)
 const DOW_KR_ADM = ['일','월','화','수','목','금','토'];
 
+// 공휴일 다음날 체크 헬퍼 (관리자PC)
+const _PC_FH = new Set(['01-01','03-01','05-01','05-05','06-06','08-15','10-03','10-09','12-25']);
+const _PC_LH = new Set([
+  '2023-01-21','2023-01-22','2023-01-23','2023-01-24','2023-05-27',
+  '2023-09-27','2023-09-28','2023-09-29','2023-09-30','2023-10-02',
+  '2024-02-08','2024-02-09','2024-02-10','2024-02-11','2024-02-12',
+  '2024-05-06','2024-05-15','2024-09-15','2024-09-16','2024-09-17','2024-09-18',
+  '2025-01-27','2025-01-28','2025-01-29','2025-01-30','2025-01-31',
+  '2025-05-06','2025-10-04','2025-10-05','2025-10-06','2025-10-07','2025-10-08',
+  '2026-02-15','2026-02-16','2026-02-17','2026-02-18','2026-02-19',
+  '2026-05-24','2026-05-25','2026-09-23','2026-09-24','2026-09-25','2026-09-26','2026-09-28',
+  '2027-02-05','2027-02-06','2027-02-07','2027-02-08','2027-02-09',
+  '2027-05-13','2027-10-13','2027-10-14','2027-10-15','2027-10-16',
+]);
+function _pcIsHol(k) { return _PC_LH.has(k) || _PC_FH.has(k.slice(5)); }
+function _pcPrevWd(ds) {
+  const d = new Date(ds);
+  for(let i=1;i<=10;i++){d.setDate(d.getDate()-1);if(d.getDay()!==0&&d.getDay()!==6)return d.toISOString().slice(0,10);}
+  return null;
+}
+function _pcIsPostHolidayToday() {
+  const today = new Date().toISOString().slice(0,10);
+  const prev = _pcPrevWd(today);
+  return !!(prev && _pcIsHol(prev));
+}
+function _pcNextWd(ds) {
+  const d = new Date(ds);
+  for(let i=1;i<=10;i++){d.setDate(d.getDate()+1);const dw=d.getDay();if(dw!==0&&dw!==6)return d.toISOString().slice(0,10);}
+  return null;
+}
+function _pcIsPreHolidayToday() {
+  const today = new Date().toISOString().slice(0,10);
+  const next = _pcNextWd(today);
+  return !!(next && _pcIsHol(next));
+}
+
 function admCalcPredicted(netQty) {
-  const now=new Date(), dow=now.getDay(), dom=now.getDate(), mon=now.getMonth()+1;
-  if(dow===0||dow===6||!admPredConfig) return null;
-  const {overall=0,recent4wAvg=[],recent4wCnt=[],dowAvg=[],domFactor=[],monAvg=[],monCnt=[]}=admPredConfig;
-  if(overall<=0) return null;
-  let baseVal,method;
-  if(recent4wAvg[dow]>0&&(recent4wCnt[dow]||0)>=2){baseVal=recent4wAvg[dow];method=`최근${recent4wCnt[dow]}주 ${DOW_KR_ADM[dow]}요일 평균`;}
-  else if(dowAvg[dow]>0){baseVal=dowAvg[dow];method=`전체 ${DOW_KR_ADM[dow]}요일 평균`;}
-  else{baseVal=overall;method='전체 평균';}
-  const domF=domFactor[dom]||1, monF=(monCnt[mon]>=2&&monAvg[mon]>0)?monAvg[mon]/overall:1;
-  return {predicted:Math.round(baseVal*domF*monF), overall, dow, dom, method};
+  const now = new Date(), dow = now.getDay(), dom = now.getDate(), mon = now.getMonth()+1;
+  if (dow === 0 || dow === 6 || !admPredConfig) return null;
+  const {
+    overall=0,
+    dowAvg=[], dowFactor=[],
+    domFactor=[], domCnt=[],
+    monAvg=[], monCnt=[],
+    weighted4wAvg=[], recent4wAvg=[], recent4wCnt=[],
+    trendFactor=[], weekOfMonthFactor=[], lateMonthFactor=1,
+    accuracyFactor=[], nextDayFactor=1.2, prevDayFactor=0.8
+  } = admPredConfig;
+  if (overall <= 0) return null;
+
+  const DOW_KR = ['일','월','화','수','목','금','토'];
+  const w4w = weighted4wAvg[dow] || recent4wAvg[dow] || 0;
+  const w4wCnt = recent4wCnt[dow] || 0;
+  const trend = trendFactor[dow] || 1;
+  const patternBase = dowAvg[dow] || Math.round(overall * (dowFactor[dow] || 1));
+
+  let base, method;
+  if (w4w > 0 && w4wCnt >= 3) {
+    base = w4w * trend * 0.60 + patternBase * 0.40;
+    method = `최근${w4wCnt}주 ${DOW_KR[dow]}요일 가중평균`;
+  } else if (w4w > 0 && w4wCnt >= 2) {
+    base = w4w * trend * 0.40 + patternBase * 0.60;
+    method = `최근${w4wCnt}주 혼합예측`;
+  } else if (w4w > 0) {
+    base = w4w * 0.25 + patternBase * 0.75;
+    method = `요일 패턴 기반`;
+  } else {
+    base = patternBase;
+    method = `전체 ${DOW_KR[dow]}요일 평균`;
+  }
+
+  const rawDomF = domFactor[dom] || 1;
+  const wi = dom<=7?0:dom<=14?1:dom<=21?2:3;
+  const rawWomF = (weekOfMonthFactor[wi])||1;
+  const dateF = (domCnt[dom]||0)>=3 ? 1+(rawDomF-1)*0.5 : 1+(rawWomF-1)*0.5;
+  const monF = (monCnt[mon]>=2&&monAvg[mon]>0) ? 1+(monAvg[mon]/overall-1)*0.3 : 1;
+  const latef = dom>=25 ? 1+((lateMonthFactor||1)-1)*0.6 : 1;
+  const accF = (accuracyFactor[dow])||1;
+
+  // 공휴일/휴무 다음날 계수
+  const _isNdPc = _pcIsPostHolidayToday();
+  const ndFPc = _isNdPc ? nextDayFactor : 1;
+  const _isPdPc = _pcIsPreHolidayToday();
+  const pdFPc = _isPdPc ? prevDayFactor : 1;
+
+  let predicted = Math.round(base * dateF * monF * latef * accF * ndFPc * pdFPc);
+  predicted = Math.max(Math.round(overall*(_isPdPc?0.25:0.35)), Math.min(Math.round(overall*(_isNdPc?2.6:2.1)), predicted));
+
+  return { predicted, overall, dow, dom, method, isPostHoliday: _isNdPc, isPreHoliday: _isPdPc };
 }
 function admCalcEta(cur,pred) {
   if(cur<=0||pred<=0) return null;
@@ -1363,18 +1978,104 @@ function admUpdatePredWidget(liveData) {
     else snapsEl.style.display='none';
   }
 
-  // 박스현황 (5분마다)
+  // 페이스 위젯
+  admUpdatePaceWidget(liveData, pInfo||null);
+
+  // 월별 예상 (5분마다)
   const now2=Date.now();
-  if(!_admMonthLoaded||(now2-_admMonthTs)>5*60*1000){_admMonthLoaded=true;_admMonthTs=now2;admLoadMonthForecast();}
+  if(admPredConfig&&(!_admMonthLoaded||(now2-_admMonthTs)>5*60*1000)){_admMonthLoaded=true;_admMonthTs=now2;admLoadMonthForecast();}
 }
 let _admMonthLoaded=false, _admMonthTs=0;
 
-function admBoxTodayKey() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function admGetTeamGradeFactor(liveData) {
+  try {
+    const cfg=JSON.parse(localStorage.getItem('sys_config_v1')||'{}');
+    const workers=(cfg.workers||[]).map(w=>typeof w==='string'?{name:w,grade:'B'}:w);
+    const gf=Object.assign({A:100,B:85,C:70,D:55},cfg.gradeFactors||{});
+    const stdHours=parseFloat(cfg.standardHours)||8;
+    const att=liveData?.출근부;
+    if(!att||!att.members||workers.length===0) return{factor:1,count:0,composition:'',stdHours};
+    const presentNames=new Set(Object.entries(att.members||{}).filter(([,s])=>s==='present'||s==='late').map(([n])=>n));
+    const present=workers.filter(w=>presentNames.has(w.name));
+    if(present.length===0) return{factor:1,count:0,composition:'',stdHours};
+    const avg=present.reduce((s,w)=>s+(gf[w.grade]||85),0)/present.length/100;
+    const comp=Object.entries(present.reduce((acc,w)=>{acc[w.grade]=(acc[w.grade]||0)+1;return acc;},{}))
+      .map(([g,c])=>`${g}:${c}명`).join(' ');
+    return{factor:avg,count:present.length,composition:comp,stdHours};
+  } catch(e){return{factor:1,count:0,composition:'',stdHours:8};}
+}
+
+function admUpdatePaceWidget(liveData,pInfo) {
+  const el=document.getElementById('admPaceWidget'); if(!el) return;
+  const now=new Date(), start=new Date(now); start.setHours(9,0,0,0);
+  const elH=(now-start)/3600000;
+  if(!pInfo||!pInfo.predicted){el.style.display='none';return;}
+  const hanjin=liveData?.기타업체?.한진||0, jikbae=liveData?.종근당?.직배||0;
+  const netQty=(liveData?.totalQty||0)-hanjin-jikbae;
+  const {factor,count,composition,stdHours}=admGetTeamGradeFactor(liveData);
+  const adjPred=Math.round(pInfo.predicted*factor);
+  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const setStyle=(id,s,v)=>{const e=document.getElementById(id);if(e)e.style[s]=v;};
+
+  // 준비중 상태
+  if(elH<0.1||netQty<=0){
+    el.style.display='';
+    setEl('admPaceSpeed','—');
+    setEl('admPaceTarget',`목표 ${Math.round(adjPred/stdHours)}개/h`);
+    setEl('admPaceIcon','⏳'); setEl('admPaceLabel','준비중'); setStyle('admPaceLabel','color','var(--muted)');
+    setEl('admPaceTeamBadge',count>0?`👷 ${count}명`:'');
+    setEl('admPaceTeamDetail',`오늘 목표 ${adjPred}개`);
+    setEl('admPaceEta','');
+    const bar=document.getElementById('admPaceBar'); if(bar){bar.style.width='0%';bar.style.background='rgba(255,255,255,.15)';}
+    return;
+  }
+  el.style.display='';
+  const currentRate=netQty/elH;
+  const targetRate=adjPred/stdHours;
+  const ratio=targetRate>0?currentRate/targetRate:0;
+  const pct=Math.min(Math.round(ratio*100),200);
+  let icon,label,color;
+  if(ratio>=1.15){icon='🔥';label='빠름';color='#22c55e';}
+  else if(ratio>=0.9){icon='✅';label='적정';color='var(--a3)';}
+  else if(ratio>=0.7){icon='⚠️';label='느림';color='var(--a5)';}
+  else{icon='🚨';label='위험';color='#ef4444';}
+  setEl('admPaceSpeed',`현재 ${Math.round(currentRate)}개/h`);
+  setEl('admPaceTarget',`목표 ${Math.round(targetRate)}개/h`);
+  const bar=document.getElementById('admPaceBar');
+  if(bar){bar.style.width=Math.min(pct,100)+'%';bar.style.background=color;}
+  setEl('admPaceIcon',icon); setEl('admPaceLabel',label);
+  setStyle('admPaceLabel','color',color);
+  if(count>0){
+    setEl('admPaceTeamBadge',`👷 ${count}명`);
+    setEl('admPaceTeamDetail',composition?`구성: ${composition}`:'');
+  } else {
+    setEl('admPaceTeamBadge',''); setEl('admPaceTeamDetail','');
+  }
+  const rem=Math.max(adjPred-netQty,0);
+  if(rem>0&&currentRate>0){
+    const etaMs=now.getTime()+rem/currentRate*3600000;
+    const etaD=new Date(etaMs);
+    const h=etaD.getHours(),m=etaD.getMinutes(),ap=h<12?'오전':'오후',hh=h>12?h-12:(h===0?12:h);
+    setEl('admPaceEta',`완료 예상: ${ap} ${hh}:${String(m).padStart(2,'0')}`);
+  } else if(rem<=0){
+    setEl('admPaceEta','🎉 목표 달성!');
+  } else {
+    setEl('admPaceEta','');
+  }
 }
 
 // ══ 📦 박스현황: 날짜별 / 기간별 조회 ══
+function admBoxTodayKey(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+let admBoxStream=null, admBoxReloadTimer=null;
+function admReloadBoxSoon(){ clearTimeout(admBoxReloadTimer); admBoxReloadTimer=setTimeout(()=>{ _admMonthLoaded=false; admLoadMonthForecast(); },250); }
+function initAdmBoxRealtime(){
+  if(!FB_URL||admBoxStream||typeof EventSource==='undefined') return;
+  try{
+    admBoxStream=new EventSource(`${FB_URL}/stream`);
+    admBoxStream.onmessage=(event)=>{ try{ const msg=JSON.parse(event.data); if(msg&&msg.type==='box_history') admReloadBoxSoon(); }catch(e){} };
+    admBoxStream.onerror=()=>{ if(admBoxStream) admBoxStream.close(); admBoxStream=null; setTimeout(initAdmBoxRealtime,5000); };
+  }catch(e){}
+}
 const BOX_COMPANIES=['종근당','국제','삼천당','비씨','대우'];
 let _boxDates=[], _boxCache={}, _boxMode='date', _boxSelKey=null, _boxRangeStart=null, _boxRangeEnd=null, _boxInit=false;
 
@@ -1397,6 +2098,7 @@ async function admLoadMonthForecast(){
     const rawKeys=await fetch(`${FB_URL}/box_history?t=${Date.now()}`).then(r=>r.ok?r.json():[]).catch(()=>[]);
     _boxDates=Array.isArray(rawKeys)?rawKeys.slice():Object.keys(rawKeys||{}).sort().reverse();
     _boxCache={};                                    // 실시간/새로고침 시 데이터 재조회
+    initAdmBoxRealtime();                            // 박스 실시간(SSE) 갱신 시작 (중복 방지 가드)
     const tabs=document.getElementById('admBoxTabs'), ctl=document.getElementById('admBoxControls');
     if(_boxDates.length===0){
       if(tabs) tabs.innerHTML=''; if(ctl) ctl.innerHTML='';
@@ -1554,16 +2256,24 @@ async function admRenderBoxPeriod(mc){
 async function admLoadQuickPred() {
   if (admPredConfig || !FB_URL) return;
   try {
+    const _FH = new Set(['01-01','03-01','05-01','05-05','06-06','08-15','10-03','10-09','12-25']);
+    const _LH = new Set([
+      '2023-01-21','2023-01-22','2023-01-23','2023-01-24','2023-05-27','2023-09-27','2023-09-28','2023-09-29','2023-09-30','2023-10-02',
+      '2024-02-08','2024-02-09','2024-02-10','2024-02-11','2024-02-12','2024-05-06','2024-05-15','2024-09-15','2024-09-16','2024-09-17','2024-09-18',
+      '2025-01-27','2025-01-28','2025-01-29','2025-01-30','2025-01-31','2025-05-06','2025-10-04','2025-10-05','2025-10-06','2025-10-07','2025-10-08',
+      '2026-02-15','2026-02-16','2026-02-17','2026-02-18','2026-02-19','2026-05-24','2026-05-25','2026-09-23','2026-09-24','2026-09-25','2026-09-26','2026-09-28',
+      '2027-02-05','2027-02-06','2027-02-07','2027-02-08','2027-02-09','2027-05-13','2027-10-13','2027-10-14','2027-10-15','2027-10-16',
+    ]);
+    const _isHol = k => _LH.has(k) || _FH.has(k.slice(5));
+
     const now = new Date(), today = now.getDate();
     const dates = [];
-    for (let i = 1; i <= 42 && dates.length < 20; i++) {
+    for (let i = 1; i <= 60 && dates.length < 20; i++) {
       const d = new Date(now); d.setDate(today - i);
       const dw = d.getDay();
-      if (dw !== 0 && dw !== 6) {
-        dates.push({
-          key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
-          dow: dw, dom: d.getDate(), mon: d.getMonth()+1
-        });
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      if (dw !== 0 && dw !== 6 && !_isHol(key)) {
+        dates.push({ key, dow: dw, dom: d.getDate(), mon: d.getMonth()+1 });
       }
     }
     if (dates.length < 3) return;
@@ -1573,8 +2283,19 @@ async function admLoadQuickPred() {
     ));
 
     const pairs = dates.map((d,i)=>({...d,data:results[i]}))
-      .filter(p=>p.data&&(p.data.totalQty||0)>50)
-      .map(p=>({...p,qty:(p.data.totalQty||0)-(p.data?.기타업체?.한진||0)-(p.data?.종근당?.직배||0)}))
+      .filter(p=>p.data&&(
+        (p.data.totalQty||0)>10 ||
+        (p.data?.종근당?.매핑||0)>5 ||
+        (p.data?.instrData?.종근당?.boxes||0)>5
+      ))
+      .map(p=>{
+        const tq=(p.data.totalQty||0)-(p.data?.기타업체?.한진||0)-(p.data?.종근당?.직배||0);
+        // A0 박스수 우선, 없으면 종근당.매핑, 없으면 totalQty 기반
+        const a0boxes = p.data?.instrData?.종근당?.boxes||0;
+        const mappedBoxes = p.data?.종근당?.매핑||0;
+        const qty = tq>10 ? tq : (a0boxes||mappedBoxes);
+        return {...p, qty, a0boxes, a0count: p.data?.instrData?.종근당?.count||0};
+      })
       .filter(p=>p.qty>0);
     if (pairs.length < 3) return;
 
@@ -1597,7 +2318,12 @@ async function admLoadQuickPred() {
     pairs.forEach(p=>{monSum2[p.mon]+=p.qty;monCnt2[p.mon]++;});
     const monAvg=monSum2.map((s,i)=>monCnt2[i]>0?s/monCnt2[i]:0);
 
-    admPredConfig={overall,dowAvg,recent4wAvg,recent4wCnt,domFactor,monAvg,monCnt:monCnt2,orderRatio:0,autoCalc:true};
+    // A0 건수→박스 비율 학습 (instrData.종근당.count, boxes 둘 다 있는 날만)
+    const a0Samples = pairs.filter(p=>p.a0boxes>0&&p.a0count>0).map(p=>p.a0boxes/p.a0count);
+    const orderRatio = a0Samples.length>0 ? a0Samples.reduce((s,v)=>s+v,0)/a0Samples.length : 0;
+
+    admPredConfig={overall,dowAvg,recent4wAvg,recent4wCnt,domFactor,monAvg,monCnt:monCnt2,orderRatio,autoCalc:true};
+    if (cachedLiveData) admUpdatePredWidget(cachedLiveData); // 자동계산 완료 후 즉시 위젯 갱신
     admLoadMonthForecast();
     // config.json에 저장 → work.html 등 다른 앱도 바로 사용 가능
     admSavePredToConfig(admPredConfig);
@@ -1611,13 +2337,13 @@ async function admSavePredToConfig(pred) {
     const r = await fetch(`${FB_URL}/config.json?t=${Date.now()}`);
     const cfg = (await r.json().catch(()=>null)) || {};
     if (cfg.prediction && cfg.prediction.overall > 0 && !cfg.prediction.autoCalc) return;
-    cfg.prediction = {
+    const newPrediction = {
       overall:pred.overall, dowAvg:pred.dowAvg, domFactor:pred.domFactor,
       monAvg:pred.monAvg, monCnt:pred.monCnt, recent4wAvg:pred.recent4wAvg,
       recent4wCnt:pred.recent4wCnt, orderRatio:pred.orderRatio||0,
       updatedAt:new Date().toISOString().slice(0,10), autoCalc:true
     };
-    await fetch(`${FB_URL}/config.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});
+    await fetch(`${FB_URL}/config.json`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({prediction:newPrediction})});
   } catch(e) {}
 }
 
@@ -1636,6 +2362,217 @@ setInterval(async () => {
   } catch(e) {}
 }, 30 * 60 * 1000);
 
+// ══════════════════════════════════════════════
+// 📢 공지사항 관리 (관리자 PC)
+// ══════════════════════════════════════════════
+
+// 공지사항 전용 fetch — daya-api.js 인터셉터 우회, 5초 타임아웃
+function _noticeFetch(url, opt) {
+  const _f = window.__dayaOrigFetch || window.fetch.bind(window);
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), 5000);
+  return _f(url, Object.assign({ signal: ctrl.signal }, opt || {}))
+    .finally(() => clearTimeout(tid));
+}
+
+async function _noticeWrite(payload) {
+  const body = JSON.stringify(payload);
+  const headers = { 'Content-Type': 'application/json' };
+  const nasUrl = `${window.DAYA_API_BASE || FB_URL}/notice.json`;
+  const fbUrl  = `${window.FB_BACKUP}/notice.json`;
+  const [r1, r2] = await Promise.all([
+    _noticeFetch(nasUrl, { method:'PUT', headers, body }).catch(() => null),
+    _noticeFetch(fbUrl,  { method:'PUT', headers, body }).catch(() => null)
+  ]);
+  if ((!r1 || !r1.ok) && (!r2 || !r2.ok)) throw new Error('NAS·Firebase 모두 저장 실패');
+}
+
+async function pcLoadNotices() {
+  _pcNotices = [];
+  try {
+    const nasUrl = `${window.DAYA_API_BASE || FB_URL}/notice.json?t=${Date.now()}`;
+    let data = null;
+    // NAS 시도
+    try {
+      const r = await _noticeFetch(nasUrl);
+      if (r.ok) data = await r.json().catch(() => null);
+    } catch(e) {}
+    // NAS 실패 시 Firebase 직접
+    if (!data && window.FB_BACKUP) {
+      try {
+        const r = await _noticeFetch(`${window.FB_BACKUP}/notice.json?t=${Date.now()}`);
+        if (r.ok) data = await r.json().catch(() => null);
+      } catch(e) {}
+    }
+    _pcNotices = (data && data.notices) ? data.notices : [];
+  } catch(e) { _pcNotices = []; }
+  pcRenderNoticeList();
+}
+
+function pcRenderNoticeList() {
+  const wrap = document.getElementById('pcNoticeList');
+  if (!wrap) return;
+  if (!_pcNotices.length) {
+    wrap.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px 0;">등록된 공지사항 없음</div>';
+    return;
+  }
+  const list = [..._pcNotices].reverse().slice(0, 6);
+  _pcNoticeListData = list;
+  wrap.innerHTML = list.map((n, idx) => `
+    <div class="pc-notice-clickable" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;" onclick="pcOpenNoticeDetail(${idx})">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:2px;">${n.important?'⚠️ ':''}${n.title}</div>
+        <div style="font-size:10px;color:var(--muted);">${n.date} · 클릭하여 내용 보기</div>
+      </div>
+      <button onclick="event.stopPropagation();pcDeleteNotice('${n.id}')" style="background:rgba(255,100,100,.15);border:1px solid rgba(255,100,100,.3);color:#ff6b6b;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;">삭제</button>
+    </div>`).join('');
+}
+
+function pcOpenNoticeDetail(idx) {
+  const n = _pcNoticeListData[idx];
+  if (!n) return;
+  document.getElementById('pcNdMeta').textContent = (n.date||'') + (n.type==='update'?' 🔄 자동등록':'') + (n.type==='analysis'?' 📊 분석결과':'') + (n.important?' ⚠️ 중요':'');
+  document.getElementById('pcNdTitle').textContent = n.title||'';
+  document.getElementById('pcNdBody').textContent = n.content||'';
+  document.getElementById('pcNdOverlay').classList.add('show');
+}
+function pcCloseNoticeDetail() {
+  document.getElementById('pcNdOverlay').classList.remove('show');
+}
+
+async function pcSubmitNotice() {
+  const title = document.getElementById('pcNoticeTitle')?.value.trim();
+  const content = document.getElementById('pcNoticeContent')?.value.trim();
+  const important = document.getElementById('pcNoticeImportant')?.checked || false;
+  if (!title) { alert('제목을 입력하세요'); return; }
+  if (!content) { alert('내용을 입력하세요'); return; }
+  const btn = document.getElementById('pcNoticeBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '등록 중...'; }
+  try {
+    await pcLoadNotices();
+    _pcNotices.push({ id: Date.now().toString(), type:'notice', title, content, date: new Date().toISOString().slice(0,10), important });
+    if (_pcNotices.length > 50) _pcNotices = _pcNotices.slice(-50);
+    await _noticeWrite({ notices: _pcNotices });
+    document.getElementById('pcNoticeTitle').value = '';
+    document.getElementById('pcNoticeContent').value = '';
+    document.getElementById('pcNoticeImportant').checked = false;
+    pcRenderNoticeList();
+    alert('✅ 공지사항이 등록되었습니다');
+  } catch(e) { alert('등록 실패: ' + e.message); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = '📢 공지 등록'; } }
+}
+
+async function pcDeleteNotice(id) {
+  if (!confirm('이 공지를 삭제하시겠습니까?')) return;
+  _pcNotices = _pcNotices.filter(n => n.id !== id);
+  try {
+    await _noticeWrite({ notices: _pcNotices });
+    pcRenderNoticeList();
+  } catch(e) {}
+}
+
+// 페이지 로드 시 공지 목록 자동 로드 + 60초마다 갱신
+setTimeout(pcLoadNotices, 2500);
+setInterval(pcLoadNotices, 60000);
+
+// ── 관리자 PC 버전 자동 공지 ──
+const PC_VER_KEY = 'daya_app_ver_adm_pc';
+
+async function pcCheckVersionNotice() {
+  try {
+    const stored = localStorage.getItem(PC_VER_KEY);
+    localStorage.setItem(PC_VER_KEY, APP_VERSION_PC);
+    if (!stored || stored === APP_VERSION_PC) return;
+    const r = await fetch(`${FB_URL}/notice.json?t=${Date.now()}`);
+    const d = (r.ok ? await r.json().catch(()=>null) : null) || {};
+    const notices = d.notices || [];
+    const recent = notices.filter(n => n.type==='update' && n.version===APP_VERSION_PC);
+    if (recent.length > 0) return;
+    notices.push({
+      id: Date.now().toString(),
+      type: 'update',
+      version: APP_VERSION_PC,
+      title: `💻 관리자 PC 업데이트 (${APP_VERSION_PC})`,
+      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 📦 박스현황 날짜별·기간별 조회 — [날짜별] 탭에서 날짜 선택/◀▶ 이동, [기간별] 탭에서 시작~종료일(또는 최근7일/30일/전체)로 입고·출고 합계·순증감·기말보유를 회사별로 확인.\n② ⚡ 박스현황 실시간(SSE) 자동 갱신 — 작업자 입력 시 새로고침 없이 즉시 반영.\n③ 🐛 날짜 시간대 버그 수정(새벽 시간 '오늘' 박스가 어제로 보이던 문제).\n④ 🔗 NAS·GitHub 코드 통합 — 양쪽이 동일 버전으로 유지됩니다.`,
+      date: new Date().toISOString().slice(0,10),
+      important: false,
+      auto: true
+    });
+    if (notices.length > 50) notices.splice(0, notices.length - 50);
+    await fetch(`${FB_URL}/notice.json`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ notices })
+    });
+    setTimeout(pcLoadNotices, 500);
+  } catch(e) {}
+}
+
+// ── 관리자 PC 공지 상단 배너 ──
+const PC_NOTICE_READ_KEY = 'daya_last_notice_id_pc';
+async function pcCheckNoticeOnLoad() {
+  try {
+    const r = await fetch(`${FB_URL}/notice.json?t=${Date.now()}`);
+    if (!r.ok) return;
+    const d = await r.json().catch(()=>null);
+    const notices = (d && d.notices) ? [...d.notices].reverse() : [];
+    if (!notices.length) return;
+    const lastRead = localStorage.getItem(PC_NOTICE_READ_KEY) || '';
+    const unread = notices.filter(n => n.id > lastRead);
+    if (!unread.length) return;
+
+    // 상단 배너 표시
+    const existing = document.getElementById('pcNoticeBanner');
+    if (existing) existing.remove();
+    const banner = document.createElement('div');
+    banner.id = 'pcNoticeBanner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999;background:linear-gradient(135deg,#1a2940,#0d1520);border-bottom:2px solid var(--a1);padding:12px 20px;display:flex;align-items:center;gap:12px;';
+    window._pcBannerUnread = unread;
+    banner.innerHTML = `
+      <span style="font-size:14px;">📢</span>
+      <span style="font-size:13px;font-weight:700;color:var(--a1);flex:1;cursor:pointer;" onclick="pcOpenBannerNotice(0)">읽지 않은 공지 ${unread.length}건 — <span style="font-weight:500;color:var(--text);text-decoration:underline;">${unread[0].title}</span> <span style="font-size:11px;color:var(--muted);">▶ 클릭하여 보기</span></span>
+      <button onclick="pcMarkNoticesRead()" style="background:var(--a1);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">✓ 확인</button>
+    `;
+    document.body.prepend(banner);
+  } catch(e) {}
+}
+
+function pcMarkNoticesRead() {
+  const banner = document.getElementById('pcNoticeBanner');
+  if (banner) banner.remove();
+  fetch(`${FB_URL}/notice.json?t=${Date.now()}`).then(r=>r.json()).then(d => {
+    const notices = (d && d.notices) ? d.notices : [];
+    const sorted = [...notices].sort((a,b)=>b.id>a.id?1:-1);
+    if (sorted.length) localStorage.setItem(PC_NOTICE_READ_KEY, sorted[0].id);
+  }).catch(()=>{});
+}
+
+function pcOpenBannerNotice(idx) {
+  const list = window._pcBannerUnread || [];
+  const n = list[idx];
+  if (!n) return;
+  document.getElementById('pcNdMeta').textContent = (n.date||'') + (n.type==='update'?' 🔄 자동등록':'') + (n.type==='analysis'?' 📊 분석결과':'') + (n.important?' ⚠️ 중요':'');
+  document.getElementById('pcNdTitle').textContent = n.title||'';
+  document.getElementById('pcNdBody').textContent = n.content||'';
+  document.getElementById('pcNdOverlay').classList.add('show');
+}
+
+setTimeout(async () => {
+  await pcCheckVersionNotice();
+  await pcCheckNoticeOnLoad();
+}, 2500);
+
+</script>
+<!-- 공지 상세 모달 (PC) -->
+<div class="pc-nd-overlay" id="pcNdOverlay" onclick="if(event.target===this)pcCloseNoticeDetail()">
+  <div class="pc-nd-box">
+    <div style="font-size:15px;font-weight:900;color:var(--a1);">📢 공지 상세</div>
+    <div class="pc-nd-meta" id="pcNdMeta"></div>
+    <div class="pc-nd-title" id="pcNdTitle"></div>
+    <div class="pc-nd-body" id="pcNdBody"></div>
+    <button class="pc-nd-close" onclick="pcCloseNoticeDetail()">✓ 닫기</button>
+  </div>
+</div>
 
 </script>
 </body>
