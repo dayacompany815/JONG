@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>에러 로그 뷰어</title>
+<style>
+:root{
+  --bg:#0d1117;--card:#161b22;--card2:#1c2128;--border:rgba(255,255,255,.08);
+  --text:#e6edf3;--muted:#7d8590;
+  --a1:#58a6ff;--a3:#3fb950;--a5:#d29922;--a6:#f78166;--pink:#e91e8c;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,'Noto Sans KR',sans-serif;min-height:100vh;}
+
+.header{background:linear-gradient(135deg,rgba(239,68,68,.2),rgba(88,166,255,.08));
+  border-bottom:1.5px solid rgba(239,68,68,.3);padding:14px 16px 12px;
+  display:flex;align-items:center;gap:10px;}
+.header h1{font-size:16px;font-weight:900;color:#fff;}
+.header .sub{font-size:10px;color:var(--muted);margin-top:2px;}
+
+.wrap{padding:14px;max-width:700px;margin:0 auto;}
+
+/* 상단 컨트롤 */
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.date-btn{background:var(--card2);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.date-btn:active,.date-btn.active{background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.5);color:#ef4444;}
+.date-input{background:var(--card2);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;outline:none;}
+.rf-btn{background:var(--a6);color:#fff;border:none;border-radius:8px;
+  padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;margin-left:auto;}
+.rf-btn:active{opacity:.8;}
+
+/* 필터 탭 */
+.filter-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.ftab{background:var(--card2);border:1px solid var(--border);color:var(--muted);
+  border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;}
+.ftab.on{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);color:#ef4444;}
+.ftab.app-on{background:rgba(88,166,255,.15);border-color:rgba(88,166,255,.4);color:var(--a1);}
+
+/* 요약 */
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:10px 8px;text-align:center;}
+.sc-l{font-size:9px;color:var(--muted);font-weight:700;margin-bottom:4px;}
+.sc-v{font-size:20px;font-weight:900;line-height:1;}
+
+/* 에러 목록 */
+.log-list{display:flex;flex-direction:column;gap:6px;}
+.log-item{background:var(--card);border:1px solid var(--border);border-radius:11px;
+  padding:12px 14px;cursor:pointer;transition:border-color .15s;}
+.log-item:hover{border-color:rgba(255,255,255,.15);}
+.log-item.type-error{border-left:3px solid #ef4444;}
+.log-item.type-rejection{border-left:3px solid var(--a5);}
+.log-item.type-manual{border-left:3px solid var(--a1);}
+.log-item.type-start{border-left:3px solid var(--a3);opacity:.6;}
+
+.li-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+.li-app{font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;
+  background:rgba(88,166,255,.15);color:var(--a1);}
+.li-type-badge{font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;}
+.tb-error{background:rgba(239,68,68,.15);color:#ef4444;}
+.tb-rejection{background:rgba(210,153,34,.15);color:var(--a5);}
+.tb-manual{background:rgba(88,166,255,.15);color:var(--a1);}
+.tb-start{background:rgba(63,185,80,.15);color:var(--a3);}
+.li-time{font-size:10px;color:var(--muted);margin-left:auto;}
+.li-user{font-size:10px;color:var(--muted);}
+
+.li-msg{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;
+  word-break:break-all;line-height:1.4;}
+.li-src{font-size:10px;color:var(--muted);word-break:break-all;}
+
+/* 상세 펼침 */
+.li-detail{display:none;margin-top:10px;padding-top:10px;
+  border-top:1px solid var(--border);}
+.li-detail.open{display:block;}
+.detail-row{display:flex;gap:8px;margin-bottom:5px;font-size:11px;}
+.dr-label{color:var(--muted);font-weight:700;flex-shrink:0;width:55px;}
+.dr-val{color:var(--text);word-break:break-all;font-family:monospace;font-size:10px;
+  background:rgba(0,0,0,.2);border-radius:4px;padding:2px 6px;flex:1;}
+.stack-box{background:rgba(0,0,0,.3);border-radius:6px;padding:8px;font-size:9px;
+  color:var(--muted);font-family:monospace;white-space:pre-wrap;word-break:break-all;
+  max-height:120px;overflow-y:auto;margin-top:5px;}
+
+/* 실시간 */
+.live-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(63,185,80,.15);
+  border:1px solid rgba(63,185,80,.3);border-radius:8px;padding:4px 10px;
+  font-size:11px;font-weight:700;color:var(--a3);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--a3);
+  animation:blink 1.2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+
+.no-data{color:var(--muted);font-size:12px;text-align:center;padding:40px 0;line-height:1.8;}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.1);
+  border-top-color:var(--a6);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;}
+@keyframes sp{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="font-size:22px;">🚨</div>
+  <div>
+    <h1>에러 로그 뷰어</h1>
+    <div class="sub">앱별 에러 실시간 모니터링</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- 컨트롤 -->
+  <div class="controls">
+    <button class="date-btn active" id="btnToday" onclick="selectDate('today')">오늘</button>
+    <button class="date-btn" id="btnYest"  onclick="selectDate('yesterday')">어제</button>
+    <input  class="date-input" type="date" id="customDate" onchange="selectDate('custom')">
+    <button class="rf-btn" onclick="loadLogs()">🔄 새로고침</button>
+  </div>
+
+  <!-- 실시간 표시 -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+    <div class="live-badge" id="liveBadge" style="display:none;">
+      <div class="live-dot"></div> 실시간 감시중
+    </div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;">
+      <input type="checkbox" id="liveCheck" onchange="toggleLive(this.checked)"
+        style="accent-color:var(--a3);width:14px;height:14px;">
+      자동 새로고침 (30초)
+    </label>
+  </div>
+
+  <!-- 앱별 필터 -->
+  <div class="filter-tabs" id="appFilters"></div>
+
+  <!-- 요약 -->
+  <div class="summary">
+    <div class="sc"><div class="sc-l">전체</div><div class="sc-v" id="sTotal" style="color:var(--text);">—</div></div>
+    <div class="sc"><div class="sc-l">에러</div><div class="sc-v" id="sError" style="color:#ef4444;">—</div></div>
+    <div class="sc"><div class="sc-l">경고</div><div class="sc-v" id="sWarn"  style="color:var(--a5);">—</div></div>
+    <div class="sc"><div class="sc-l">앱시작</div><div class="sc-v" id="sStart" style="color:var(--a3);">—</div></div>
+  </div>
+
+  <!-- 로그 목록 -->
+  <div id="logList"><div class="no-data"><div class="spin"></div></div></div>
+
+</div>
+
+<script src="daya-api.js"></script>
+<script>
+const FB = window.FB_URL;
+let allLogs = [];
+let selectedDate = todayKey();
+let selectedApp = 'all';
+let liveTimer = null;
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function yesterdayKey() {
+  const d = new Date(Date.now() - 86400000);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function pad(n) { return String(n).padStart(2,'0'); }
+
+function selectDate(type) {
+  document.getElementById('btnToday').classList.toggle('active', type === 'today');
+  document.getElementById('btnYest').classList.toggle('active', type === 'yesterday');
+  if (type === 'today')     selectedDate = todayKey();
+  if (type === 'yesterday') selectedDate = yesterdayKey();
+  if (type === 'custom') {
+    const v = document.getElementById('customDate').value;
+    if (v) { selectedDate = v; document.getElementById('btnToday').classList.remove('active'); document.getElementById('btnYest').classList.remove('active'); }
+  }
+  loadLogs();
+}
+
+// ── 로그 로드 ──
+async function loadLogs() {
+  document.getElementById('logList').innerHTML = '<div class="no-data"><div class="spin"></div></div>';
+  if (!FB) { document.getElementById('logList').innerHTML = '<div class="no-data">API URL 없음</div>'; return; }
+
+  try {
+    const res = await fetch(`${FB}/error_logs/${selectedDate}.json?t=${Date.now()}`);
+    const data = res.ok ? await res.json() : null;
+
+    if (!data) { allLogs = []; render(); return; }
+
+    allLogs = Object.entries(data).map(([key, v]) => ({ key, ...v }))
+      .sort((a, b) => (b.ts || 0) - (a.ts || 0));
+
+    render();
+  } catch (e) {
+    document.getElementById('logList').innerHTML = `<div class="no-data">로딩 실패: ${e.message}</div>`;
+  }
+}
+
+// ── 렌더링 ──
+function render() {
+  // 앱 목록 추출
+  const apps = [...new Set(allLogs.map(l => l.app).filter(Boolean))];
+  renderFilters(apps);
+
+  // 필터 적용
+  const filtered = selectedApp === 'all'
+    ? allLogs
+    : allLogs.filter(l => l.app === selectedApp);
+
+  // 요약
+  document.getElementById('sTotal').textContent = filtered.length;
+  document.getElementById('sError').textContent = filtered.filter(l => !l.type || l.type === 'error').length;
+  document.getElementById('sWarn').textContent  = filtered.filter(l => l.type === 'rejection').length;
+  document.getElementById('sStart').textContent = filtered.filter(l => l.type === 'start').length;
+
+  if (!filtered.length) {
+    document.getElementById('logList').innerHTML = '<div class="no-data">이 날짜에 로그 없음<br><span style="font-size:10px;">에러가 발생하면 여기에 자동으로 표시됩니다</span></div>';
+    return;
+  }
+
+  document.getElementById('logList').innerHTML = `<div class="log-list">${filtered.map(renderItem).join('')}</div>`;
+}
+
+function renderFilters(apps) {
+  const el = document.getElementById('appFilters');
+  const all = `<button class="ftab ${selectedApp==='all'?'on':''}" onclick="filterApp('all')">전체</button>`;
+  const btns = apps.map(a =>
+    `<button class="ftab ${selectedApp===a?'app-on':''}" onclick="filterApp('${a}')">${a}</button>`
+  ).join('');
+  el.innerHTML = all + btns;
+}
+
+function filterApp(app) {
+  selectedApp = app;
+  render();
+}
+
+function renderItem(log) {
+  const type = log.type || 'error';
+  const typeBadge = { error:'tb-error', rejection:'tb-rejection', manual:'tb-manual', start:'tb-start' }[type] || 'tb-error';
+  const typeLabel = { error:'JS에러', rejection:'Promise에러', manual:'수동로그', start:'앱시작' }[type] || '에러';
+  const timeStr = log.time || (log.ts ? new Date(log.ts).toLocaleTimeString('ko-KR') : '?');
+
+  return `
+    <div class="log-item type-${type}" onclick="toggleDetail('${log.key}')">
+      <div class="li-top">
+        <div class="li-app">${log.app || '?'}</div>
+        <div class="li-type-badge ${typeBadge}">${typeLabel}</div>
+        ${log.user && log.user !== '?' ? `<div class="li-user">👤 ${log.user}</div>` : ''}
+        <div class="li-time">${timeStr}</div>
+      </div>
+      <div class="li-msg">${escHtml(log.msg || '(메시지 없음)')}</div>
+      ${log.source ? `<div class="li-src">📄 ${escHtml(log.source)}${log.line ? ` :${log.line}` : ''}</div>` : ''}
+      <div class="li-detail" id="detail_${log.key}">
+        ${log.url ? `<div class="detail-row"><div class="dr-label">URL</div><div class="dr-val">${escHtml(log.url)}</div></div>` : ''}
+        ${log.context ? `<div class="detail-row"><div class="dr-label">컨텍스트</div><div class="dr-val">${escHtml(log.context)}</div></div>` : ''}
+        ${log.ua ? `<div class="detail-row"><div class="dr-label">브라우저</div><div class="dr-val">${escHtml(log.ua.slice(0,80))}</div></div>` : ''}
+        ${log.stack && log.stack.length > 5 ? `<div class="stack-box">${escHtml(log.stack)}</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function toggleDetail(key) {
+  const el = document.getElementById('detail_' + key);
+  if (el) el.classList.toggle('open');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── 실시간 ──
+function toggleLive(on) {
+  document.getElementById('liveBadge').style.display = on ? '' : 'none';
+  if (liveTimer) { clearInterval(liveTimer); liveTimer = null; }
+  if (on) liveTimer = setInterval(loadLogs, 30000);
+}
+
+// 초기 로드
+document.getElementById('customDate').value = todayKey();
+loadLogs();
+</script>
+</body>
+</html>

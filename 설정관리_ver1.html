@@ -55,6 +55,15 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
 .dbtn{background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.25);color:var(--red);border-radius:7px;padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;}
 
 .avt{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0;}
+.grade-sel{background:var(--bg);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;font-weight:900;padding:4px 6px;outline:none;font-family:inherit;width:48px;flex-shrink:0;text-align:center;}
+.grade-sel.A{border-color:#ffd600;color:#ffd600;}
+.grade-sel.B{border-color:#3b9eff;color:#3b9eff;}
+.grade-sel.C{border-color:#2ecc71;color:#2ecc71;}
+.grade-sel.D{border-color:#94a3b8;color:#94a3b8;}
+.gf-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.gf-badge{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0;}
+.gf-num{width:68px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-weight:700;padding:6px 8px;outline:none;font-family:inherit;text-align:center;}
+.gf-num:focus{border-color:var(--a1);}
 
 .biz-item{background:var(--card2);border-radius:10px;padding:10px 11px;margin-bottom:8px;border-left:3px solid var(--border);}
 .biz-item:last-child{margin-bottom:0;}
@@ -131,6 +140,8 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
     <div class="hdr-title">시스템 설정 관리</div>
     <div class="hdr-sub" id="hdr-who">변경 후 저장 → 작업자앱 즉시 반영</div>
   </div>
+  <a href="work.html" style="text-decoration:none;background:rgba(59,158,255,.15);border:1.5px solid rgba(59,158,255,.35);color:#3b9eff;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:700;white-space:nowrap;">📱 작업앱</a>
+  <a href="관리자PC_ver15.html?v=20260706-2028" style="text-decoration:none;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);color:#fff;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:700;white-space:nowrap;">🖥️ 대시보드</a>
   <button class="hdr-save" onclick="saveAll()">💾 저장</button>
   <button onclick="doAdminLogout()" style="background:rgba(239,68,68,.15);border:1.5px solid rgba(239,68,68,.3);color:#ef4444;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;margin-left:4px;">로그아웃</button>
 </div>
@@ -180,13 +191,80 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
     <div class="cbody">
       <div id="wlist"></div>
       <button class="add-btn" onclick="addW()">+ 작업자 추가</button>
-      <div class="note">작업자앱 <strong>선택 드롭다운</strong>과 <strong>출근부</strong>에 반영됩니다.</div>
+      <div class="note">작업자앱 <strong>선택 드롭다운</strong>과 <strong>출근부</strong>에 반영됩니다. 등급(A/B/C/D)은 오른쪽 셀렉트에서 설정하세요.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="chdr"><div class="cdot" style="background:var(--a5)"></div><div class="ctitle">등급별 생산성 계수</div></div>
+    <div class="cbody">
+      <div class="note" style="margin-top:0;margin-bottom:10px;">💡 <strong>등급 계수</strong>는 팀 구성에 따른 예측 보정에 사용됩니다. A등급이 기준(100%)입니다.</div>
+      <div class="gf-row">
+        <div class="gf-badge" style="background:rgba(255,214,0,.15);border:1.5px solid rgba(255,214,0,.4);color:#ffd600;">A</div>
+        <input class="gf-num" id="gf-a" type="number" min="50" max="150" value="100"> <span style="font-size:12px;color:var(--muted);">% &nbsp;(숙련)</span>
+      </div>
+      <div class="gf-row">
+        <div class="gf-badge" style="background:rgba(59,158,255,.15);border:1.5px solid rgba(59,158,255,.4);color:#3b9eff;">B</div>
+        <input class="gf-num" id="gf-b" type="number" min="50" max="150" value="85"> <span style="font-size:12px;color:var(--muted);">% &nbsp;(일반)</span>
+      </div>
+      <div class="gf-row">
+        <div class="gf-badge" style="background:rgba(46,204,113,.15);border:1.5px solid rgba(46,204,113,.4);color:#2ecc71;">C</div>
+        <input class="gf-num" id="gf-c" type="number" min="50" max="150" value="70"> <span style="font-size:12px;color:var(--muted);">% &nbsp;(초보)</span>
+      </div>
+      <div class="gf-row">
+        <div class="gf-badge" style="background:rgba(148,163,184,.15);border:1.5px solid rgba(148,163,184,.3);color:#94a3b8;">D</div>
+        <input class="gf-num" id="gf-d" type="number" min="50" max="150" value="55"> <span style="font-size:12px;color:var(--muted);">% &nbsp;(신규)</span>
+      </div>
+      <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+        <div class="gf-row">
+          <div class="gf-badge" style="background:rgba(249,115,22,.15);border:1.5px solid rgba(249,115,22,.4);color:var(--a2);">⏱</div>
+          <input class="gf-num" id="std-hours" type="number" min="4" max="16" step="0.5" value="8"> <span style="font-size:12px;color:var(--muted);">시간 &nbsp;(기준 작업시간 — 목표 속도 계산용)</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- 탭2: 종근당 -->
 <div class="tab-page" id="tp2">
+
+  <!-- 위고비 설정 -->
+  <div class="card" style="border-color:rgba(233,30,140,.35);">
+    <div class="chdr" style="background:rgba(233,30,140,.08);">
+      <div class="cdot" style="background:#e91e8c;"></div>
+      <div class="ctitle" style="color:#e91e8c;">💊 위고비 작업 설정</div>
+    </div>
+    <div class="cbody">
+      <span class="lbl">하루 작업 기준 시간 (페이스 계산 기준)</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input class="inp" id="jkg-work-hours" type="number" min="1" max="24" placeholder="8" style="flex:1;">
+        <span style="color:var(--muted);font-size:13px;font-weight:700;flex-shrink:0;">시간</span>
+      </div>
+      <div class="note">위고비 실시간 현황(jkg-live)의 페이스 계산 기준입니다.<br>기본값 8시간. 변경 시 즉시 Firebase에 저장됩니다.</div>
+      <button onclick="saveJkgConfig()" style="width:100%;margin-top:10px;background:rgba(233,30,140,.15);
+        border:1.5px solid rgba(233,30,140,.35);color:#e91e8c;border-radius:9px;
+        padding:9px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">
+        💾 위고비 설정 저장
+      </button>
+    </div>
+  </div>
+
+  <!-- 바로가기 -->
+  <div class="card" style="border-color:rgba(233,30,140,.2);">
+    <div class="chdr"><div class="cdot" style="background:#e91e8c;"></div><div class="ctitle">위고비 앱 바로가기</div></div>
+    <div class="cbody" style="display:flex;gap:8px;">
+      <a href="jkg-live.html" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+        background:rgba(233,30,140,.12);border:1px solid rgba(233,30,140,.3);
+        border-radius:9px;padding:10px;text-decoration:none;font-size:12px;font-weight:800;color:#e91e8c;">
+        📡 실시간 현황
+      </a>
+      <a href="jkg-dashboard.html" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+        background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.25);
+        border-radius:9px;padding:10px;text-decoration:none;font-size:12px;font-weight:800;color:#3b9eff;">
+        📊 박스수 분석
+      </a>
+    </div>
+  </div>
+
   <div class="card">
     <div class="chdr"><div class="cdot" style="background:var(--a6)"></div><div class="ctitle">종근당 슬롯 수</div></div>
     <div class="cbody">
@@ -308,10 +386,16 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
 </div>
 <div id="toast"></div>
 
+<script src="daya-api.js"></script>
 <script>
 const DEF = {
   firebaseUrl:'', company:'다야냉장팀', startTime:'09:00',
-  workers:['이지철','이성재','한태준','최태원','김제선','김성영','오영석'],
+  workers:[
+    {name:'이지철',grade:'A'},{name:'이성재',grade:'B'},{name:'한태준',grade:'B'},
+    {name:'최태원',grade:'B'},{name:'김제선',grade:'C'},{name:'김성영',grade:'C'},{name:'오영석',grade:'B'}
+  ],
+  gradeFactors:{A:100,B:85,C:70,D:55},
+  standardHours:8,
   jkgSlots:40,
   jbList:['종로팔팔','종로카톨릭','종로365의원','종로5가미래','동탄아이엠유','강서아이엠유','필모어','크리스트','당산수','수원더셀','서울뷰세종','가산연합'],
   dmsRows:3, ycRows:3,
@@ -337,12 +421,19 @@ const BT=[{v:'simple',l:'단순형'},{v:'gj',l:'국제형'},{v:'hj',l:'한진형
 const AV=['#3b82f6','#8b5cf6','#f97316','#ef4444','#06b6d4','#84cc16','#ec4899','#14b8a6','#f59e0b','#64748b'];
 let cfg={};
 
+function migrateWorkers(ws){
+  if(!Array.isArray(ws)) return DEF.workers;
+  return ws.map(w=>typeof w==='string'?{name:w,grade:'B'}:w);
+}
 function loadCfg(){
   // 로컬 API에서 설정 로드
   fetch(`/api/config.json?t=${Date.now()}`)
     .then(r=>r.ok?r.json():null)
-    .then(d=>{if(d){cfg={...DEF,...d};}else{try{const s=localStorage.getItem('sys_config_v1');cfg=s?{...DEF,...JSON.parse(s)}:{...DEF};}catch{cfg={...DEF};}}renderAll();})
-    .catch(()=>{try{const s=localStorage.getItem('sys_config_v1');cfg=s?{...DEF,...JSON.parse(s)}:{...DEF};}catch{cfg={...DEF};}renderAll();});
+    .then(d=>{
+      if(d){cfg={...DEF,...d,workers:migrateWorkers(d.workers),gradeFactors:{...DEF.gradeFactors,...(d.gradeFactors||{})}};}
+      else{try{const s=localStorage.getItem('sys_config_v1');const p=s?JSON.parse(s):{};cfg={...DEF,...p,workers:migrateWorkers(p.workers),gradeFactors:{...DEF.gradeFactors,...(p.gradeFactors||{})}};}catch{cfg={...DEF};}}
+      renderAll(); loadJkgConfig();})
+    .catch(()=>{try{const s=localStorage.getItem('sys_config_v1');cfg=s?{...DEF,...JSON.parse(s)}:{...DEF};}catch{cfg={...DEF};}renderAll(); loadJkgConfig();});
 }
 
 function renderAll(){
@@ -354,25 +445,60 @@ function renderAll(){
   document.getElementById('ext-gw').value=cfg.extraGw||'';
   document.getElementById('ext-gs').value=cfg.extraGs||'';
   document.getElementById('ext-gb').value=cfg.extraGb||'';
-  rW();rBiz();rHj();rJb();rAlarm();
+  rW();rBiz();rHj();rJb();rAlarm();renderGradeFactors();
   updFdot();
 }
 
 // ── 작업자 ──
+const GRADE_COLORS={A:'#ffd600',B:'#3b9eff',C:'#2ecc71',D:'#94a3b8'};
+
+// 경력일수 → 경력기반 제안 등급
+function expGrade(startDate) {
+  if (!startDate) return null;
+  const days = Math.floor((Date.now() - new Date(startDate).getTime()) / 86400000);
+  if (days >= 181) return {grade:'A', label:`${Math.floor(days/30)}개월`, days};
+  if (days >= 121) return {grade:'B', label:`${Math.floor(days/30)}개월`, days};
+  if (days >= 61)  return {grade:'C', label:`${Math.floor(days/30)}개월`, days};
+  return {grade:'D', label:`${days}일`, days};
+}
+
 function rW(){
   const l=cfg.workers||[];
   document.getElementById('wcnt').textContent=l.length+'명';
-  document.getElementById('wlist').innerHTML=l.map((n,i)=>`
-    <div class="row" id="wr${i}">
-      <div class="avt" style="background:linear-gradient(135deg,${AV[i%10]},${AV[(i+2)%10]})">${n?n[0]:'?'}</div>
-      <input class="inp" value="${x(n)}" placeholder="이름 입력"
-        oninput="cfg.workers[${i}]=this.value;document.querySelector('#wr${i} .avt').textContent=this.value[0]||'?'">
+  document.getElementById('wlist').innerHTML=l.map((w,i)=>{
+    const obj=typeof w==='string'?{name:w,grade:'B'}:w;
+    const g=obj.grade||'B';
+    const sel=['A','B','C','D'].map(v=>`<option value="${v}"${v===g?' selected':''}>${v}</option>`).join('');
+    const exp=expGrade(obj.startDate);
+    const expBadge=exp
+      ? `<span style="font-size:10px;color:${GRADE_COLORS[exp.grade]||'#94a3b8'};margin-left:4px;" title="경력기준 제안등급">경력 ${exp.label}(${exp.grade})</span>`
+      : '';
+    return `<div class="row" id="wr${i}" style="flex-wrap:wrap;gap:4px;">
+      <div class="avt" style="background:linear-gradient(135deg,${AV[i%10]},${AV[(i+2)%10]})">${obj.name?obj.name[0]:'?'}</div>
+      <input class="inp" value="${x(obj.name||'')}" placeholder="이름 입력" style="flex:1;min-width:70px;"
+        oninput="cfg.workers[${i}].name=this.value;document.querySelector('#wr${i} .avt').textContent=this.value[0]||'?'">
+      <select class="grade-sel ${g}" onchange="cfg.workers[${i}].grade=this.value;this.className='grade-sel '+this.value">
+        ${sel}
+      </select>
+      <input type="date" value="${obj.startDate||''}" style="font-size:11px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:6px;color:#e2eaf5;padding:3px 6px;"
+        onchange="cfg.workers[${i}].startDate=this.value;rW()" title="입사일">
+      ${expBadge}
       <button class="dbtn" onclick="cfg.workers.splice(${i},1);rW()">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function addW(){
-  (cfg.workers=cfg.workers||[]).push('');rW();
+  (cfg.workers=cfg.workers||[]).push({name:'',grade:'B',startDate:''});rW();
   setTimeout(()=>{const e=document.querySelectorAll('#wlist .inp');if(e.length)e[e.length-1].focus();},50);
+}
+function renderGradeFactors(){
+  const gf=cfg.gradeFactors||DEF.gradeFactors;
+  ['A','B','C','D'].forEach(g=>{
+    const el=document.getElementById('gf-'+g.toLowerCase());
+    if(el) el.value=gf[g]??DEF.gradeFactors[g];
+  });
+  const sh=document.getElementById('std-hours');
+  if(sh) sh.value=cfg.standardHours||8;
 }
 
 // ── 기타업체 ──
@@ -446,7 +572,14 @@ async function saveAll(){
   cfg.extraGw=document.getElementById('ext-gw').value.trim();
   cfg.extraGs=document.getElementById('ext-gs').value.trim();
   cfg.extraGb=document.getElementById('ext-gb').value.trim();
-  cfg.workers=(cfg.workers||[]).filter(w=>w.trim());
+  cfg.workers=(cfg.workers||[]).map(w=>typeof w==='string'?{name:w,grade:'B'}:w).filter(w=>(w.name||'').trim());
+  cfg.gradeFactors={
+    A:parseInt(document.getElementById('gf-a')?.value)||100,
+    B:parseInt(document.getElementById('gf-b')?.value)||85,
+    C:parseInt(document.getElementById('gf-c')?.value)||70,
+    D:parseInt(document.getElementById('gf-d')?.value)||55,
+  };
+  cfg.standardHours=parseFloat(document.getElementById('std-hours')?.value)||8;
   cfg.jbList=(cfg.jbList||[]).filter(j=>j.trim());
   cfg.bizList=(cfg.bizList||[]).filter(b=>b.name.trim());
   cfg.hjList=(cfg.hjList||[]).filter(h=>h.trim());
@@ -464,6 +597,34 @@ async function saveAll(){
     else showBanner('⚠️ NAS 저장 실패 ('+res.status+')',true);
   }catch{showBanner('⚠️ NAS 연결 실패 - 로컬에만 저장됨',true);}
   renderAll();
+}
+
+// ── 위고비 설정 로드/저장 ──
+async function loadJkgConfig() {
+  const FB = window.FB_URL;
+  if (!FB) return;
+  try {
+    const r = await fetch(`${FB}/jkg_config/workHours.json?t=${Date.now()}`);
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d && d.hours > 0) {
+      document.getElementById('jkg-work-hours').value = d.hours;
+    }
+  } catch {}
+}
+
+async function saveJkgConfig() {
+  const FB = window.FB_URL;
+  const hours = parseInt(document.getElementById('jkg-work-hours').value) || 8;
+  if (!FB) { showToast('API URL 없음'); return; }
+  try {
+    const r = await fetch(`${FB}/jkg_config/workHours.json`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hours, savedAt: Date.now() })
+    });
+    if (r.ok) showBanner(`✅ 위고비 작업 기준 ${hours}시간 저장됨`, false);
+    else showBanner('⚠️ 저장 실패', true);
+  } catch { showBanner('⚠️ 연결 실패', true); }
 }
 
 // ── NAS API 연결 테스트 ──
@@ -511,47 +672,7 @@ function showToast(msg){
 }
 function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
-const NAS = 'https://daya.sudalife.net/api';
-// ── Firebase 자동 폴백 + NAS 자동 동기화 ──
-const FB_BACKUP = 'https://ice-work-d8045-default-rtdb.asia-southeast1.firebasedatabase.app';
-(function(){
-  const _f = window.fetch.bind(window);
-  function toFb(u){const p=u.replace('https://daya.sudalife.net/api','').split('?')[0];return p.endsWith('/')?FB_BACKUP+p.slice(0,-1)+'.json':FB_BACKUP+p;}
-  async function fbGet(u){
-    const p=u.replace('https://daya.sudalife.net/api','').split('?')[0],isDir=p.endsWith('/');
-    const r=await _f(toFb(u)+'?t='+Date.now());
-    if(!isDir)return r;
-    const d=await r.clone().json().catch(()=>null);
-    return new Response(JSON.stringify(d?Object.keys(d).sort().reverse():[]),{status:200});
-  }
-  window.fetch=async(url,opt)=>{
-    if(typeof url!=='string'||!url.startsWith('https://daya.sudalife.net/api'))return _f(url,opt);
-    const m=((opt&&opt.method)||'GET').toUpperCase();
-    if(m==='GET'){try{const r=await _f(url,opt);if(r.ok)return r;}catch(e){}return fbGet(url).catch(()=>new Response('null',{status:200}));}
-    const fo=Object.assign({},opt,{headers:{'Content-Type':'application/json'}});
-    const[r1,r2]=await Promise.all([_f(url,opt).catch(()=>null),_f(toFb(url),fo).catch(()=>null)]);
-    return(r1&&r1.ok)?r1:(r2&&r2.ok)?r2:new Response('{"error":"both failed"}',{status:500});
-  };
-  setTimeout(async()=>{
-    try{
-      const ping=await _f('/api/config.json?t='+Date.now());
-      if(!ping.ok)return;
-      const paths=['/config.json'];
-      for(const p of paths){
-        try{
-          const[nr,fr]=await Promise.all([
-            _f('/api'+p+'?t='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
-            _f(FB_BACKUP+p+'?t='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
-          ]);
-          if(!fr)continue;
-          const nSaved=(nr&&(nr.savedAt||0))||0;
-          const fSaved=(fr&&(fr.savedAt||0))||0;
-          if(fSaved>nSaved){await _f('/api'+p,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(fr)});}
-        }catch(e){}
-      }
-    }catch(e){}
-  },3000);
-})();
+var NAS = window.FB_URL;
 
 async function loadUserList() {
   const el = document.getElementById('userList');

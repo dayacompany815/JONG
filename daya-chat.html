@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>다야 AI 어시스턴트</title>
+<script src="daya-api.js?v=20250519"></script>
+<style>
+:root {
+  --bg:#0b0f1a; --card:#111827; --card2:#1a2235; --border:#1e2d45;
+  --text:#e2eaf5; --muted:#5a7a99;
+  --a1:#3b9eff; --a2:#f97316; --a3:#2ecc71; --a4:#a78bfa; --a5:#ffd600; --a6:#ff6b9d;
+  --red:#ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;height:100%;width:100%;overflow:hidden;}
+html{height:-webkit-fill-available;}
+
+/* ── 헤더 ── */
+.hdr{
+  background:linear-gradient(135deg,#080d1a,#0f1e35);
+  border-bottom:2px solid var(--a4);
+  padding:10px 14px;
+  display:flex;align-items:center;gap:10px;
+  box-shadow:0 2px 12px rgba(0,0,0,.5);
+  flex-shrink:0;
+}
+.hdr-icon{font-size:28px;line-height:1;}
+.hdr-info{flex:1;}
+.hdr-title{font-size:15px;font-weight:900;color:#fff;}
+.hdr-sub{font-size:10px;color:var(--muted);margin-top:1px;}
+.hdr-right{display:flex;gap:8px;align-items:center;}
+.test-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;}
+.test-btn.active{background:rgba(255,214,0,.2);border-color:#ffd600;color:#ffd600;}
+.test-mode-bar{position:fixed;top:0;left:50%;transform:translateX(-50%);max-width:480px;width:100%;z-index:9999;background:#ffd600;color:#1a2634;text-align:center;font-size:12px;font-weight:900;padding:4px 8px;pointer-events:none;display:none;}
+.test-mode-bar.show{display:block;}
+.btn-sm{background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.35);color:var(--a4);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;}
+.btn-sm:hover{background:rgba(167,139,250,.25);}
+
+/* ── 레이아웃 ── */
+.layout{display:flex;flex-direction:column;height:100vh;height:-webkit-fill-available;}
+.chat-wrap{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;}
+.chat-wrap::-webkit-scrollbar{width:4px;}
+.chat-wrap::-webkit-scrollbar-track{background:transparent;}
+.chat-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* ── 메시지 ── */
+.msg{display:flex;gap:8px;max-width:100%;animation:fadeUp .2s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.msg.user{flex-direction:row-reverse;}
+.msg-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-top:2px;}
+.msg.ai .msg-avatar{background:linear-gradient(135deg,#4f46e5,#7c3aed);}
+.msg.user .msg-avatar{background:linear-gradient(135deg,#0ea5e9,#3b9eff);}
+.msg-bubble{max-width:82%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.6;word-break:break-word;white-space:pre-wrap;}
+.msg.ai .msg-bubble{background:var(--card2);border:1px solid var(--border);border-bottom-left-radius:4px;color:var(--text);}
+.msg.user .msg-bubble{background:linear-gradient(135deg,#1d4ed8,#2563eb);border-bottom-right-radius:4px;color:#fff;}
+.msg-time{font-size:10px;color:var(--muted);margin-top:4px;text-align:right;}
+.msg.ai .msg-time{text-align:left;}
+
+/* ── 타이핑 인디케이터 ── */
+.typing{display:flex;align-items:center;gap:4px;padding:12px 14px;}
+.typing span{width:7px;height:7px;border-radius:50%;background:var(--a4);animation:bounce 1.2s infinite;}
+.typing span:nth-child(2){animation-delay:.2s;}
+.typing span:nth-child(3){animation-delay:.4s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);}}
+
+/* ── 빠른 질문 칩 ── */
+.quick-chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 8px;}
+.chip{background:var(--card2);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 12px;font-size:11px;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap;}
+.chip:hover{border-color:var(--a4);color:var(--a4);background:rgba(167,139,250,.1);}
+
+/* ── 입력창 ── */
+.input-area{
+  background:var(--card);
+  border-top:1px solid var(--border);
+  padding:10px 12px;
+  display:flex;gap:8px;align-items:flex-end;
+  flex-shrink:0;
+}
+.input-area textarea{
+  flex:1;background:var(--card2);border:1px solid var(--border);color:var(--text);
+  border-radius:12px;padding:10px 12px;font-size:13px;font-family:inherit;
+  resize:none;outline:none;max-height:120px;min-height:42px;line-height:1.5;
+  transition:border-color .2s;
+}
+.input-area textarea:focus{border-color:var(--a4);}
+.send-btn{
+  width:42px;height:42px;border-radius:12px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:18px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:opacity .2s;
+}
+.send-btn:disabled{opacity:.4;cursor:default;}
+.send-btn:active:not(:disabled){opacity:.8;}
+
+/* ── 상태바 ── */
+.status-bar{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 12px;
+  background:rgba(0,0,0,.2);
+  font-size:10px;color:var(--muted);
+  flex-shrink:0;
+}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--a3);animation:pulse 2s infinite;}
+.status-dot.err{background:var(--red);animation:none;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* ── 설정 패널 ── */
+.settings-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;
+  display:none;align-items:flex-end;
+}
+.settings-overlay.show{display:flex;}
+.settings-panel{
+  background:var(--card);border-radius:20px 20px 0 0;
+  border-top:2px solid var(--a4);
+  padding:20px;width:100%;
+  display:flex;flex-direction:column;gap:12px;
+  max-height:70vh;overflow-y:auto;
+}
+.settings-title{font-size:14px;font-weight:900;color:var(--a4);margin-bottom:4px;}
+.settings-label{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.settings-input{
+  width:100%;background:var(--card2);border:1px solid var(--border);
+  color:var(--text);border-radius:10px;padding:10px 12px;font-size:13px;
+  font-family:inherit;outline:none;
+}
+.settings-input:focus{border-color:var(--a4);}
+.settings-save-btn{
+  background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;
+  border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;
+  font-family:inherit;
+}
+.settings-close-btn{
+  background:var(--card2);border:1px solid var(--border);color:var(--muted);
+  border-radius:10px;padding:10px;font-size:13px;cursor:pointer;font-family:inherit;
+}
+
+/* ── 데이터 미리보기 칩 ── */
+.data-chips{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px 0;}
+.data-chip{background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.2);color:var(--a3);border-radius:8px;padding:4px 8px;font-size:10px;}
+.data-chip.warn{background:rgba(249,115,22,.08);border-color:rgba(249,115,22,.2);color:var(--a2);}
+
+/* ── 환영 메시지 ── */
+.welcome{text-align:center;padding:30px 20px;color:var(--muted);}
+.welcome-icon{font-size:48px;margin-bottom:12px;}
+.welcome-title{font-size:16px;font-weight:900;color:var(--text);margin-bottom:6px;}
+.welcome-desc{font-size:12px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- 헤더 -->
+  <div class="hdr">
+    <div class="hdr-icon">🤖</div>
+    <div class="hdr-info">
+      <div class="hdr-title">다야 AI 어시스턴트</div>
+      <div class="hdr-sub" id="hdr-sub">Groq llama-3.1 · 실시간 데이터 연동</div>
+    </div>
+    <div class="hdr-right">
+      <button class="btn-sm" onclick="refreshData()">🔄 데이터</button>
+      <button class="btn-sm" onclick="showSettings()">⚙️</button>
+      <button class="test-btn" id="test-mode-btn" onclick="toggleTestMode()">TEST</button>
+    </div>
+  </div>
+  <div class="test-mode-bar" id="test-mode-bar">🧪 테스트 모드 — 실제 데이터 보호 중</div>
+
+  <!-- 상태바 -->
+  <div class="status-bar">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">초기화 중...</span>
+    <span style="margin-left:auto;" id="data-time"></span>
+  </div>
+
+  <!-- 데이터 칩 -->
+  <div class="data-chips" id="data-chips"></div>
+
+  <!-- 채팅 영역 -->
+  <div class="chat-wrap" id="chat-wrap">
+    <div class="welcome" id="welcome-msg">
+      <div class="welcome-icon">🤖</div>
+      <div class="welcome-title">다야 AI 어시스턴트</div>
+      <div class="welcome-desc">
+        현재 작업 현황, 박스 예측, 페이스 분석 등<br>
+        무엇이든 물어보세요!
+      </div>
+    </div>
+  </div>
+
+  <!-- 빠른 질문 -->
+  <div class="quick-chips" id="quick-chips">
+    <button class="chip" onclick="quickAsk('지금 박스 몇 개야? 종근당, 기타업체 상세도 알려줘')">📦 현재 박스</button>
+    <button class="chip" onclick="quickAsk('오늘 작업 페이스 어때? 지금 속도면 몇 시에 끝나?')">⚡ 페이스/완료</button>
+    <button class="chip" onclick="quickAsk('내일 예상 물량 알려줘. 요일별 평균도 같이')">🔮 내일 예측</button>
+    <button class="chip" onclick="quickAsk('오늘 출근자 명단이랑 근태 상황 알려줘')">👥 근태</button>
+    <button class="chip" onclick="quickAsk('오늘 주문 현황 업체별로 정리해줘')">📋 주문</button>
+    <button class="chip" onclick="quickAsk('이번 달 작업 통계 알려줘. 평균, 합계, 최고기록')">📊 이번달 통계</button>
+    <button class="chip" onclick="quickAsk('최근 7일 작업 이력 날짜별로 보여줘')">📅 최근 7일</button>
+    <button class="chip" onclick="quickAsk('종근당 배치 현황이랑 주문 상세 알려줘')">💊 종근당 상세</button>
+    <button class="chip" onclick="quickAsk('오늘 전체 현황 한 번에 요약해줘. 박스, 주문, 근태, 예측 전부')">🔍 오늘 전체요약</button>
+  </div>
+
+  <!-- 입력창 -->
+  <div class="input-area">
+    <textarea id="msg-input" placeholder="질문을 입력하세요..." rows="1"
+      onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+
+</div>
+
+<!-- 설정 패널 -->
+<div class="settings-overlay" id="settings-overlay" onclick="closeSettingsOutside(event)">
+  <div class="settings-panel">
+    <div class="settings-title">⚙️ AI 설정</div>
+
+    <div>
+      <div class="settings-label">AI 제공자 선택</div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button id="provider-groq" onclick="setProviderUI('groq')"
+          style="flex:1;padding:10px;border-radius:10px;border:2px solid;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;">
+          ⚡ Groq<br><span style="font-size:10px;font-weight:400;">무료·빠름 (추천)</span>
+        </button>
+        <button id="provider-gemini" onclick="setProviderUI('gemini')"
+          style="flex:1;padding:10px;border-radius:10px;border:2px solid;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;">
+          🔮 Gemini<br><span style="font-size:10px;font-weight:400;">Google AI</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="groq-section">
+      <div class="settings-label">Groq API 키 <span style="color:#2ecc71;font-size:10px;">— console.groq.com</span></div>
+      <input class="settings-input" id="groq-key-input" type="password"
+        placeholder="gsk_..." autocomplete="off">
+    </div>
+
+    <div id="gemini-section" style="display:none;">
+      <div class="settings-label">Gemini API 키 <span style="color:#a78bfa;font-size:10px;">— aistudio.google.com</span></div>
+      <input class="settings-input" id="gemini-key-input" type="password"
+        placeholder="AIza..." autocomplete="off">
+    </div>
+
+    <div>
+      <div class="settings-label">Firebase URL (자동 로드됨)</div>
+      <input class="settings-input" id="fb-url-input" type="text"
+        placeholder="https://..." readonly style="opacity:.6;">
+    </div>
+    <div>
+      <div class="settings-label">AI 추가 지시사항 (선택)</div>
+      <textarea class="settings-input" id="system-extra" rows="2"
+        placeholder="예: 항상 반말로 답해줘"></textarea>
+    </div>
+    <button class="settings-save-btn" onclick="saveSettings()">저장</button>
+    <button class="settings-close-btn" onclick="closeSettings()">닫기</button>
+  </div>
+</div>
+
+<script>
+// ══ 테스트 모드 ══
+const TEST_PWD = '0000';
+const _TM = sessionStorage.getItem('daya_test_mode') === '1';
+function toggleTestMode() {
+  if (_TM) {
+    sessionStorage.removeItem('daya_test_mode');
+    location.reload();
+  } else {
+    const pwd = prompt('테스트 모드 비밀번호 입력');
+    if (pwd === null) return;
+    if (pwd !== TEST_PWD) { alert('❌ 비밀번호 오류'); return; }
+    sessionStorage.setItem('daya_test_mode', '1');
+    location.reload();
+  }
+}
+(function initTestMode() {
+  if (!_TM) return;
+  document.getElementById('test-mode-btn')?.classList.add('active');
+  const bar = document.getElementById('test-mode-bar');
+  if (bar) bar.classList.add('show');
+  const hdr = document.querySelector('.hdr');
+  if (hdr) hdr.style.background = 'linear-gradient(135deg,#7b4f00,#b37000)';
+})();
+
+// ── 전역 변수 ──
+var FB_URL = window.FB_URL;
+var GEMINI_KEY = '';
+var GROQ_KEY = '';
+var AI_PROVIDER = 'groq'; // 'groq' | 'gemini'
+var liveData = null;
+var ordersData = null;
+var historyData = [];
+var configData = null;
+var attendanceData = null;
+var messageData = null;
+var noticeData = null;
+var targetData = null;   // jkg_target/{날짜}.json
+var isLoading = false;
+
+// ── 초기화 ──
+window.addEventListener('load', async () => {
+  loadLocalSettings();
+  FB_URL = window.FB_URL || localStorage.getItem('dashboard_fb_url') || '';
+  if (document.getElementById('fb-url-input')) {
+    document.getElementById('fb-url-input').value = FB_URL;
+  }
+  if (FB_URL) {
+    await refreshData();
+  } else {
+    setStatus('err', 'Firebase URL 미설정 — ⚙️에서 확인');
+  }
+});
+
+function loadLocalSettings() {
+  GEMINI_KEY = localStorage.getItem('gemini_api_key') || '';
+  GROQ_KEY    = localStorage.getItem('groq_api_key')   || '';
+  AI_PROVIDER = localStorage.getItem('ai_provider')    || 'groq';
+  const extra = localStorage.getItem('chat_system_extra') || '';
+  const geminiInput = document.getElementById('gemini-key-input');
+  const groqInput   = document.getElementById('groq-key-input');
+  const sysExtra    = document.getElementById('system-extra');
+  if (geminiInput) geminiInput.value = GEMINI_KEY;
+  if (groqInput)   groqInput.value   = GROQ_KEY;
+  if (sysExtra)    sysExtra.value    = extra;
+  setProviderUI(AI_PROVIDER);
+}
+
+// ── 데이터 로드 ──
+async function refreshData() {
+  if (!FB_URL) return;
+  setStatus('ok', '데이터 로딩 중...');
+  try {
+    const dk = getTodayKey();
+    const [live, orders, config, attendance, message, notice, hist, target] = await Promise.all([
+      fetchJson(`${FB_URL}/live.json`),
+      fetchJson(`${FB_URL}/jkg_orders/${dk}.json`),
+      fetchJson(`${FB_URL}/config.json`),
+      fetchJson(`${FB_URL}/attendance/${dk}.json`),
+      fetchJson(`${FB_URL}/message.json`),
+      fetchJson(`${FB_URL}/notice.json`),
+      loadRecentHistory(30),
+      fetchJson(`${FB_URL}/jkg_target/${dk}.json`)
+    ]);
+    liveData       = live;
+    ordersData     = orders;
+    configData     = config;
+    attendanceData = attendance;
+    messageData    = message;
+    noticeData     = notice;
+    historyData    = hist;
+    targetData     = target;
+    updateDataChips();
+    const t = new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
+    document.getElementById('data-time').textContent = t + ' 갱신';
+    setStatus('ok', 'AI 준비 완료');
+  } catch(e) {
+    setStatus('err', '데이터 로드 실패: ' + e.message);
+  }
+}
+
+async function fetchJson(url) {
+  const r = await fetch(url + '?t=' + Date.now());
+  if (!r.ok) return null;
+  return await r.json();
+}
+
+async function loadRecentHistory(n) {
+  const dates = [];
+  const today = new Date();
+  for (let i = 1; i <= n + 5; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    // 파일명 형식: 2026-05-20.json (대시 유지)
+    const dk = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    dates.push({ dk, label: dk });
+  }
+  const results = await Promise.all(
+    dates.map(({ dk }) => fetchJson(`${FB_URL}/history/${dk}.json`).catch(() => null))
+  );
+  return results
+    .map((h, i) => h ? { ...h, _date: dates[i].label } : null)
+    .filter(Boolean)
+    .slice(0, n);
+}
+
+function updateDataChips() {
+  const el = document.getElementById('data-chips');
+  const chips = [];
+  if (liveData) {
+    const boxes = liveData.totalQty || liveData?.종근당?.매핑 || 0;
+    chips.push(`<span class="data-chip">📦 ${boxes}박스</span>`);
+  } else {
+    chips.push(`<span class="data-chip warn">📦 live없음</span>`);
+  }
+  if (ordersData) {
+    const qty = ordersData.totalQty || 0;
+    chips.push(`<span class="data-chip">🛒 ${qty}개</span>`);
+  } else {
+    chips.push(`<span class="data-chip warn">🛒 주문없음</span>`);
+  }
+  if (attendanceData) {
+    const members = Object.keys(attendanceData).length;
+    chips.push(`<span class="data-chip">👥 근태 ${members}명</span>`);
+  }
+  if (configData) {
+    chips.push(`<span class="data-chip">⚙️ 설정 로드됨</span>`);
+  }
+  if (messageData) {
+    chips.push(`<span class="data-chip">💬 메시지 있음</span>`);
+  }
+  if (historyData.length > 0) {
+    chips.push(`<span class="data-chip">📊 히스토리 ${historyData.length}일</span>`);
+  }
+  el.innerHTML = chips.join('');
+}
+
+// ── 메시지 전송 ──
+async function sendMessage(text) {
+  const input = document.getElementById('msg-input');
+  const userMsg = text || input.value.trim();
+  if (!userMsg || isLoading) return;
+
+  const activeKey = AI_PROVIDER === 'groq' ? GROQ_KEY : GEMINI_KEY;
+  if (!activeKey) {
+    showSettings();
+    addSystemMsg('⚠️ API 키를 먼저 설정해주세요.');
+    return;
+  }
+
+  // 환영 메시지 숨기기
+  const welcome = document.getElementById('welcome-msg');
+  if (welcome) welcome.style.display = 'none';
+
+  input.value = '';
+  input.style.height = '42px';
+  appendMsg('user', userMsg);
+  isLoading = true;
+  setSendBtn(false);
+
+  const typingEl = appendTyping();
+
+  try {
+    const context = buildContext();
+    const answer = AI_PROVIDER === 'groq'
+      ? await callGroq(userMsg, context)
+      : await callGemini(userMsg, context);
+    typingEl.remove();
+    appendMsg('ai', answer);
+  } catch(e) {
+    typingEl.remove();
+    appendMsg('ai', '❌ 오류: ' + e.message);
+  } finally {
+    isLoading = false;
+    setSendBtn(true);
+  }
+}
+
+function quickAsk(q) {
+  const input = document.getElementById('msg-input');
+  input.value = q;
+  sendMessage(q);
+}
+
+// ── 컨텍스트 생성 ──
+function buildContext() {
+  const now = new Date();
+  const timeStr = now.toLocaleString('ko-KR');
+  const extra = localStorage.getItem('chat_system_extra') || '';
+  const dowNames = ['일','월','화','수','목','금','토'];
+  const todayDow = now.getDay();
+  const todayKey = getTodayKey();
+
+  let ctx = `당신은 다야냉장팀의 작업 AI 어시스턴트입니다.
+현재 시각: ${timeStr} (${dowNames[todayDow]}요일)
+${extra ? '추가 지시: ' + extra + '\n' : ''}
+`;
+
+  // ══ 1. 시스템 설정 ══
+  ctx += `=== 시스템 설정 ===\n`;
+  if (configData) {
+    if (configData.company)   ctx += `회사명: ${configData.company}\n`;
+    if (configData.startTime) ctx += `작업 시작: ${configData.startTime}\n`;
+    if (configData.workHours) ctx += `작업 시간: ${configData.workHours}시간\n`;
+    if (configData.workers) {
+      const ws = Array.isArray(configData.workers) ? configData.workers : [];
+      const wList = ws.map(w => typeof w === 'string' ? w : `${w.name}(${w.grade||'B'})`).join(', ');
+      ctx += `작업자 명단: ${wList} (총 ${ws.length}명)\n`;
+      // 등급별 집계
+      const grades = {};
+      ws.forEach(w => { const g = (typeof w === 'object' ? w.grade : null) || 'B'; grades[g] = (grades[g]||0)+1; });
+      const gStr = Object.entries(grades).map(([g,n])=>`${g}급${n}명`).join(', ');
+      if (gStr) ctx += `등급 구성: ${gStr}\n`;
+    }
+  } else {
+    ctx += `설정 데이터: 없음\n`;
+  }
+
+  // 예측 데이터
+  const pred = configData?.prediction;
+  if (pred && pred.overall > 0) {
+    ctx += `\n[예측 기준 데이터]\n`;
+    ctx += `전체 평균 박스수: ${pred.overall}박스/일 (분석 기준일: ${pred.baseDays || '?'}일)\n`;
+    if (pred.avgPresent > 0) ctx += `평균 출근인원: ${pred.avgPresent}명\n`;
+    if (pred.dowAvg) {
+      const dowStr = pred.dowAvg.map((v,i)=>v>0?`${dowNames[i]}:${v}`:'').filter(Boolean).join(' / ');
+      ctx += `요일별 평균: ${dowStr}\n`;
+    }
+    // 오늘 예측
+    const todayFE = (pred.forecast||[]).find(f=>f.key===todayKey);
+    const todayPred = todayFE?.predicted || pred.dowAvg?.[todayDow] || pred.overall || 0;
+    if (todayPred > 0) ctx += `오늘(${dowNames[todayDow]}, ${todayKey}) 예측: ${todayPred}박스\n`;
+    // 내일 예측
+    const tmr = new Date(now); tmr.setDate(tmr.getDate()+1);
+    const tKey = `${tmr.getFullYear()}-${String(tmr.getMonth()+1).padStart(2,'0')}-${String(tmr.getDate()).padStart(2,'0')}`;
+    const tDow = tmr.getDay();
+    const tFE = (pred.forecast||[]).find(f=>f.key===tKey);
+    const tPred = tFE?.predicted || pred.dowAvg?.[tDow] || pred.overall || 0;
+    const tConf = tFE?.confidence || (pred.baseDays >= 20 ? 'med' : 'low');
+    if (tPred > 0) ctx += `내일(${dowNames[tDow]}, ${tKey}) 예측: ${tPred}박스 [신뢰도:${tConf}]\n`;
+    // 이번주 예측 전체
+    if (pred.forecast && pred.forecast.length > 0) {
+      ctx += `이번 주 예측: ${pred.forecast.slice(0,7).map(f=>`${f.key}=${f.predicted}박스`).join(', ')}\n`;
+    }
+    if (pred.orderRatio > 0) ctx += `주문→박스 변환비율: ${pred.orderRatio.toFixed(3)}\n`;
+  }
+  // 오늘 목표
+  if (targetData && targetData.target > 0) {
+    ctx += `오늘 목표 박스수: ${targetData.target}박스\n`;
+  }
+  ctx += '\n';
+
+  // ══ 2. 실시간 작업 현황 ══
+  ctx += `=== 실시간 작업 현황 ===\n`;
+  if (liveData) {
+    const totalBox = liveData.totalQty || 0;
+    const jkg = liveData.종근당 || {};
+    const jkgBox   = jkg.매핑 || 0;
+    const jkgDirect= jkg.직배 || 0;
+    const jkgDms   = jkg.도매상 || 0;
+    const jkgYc    = jkg.용차 || 0;
+    const jkgDmsB  = jkg.도매상박스 || 0;
+    const jkgYcB   = jkg.용차박스 || 0;
+    const plt      = liveData.plt || 0;
+    const present  = liveData.출근부?.presentCount || 0;
+    const pace     = liveData.pacePerHour || 0;
+
+    ctx += `전체 박스수: ${totalBox}박스\n`;
+    ctx += `종근당 매핑: ${jkgBox}박스\n`;
+    if (jkgDirect > 0) ctx += `종근당 직배: ${jkgDirect}건\n`;
+    if (jkgDms > 0)    ctx += `종근당 도매상: ${jkgDms}건 (${jkgDmsB}박스)\n`;
+    if (jkgYc > 0)     ctx += `종근당 용차: ${jkgYc}건 (${jkgYcB}박스)\n`;
+    if (plt > 0)       ctx += `파렛: ${plt}개\n`;
+
+    // 종근당 배치 상세
+    const batch = jkg.배치 || {};
+    const bKeys = Object.keys(batch).filter(k=>parseInt(batch[k])>0);
+    if (bKeys.length > 0) {
+      const bLines = bKeys.map(k=>`${k.replace('b','')}차:${batch[k]}개`).join(', ');
+      const bTotal = bKeys.reduce((s,k)=>s+(parseInt(batch[k])||0),0);
+      ctx += `종근당 배치 상세: ${bLines} (합계 ${bTotal}개, ≈${Math.round(bTotal/18)}박스)\n`;
+    }
+
+    // 기타업체 박스
+    if (liveData.기타업체) {
+      const etcList = Object.entries(liveData.기타업체).filter(([,v])=>(parseInt(v)||0)>0).map(([k,v])=>`${k}:${v}박스`);
+      if (etcList.length) ctx += `기타업체 작업박스: ${etcList.join(', ')}\n`;
+    }
+
+    // 주문로그 (기타업체 포함)
+    if (liveData.주문로그) {
+      const logEntries = [];
+      Object.entries(liveData.주문로그).forEach(([company, arr]) => {
+        const list = Array.isArray(arr) ? arr : (arr && typeof arr === 'object' ? Object.values(arr) : []);
+        if (list.length > 0) {
+          const totQ = list.reduce((s,e)=>s+(parseInt(e.qty)||0),0);
+          const totC = list.reduce((s,e)=>s+(parseInt(e.count)||0),0);
+          logEntries.push(`${company}: ${list.length}회차 / ${totQ}개${totC>0?' / '+totC+'건':''}`);
+        }
+      });
+      if (logEntries.length) ctx += `주문로그: ${logEntries.join(' | ')}\n`;
+    }
+
+    // 페이스 및 예측 대비 진행률
+    if (pace > 0) {
+      ctx += `현재 작업 페이스: ${pace}박스/시간\n`;
+      // 목표 또는 예측 대비 진행률
+      const targetBox = targetData?.target || (pred ? (pred.forecast||[]).find(f=>f.key===todayKey)?.predicted || pred.dowAvg?.[todayDow] || pred.overall : 0) || 0;
+      if (targetBox > 0 && totalBox > 0) {
+        const pct = Math.round(totalBox / targetBox * 100);
+        ctx += `예측 대비 진행률: ${pct}% (${totalBox}/${targetBox}박스)\n`;
+        // 완료 예상 시간
+        const remain = targetBox - totalBox;
+        if (remain > 0 && pace > 0) {
+          const hoursLeft = remain / pace;
+          const doneAt = new Date(now.getTime() + hoursLeft * 3600000);
+          ctx += `완료 예상 시각: ${doneAt.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}\n`;
+        }
+      }
+    }
+
+    // 출근인원
+    if (present > 0) {
+      const avgPres = pred?.avgPresent || 0;
+      const diff = avgPres > 0 ? present - avgPres : 0;
+      ctx += `출근인원: ${present}명${avgPres>0 ? ` (평균 ${avgPres}명 대비 ${diff>0?'+':''}${diff}명)` : ''}\n`;
+    }
+
+    // 출근부 개인별 상태
+    const members = liveData.출근부?.members || {};
+    const mKeys = Object.keys(members);
+    if (mKeys.length > 0) {
+      const statusMap = {present:'출근', absent:'결근', late:'지각', out:'퇴근', done:'퇴근', off:'휴무', early:'조퇴'};
+      const mLines = mKeys.map(name => {
+        const s = members[name];
+        const st = typeof s === 'string' ? s : (s?.status || '');
+        return `${name}:${statusMap[st]||st||'?'}`;
+      });
+      ctx += `개인별 근태: ${mLines.join(', ')}\n`;
+    }
+  } else {
+    ctx += `실시간 데이터: 없음\n`;
+  }
+  ctx += '\n';
+
+  // ══ 3. 오늘 주문 ══
+  ctx += `=== 오늘 주문 데이터 ===\n`;
+  // live.주문로그 우선, jkg_orders 보완
+  let orderWritten = false;
+  if (liveData?.주문로그) {
+    const logData = liveData.주문로그;
+    Object.entries(logData).forEach(([company, arr]) => {
+      const list = Array.isArray(arr) ? arr : (arr && typeof arr === 'object' ? Object.values(arr) : []);
+      if (list.length > 0) {
+        list.forEach((e, i) => {
+          const t = e.ts ? new Date(e.ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}) : '-';
+          ctx += `  ${company} ${i+1}차: ${e.qty||0}개${e.count>0?' / '+e.count+'건':''} (${t})\n`;
+          orderWritten = true;
+        });
+      }
+    });
+  }
+  if (!orderWritten && ordersData) {
+    ctx += `총 주문수량: ${ordersData.totalQty || 0}개\n`;
+    ctx += `주문건수: ${ordersData.totalCount || 0}건\n`;
+    if (ordersData.entries && ordersData.entries.length) {
+      ordersData.entries.forEach((e, i) => {
+        const t = e.ts ? new Date(e.ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}) : '-';
+        ctx += `  ${i+1}차: ${e.company||'종근당'} ${e.qty}개${e.round?' ['+e.round+']':''} (${t})\n`;
+      });
+    }
+    orderWritten = true;
+  }
+  if (!orderWritten) ctx += `주문 데이터: 없음\n`;
+  ctx += '\n';
+
+  // ══ 4. 근태 현황 ══
+  ctx += `=== 오늘 근태 현황 ===\n`;
+  // attendance/{날짜}.json 우선
+  if (attendanceData && Object.keys(attendanceData).length > 0) {
+    Object.entries(attendanceData).forEach(([name, rec]) => {
+      const inT  = rec.inTime  ? new Date(rec.inTime).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}) : '-';
+      const outT = rec.outTime ? new Date(rec.outTime).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}) : '근무중';
+      const memo = rec.memo ? ` (${rec.memo})` : '';
+      ctx += `  ${name}: 출근 ${inT} / 퇴근 ${outT}${memo}\n`;
+    });
+  } else if (liveData?.출근부?.members) {
+    // fallback: live.출근부.members
+    const statusMap = {present:'출근중', absent:'결근', late:'지각', out:'퇴근', done:'퇴근', off:'휴무', early:'조퇴'};
+    Object.entries(liveData.출근부.members).forEach(([name, s]) => {
+      const st = typeof s === 'string' ? s : (s?.status || '');
+      ctx += `  ${name}: ${statusMap[st]||st||'상태불명'}\n`;
+    });
+  } else {
+    ctx += `근태 데이터: 없음\n`;
+  }
+  ctx += '\n';
+
+  // ══ 5. 메시지 / 공지 ══
+  if (messageData?.text) ctx += `=== 사장님 메시지 ===\n${messageData.text}\n\n`;
+  if (noticeData?.text)  ctx += `=== 공지사항 ===\n${noticeData.text}\n\n`;
+
+  // ══ 6. 히스토리 통계 + 상세 ══
+  if (historyData.length > 0) {
+    // 월간 통계 계산
+    const thisMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const monthData = historyData.filter(h => (h._date||'').startsWith(thisMonth));
+    const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate()-7);
+    const weekData = historyData.filter(h => {
+      const d = new Date(h._date || ''); return d >= weekAgo;
+    });
+
+    const extractBoxes = h => {
+      const tq = h.totalQty || 0;
+      const jb = h?.종근당?.매핑 || 0;
+      const a0 = h?.instrData?.['종근당']?.boxes || 0;
+      return tq || jb || a0;
+    };
+
+    const calcStats = arr => {
+      const vals = arr.map(extractBoxes).filter(v=>v>0);
+      if (!vals.length) return null;
+      return {
+        avg: Math.round(vals.reduce((a,b)=>a+b,0)/vals.length),
+        max: Math.max(...vals),
+        min: Math.min(...vals),
+        cnt: vals.length,
+        total: vals.reduce((a,b)=>a+b,0)
+      };
+    };
+
+    const mStats = calcStats(monthData);
+    const wStats = calcStats(weekData);
+    const allStats = calcStats(historyData);
+
+    ctx += `=== 기간별 통계 ===\n`;
+    if (mStats) ctx += `이번 달(${thisMonth}): ${mStats.cnt}일 / 평균 ${mStats.avg}박스 / 합계 ${mStats.total}박스 / 최고 ${mStats.max}박스\n`;
+    if (wStats) ctx += `최근 7일: ${wStats.cnt}일 / 평균 ${wStats.avg}박스 / 최고 ${wStats.max}박스\n`;
+    if (allStats) ctx += `전체(${allStats.cnt}일): 평균 ${allStats.avg}박스 / 최고 ${allStats.max}박스 / 최저 ${allStats.min}박스\n`;
+    ctx += '\n';
+
+    ctx += `=== 과거 작업 히스토리 (최근 ${historyData.length}일) ===\n`;
+    historyData.forEach(h => {
+      const dateStr = h._date || '?';
+      const boxes    = extractBoxes(h);
+      const jkgBoxes = h?.종근당?.매핑 || 0;
+      const jkgDir   = h?.종근당?.직배 || 0;
+      const a0Instr  = h?.instrData?.['종근당']?.instr || 0;
+      const a0Count  = h?.instrData?.['종근당']?.count || 0;
+      const plt      = h.plt || 0;
+      const present  = h?.출근부?.presentCount || 0;
+      const etcData  = h.기타업체 || {};
+      const etcStr   = Object.entries(etcData).filter(([,v])=>(parseInt(v)||0)>0).map(([k,v])=>`${k}:${v}`).join(',');
+
+      if (boxes > 0 || a0Instr > 0) {
+        let line = `  ${dateStr}: 전체 ${boxes}박스`;
+        if (jkgBoxes > 0) line += ` / 종근당 ${jkgBoxes}박스`;
+        if (jkgDir > 0)   line += ` / 직배 ${jkgDir}건`;
+        if (a0Instr > 0)  line += ` / 주문 ${a0Instr}개`;
+        if (a0Count > 0)  line += ` ${a0Count}건`;
+        if (plt > 0)      line += ` / 파렛 ${plt}개`;
+        if (present > 0)  line += ` / 출근 ${present}명`;
+        if (etcStr)       line += ` / 기타[${etcStr}]`;
+        ctx += line + '\n';
+      }
+    });
+    ctx += '\n';
+  }
+
+  ctx += `=== 답변 지침 ===
+- 한국어로 답변
+- 핵심만 간결하게, 데이터 기반으로 구체적 수치 포함
+- 데이터가 없으면 "데이터 없음"으로 솔직하게 답변
+- 계산 필요 시 직접 계산해서 답변
+- 오늘 현황, 예측, 통계, 근태, 주문 등 모든 항목에 답변 가능`;
+
+  return ctx;
+}
+
+function calcAvg(history, brand, field) {
+  const vals = history
+    .map(h => h[brand] && h[brand][field] ? Number(h[brand][field]) : 0)
+    .filter(v => v > 0);
+  if (!vals.length) return 0;
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
+// ── Groq API 호출 ──
+async function callGroq(userMsg, systemContext) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + GROQ_KEY
+    },
+    body: JSON.stringify({
+      model: 'llama-3.1-8b-instant',
+      messages: [
+        { role: 'system', content: systemContext },
+        { role: 'user',   content: userMsg }
+      ],
+      temperature: 0.7,
+      max_tokens: 800
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const msg = err.error?.message || `HTTP ${res.status}`;
+    throw new Error(msg);
+  }
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content;
+  if (!text) throw new Error('응답 없음');
+  return text.trim();
+}
+
+// ── Gemini API 호출 ──
+async function callGemini(userMsg, systemContext) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+  const body = {
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: systemContext + '\n\n사용자 질문: ' + userMsg }]
+      }
+    ],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 800,
+    }
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const msg = err.error && err.error.message ? err.error.message : `HTTP ${res.status}`;
+    throw new Error(msg);
+  }
+
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('응답 없음');
+  return text.trim();
+}
+
+// ── UI 헬퍼 ──
+function appendMsg(role, text) {
+  const wrap = document.getElementById('chat-wrap');
+  const time = new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = `
+    <div class="msg-avatar">${role === 'ai' ? '🤖' : '👤'}</div>
+    <div>
+      <div class="msg-bubble">${escHtml(text)}</div>
+      <div class="msg-time">${time}</div>
+    </div>`;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  return div;
+}
+
+function appendTyping() {
+  const wrap = document.getElementById('chat-wrap');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.innerHTML = `
+    <div class="msg-avatar">🤖</div>
+    <div class="msg-bubble" style="padding:8px 14px;">
+      <div class="typing">
+        <span></span><span></span><span></span>
+      </div>
+    </div>`;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  return div;
+}
+
+function addSystemMsg(text) {
+  const wrap = document.getElementById('chat-wrap');
+  const div = document.createElement('div');
+  div.style.cssText = 'text-align:center;font-size:11px;color:var(--muted);padding:6px 0;';
+  div.textContent = text;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function setSendBtn(enabled) {
+  document.getElementById('send-btn').disabled = !enabled;
+}
+
+function setStatus(type, text) {
+  const dot = document.getElementById('status-dot');
+  const el = document.getElementById('status-text');
+  dot.className = 'status-dot' + (type === 'err' ? ' err' : '');
+  el.textContent = text;
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = '42px';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ── 설정 ──
+function setProviderUI(provider) {
+  AI_PROVIDER = provider;
+  const gGroq   = document.getElementById('provider-groq');
+  const gGemini = document.getElementById('provider-gemini');
+  const sGroq   = document.getElementById('groq-section');
+  const sGemini = document.getElementById('gemini-section');
+  if (!gGroq) return;
+  if (provider === 'groq') {
+    gGroq.style.cssText   += ';background:rgba(46,204,113,.15);border-color:#2ecc71;color:#2ecc71;';
+    gGemini.style.cssText += ';background:rgba(255,255,255,.03);border-color:#1e2d45;color:#5a7a99;';
+    sGroq.style.display   = 'block';
+    sGemini.style.display = 'none';
+  } else {
+    gGemini.style.cssText += ';background:rgba(167,139,250,.15);border-color:#a78bfa;color:#a78bfa;';
+    gGroq.style.cssText   += ';background:rgba(255,255,255,.03);border-color:#1e2d45;color:#5a7a99;';
+    sGroq.style.display   = 'none';
+    sGemini.style.display = 'block';
+  }
+  // 상태바 표시
+  const providerLabel = provider === 'groq' ? '⚡ Groq (llama-3.1)' : '🔮 Gemini 2.0 Flash';
+  const activeKey = provider === 'groq' ? GROQ_KEY : GEMINI_KEY;
+  setStatus(activeKey ? 'ok' : 'err', activeKey ? providerLabel + ' · 준비 완료' : providerLabel + ' · API 키 없음');
+}
+
+function showSettings() {
+  document.getElementById('settings-overlay').classList.add('show');
+  document.getElementById('fb-url-input').value = FB_URL;
+  setProviderUI(AI_PROVIDER);
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('show');
+}
+
+function closeSettingsOutside(e) {
+  if (e.target === document.getElementById('settings-overlay')) closeSettings();
+}
+
+function saveSettings() {
+  const groqKey    = document.getElementById('groq-key-input').value.trim();
+  const geminiKey  = document.getElementById('gemini-key-input').value.trim();
+  const extra      = document.getElementById('system-extra').value.trim();
+  if (groqKey)   { GROQ_KEY    = groqKey;   localStorage.setItem('groq_api_key',   groqKey);   }
+  if (geminiKey) { GEMINI_KEY  = geminiKey; localStorage.setItem('gemini_api_key', geminiKey); }
+  localStorage.setItem('ai_provider',       AI_PROVIDER);
+  localStorage.setItem('chat_system_extra', extra);
+  closeSettings();
+  setProviderUI(AI_PROVIDER);
+  addSystemMsg('✅ 설정 저장됨');
+  if (!liveData) refreshData();
+}
+
+// ── 유틸 ──
+function getTodayKey() {
+  const d = new Date();
+  return d.getFullYear()
+    + String(d.getMonth() + 1).padStart(2, '0')
+    + String(d.getDate()).padStart(2, '0');
+}
+</script>
+</body>
+</html>

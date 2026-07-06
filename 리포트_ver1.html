@@ -19,6 +19,10 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','Seg
 .hdr-title{font-size:17px;font-weight:900;color:#fff;flex:1;}
 .hdr-sub{font-size:10px;color:var(--muted);}
 .hdr-back{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;}
+.test-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;}
+.test-btn.active{background:rgba(255,214,0,.2);border-color:#ffd600;color:#ffd600;}
+.test-mode-bar{position:fixed;top:0;left:50%;transform:translateX(-50%);max-width:480px;width:100%;z-index:9999;background:#ffd600;color:#1a2634;text-align:center;font-size:12px;font-weight:900;padding:4px 8px;pointer-events:none;display:none;}
+.test-mode-bar.show{display:block;}
 
 .tab-nav{display:flex;background:#080f18;border-bottom:2px solid var(--border);position:sticky;top:56px;z-index:90;}
 .tab-btn{flex:1;border:none;background:transparent;cursor:pointer;font-family:inherit;padding:11px 8px;font-size:13px;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;transition:all .2s;}
@@ -91,6 +95,10 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','Seg
 
 /* 로딩 */
 .loading{text-align:center;padding:30px;color:var(--muted);font-size:13px;}
+
+/* ── 프린트 버튼 ── */
+.btn-print{background:rgba(167,139,250,.15);border:1.5px solid rgba(167,139,250,.4);color:var(--a4);border-radius:9px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-print:hover{background:rgba(167,139,250,.25);}
 </style>
 </head>
 <body>
@@ -101,8 +109,10 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','Seg
     <div class="hdr-title">작업 리포트</div>
     <div class="hdr-sub">일일 · 주간 · 월간 현황</div>
   </div>
-  <a class="hdr-back" href="/관리자PC_ver15.html">← 대시보드</a>
+  <button class="test-btn" id="test-mode-btn" onclick="toggleTestMode()">TEST</button>
+  <a class="hdr-back" href="관리자PC_ver15.html?v=20260706-2028">← 대시보드</a>
 </div>
+<div class="test-mode-bar" id="test-mode-bar">🧪 테스트 모드 — 실제 데이터 보호 중 (저장·Firebase 차단)</div>
 
 <div class="tab-nav">
   <button class="tab-btn active" onclick="goTab(0)">📅 일일</button>
@@ -156,6 +166,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','Seg
     <div class="chdr"><div class="cdot" style="background:var(--a5)"></div><div class="ctitle">데이터 분석·예측</div><div class="csub" id="ana-range"></div></div>
     <div class="cbody" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
       <button class="btn-load" onclick="runAnalysis()" id="ana-btn">🔍 전체 데이터 분석 시작</button>
+      <button class="btn-print" onclick="printReport()">📄 보고서 인쇄</button>
       <span id="ana-loading" style="font-size:11px;color:var(--muted);"></span>
     </div>
   </div>
@@ -170,51 +181,36 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','Seg
 </div>
 <div id="toast"></div>
 
+<script src="daya-api.js?v=20250519"></script>
+<script src="daya-error-log.js?v=20250519"></script>
 <script>
-const API = 'https://daya.sudalife.net/api';
-// ── Firebase 자동 폴백 + NAS 자동 동기화 ──
-const FB_BACKUP = 'https://ice-work-d8045-default-rtdb.asia-southeast1.firebasedatabase.app';
-(function(){
-  const _f = window.fetch.bind(window);
-  function toFb(u){const p=u.replace('https://daya.sudalife.net/api','').split('?')[0];return p.endsWith('/')?FB_BACKUP+p.slice(0,-1)+'.json':FB_BACKUP+p;}
-  async function fbGet(u){
-    const p=u.replace('https://daya.sudalife.net/api','').split('?')[0],isDir=p.endsWith('/');
-    const r=await _f(toFb(u)+'?t='+Date.now());
-    if(!isDir)return r;
-    const d=await r.clone().json().catch(()=>null);
-    return new Response(JSON.stringify(d?Object.keys(d).sort().reverse():[]),{status:200});
+// ══ 테스트 모드 ══
+const TEST_PWD = '0000';
+const _TM = sessionStorage.getItem('daya_test_mode') === '1';
+function toggleTestMode() {
+  if (_TM) {
+    sessionStorage.removeItem('daya_test_mode');
+    showToast('✅ 테스트 모드 종료 — 실제 모드로 전환');
+    setTimeout(() => location.reload(), 800);
+  } else {
+    const pwd = prompt('테스트 모드 비밀번호 입력');
+    if (pwd === null) return;
+    if (pwd !== TEST_PWD) { showToast('❌ 비밀번호 오류'); return; }
+    sessionStorage.setItem('daya_test_mode', '1');
+    showToast('🧪 테스트 모드 진입');
+    setTimeout(() => location.reload(), 800);
   }
-  window.fetch=async(url,opt)=>{
-    if(typeof url!=='string'||!url.startsWith('https://daya.sudalife.net/api'))return _f(url,opt);
-    const m=((opt&&opt.method)||'GET').toUpperCase();
-    if(m==='GET'){try{const r=await _f(url,opt);if(r.ok)return r;}catch(e){}return fbGet(url).catch(()=>new Response('null',{status:200}));}
-    const fo=Object.assign({},opt,{headers:{'Content-Type':'application/json'}});
-    const[r1,r2]=await Promise.all([_f(url,opt).catch(()=>null),_f(toFb(url),fo).catch(()=>null)]);
-    return(r1&&r1.ok)?r1:(r2&&r2.ok)?r2:new Response('{"error":"both failed"}',{status:500});
-  };
-  setTimeout(async()=>{
-    try{
-      const ping=await _f('/api/live.json?t='+Date.now());
-      if(!ping.ok)return;
-      const today=new Date().toISOString().slice(0,10);
-      const dates=[today];
-      for(let i=1;i<=29;i++){const d=new Date();d.setDate(d.getDate()-i);dates.push(d.toISOString().slice(0,10));}
-      const paths=['/live.json',...dates.map(d=>'/history/'+d+'.json')];
-      for(const p of paths){
-        try{
-          const[nr,fr]=await Promise.all([
-            _f('/api'+p+'?t='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
-            _f(FB_BACKUP+p+'?t='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
-          ]);
-          const nSaved=(nr&&(nr.savedAt||nr.ts||0))||0;
-          const fSaved=(fr&&(fr.savedAt||fr.ts||0))||0;
-          if(fr&&fSaved>nSaved){await _f('/api'+p,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(fr)});}
-          else if(nr&&nSaved>=fSaved&&(!fr||nSaved>0)){await _f(FB_BACKUP+p,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(nr)});}
-        }catch(e){}
-      }
-    }catch(e){}
-  },3000);
+}
+(function initTestMode() {
+  if (!_TM) return;
+  document.getElementById('test-mode-btn')?.classList.add('active');
+  const bar = document.getElementById('test-mode-bar');
+  if (bar) bar.classList.add('show');
+  const hdr = document.querySelector('.hdr');
+  if (hdr) hdr.style.background = 'linear-gradient(135deg,#7b4f00,#b37000)';
 })();
+
+var API = window.API;
 
 // ── 탭 전환 ──
 let manualFormBuilt = false;
@@ -272,15 +268,22 @@ async function fetchHistoryList() {
 }
 
 // ── 수량 파싱 ──
-// 한진·직배 제외한 실작업 수량
+// 한진·직배 제외한 실작업 수량 (totalQty 없으면 instrData.종근당.boxes 보완)
 function getQty(d) {
   if (!d) return 0;
   const hanjin = d?.기타업체?.한진 || 0;
   const jikbae = d?.종근당?.직배 || 0;
-  return (d?.totalQty || 0) - hanjin - jikbae;
+  const tq = (d?.totalQty || 0) - hanjin - jikbae;
+  if (tq > 0) return tq;
+  // work.html 미사용일 → instrData(A0) 기반 박스수로 보완
+  return d?.instrData?.종근당?.boxes || 0;
 }
 function getPlt(d) { return d?.plt || 0; }
-function getJkg(d) { return d?.종근당?.매핑 || 0; }
+function getJkg(d) {
+  const mapped = d?.종근당?.매핑 || 0;
+  if (mapped > 0) return mapped;
+  return d?.instrData?.종근당?.boxes || 0; // A0 보완
+}
 function getJb(d) { return d?.종근당?.직배 || 0; }
 function getOther(d) {
   const o = d?.기타업체 || {};
@@ -319,12 +322,12 @@ function renderDayReport(key, d) {
       </div>
       <div class="cbody">
         <div class="sum-grid">
-          <div class="sum-card"><div class="sum-label">총 수량</div><div class="sum-val blue">${getQty(d)}</div></div>
-          <div class="sum-card"><div class="sum-label">파렛트</div><div class="sum-val purple">${d.plt||0}</div></div>
-          <div class="sum-card"><div class="sum-label">종근당</div><div class="sum-val pink">${jkg}</div></div>
-          <div class="sum-card"><div class="sum-label">기타업체</div><div class="sum-val orange">${other}</div></div>
-          <div class="sum-card"><div class="sum-label">직배</div><div class="sum-val green">${jb}</div></div>
-          <div class="sum-card"><div class="sum-label">도매/용차</div><div class="sum-val yellow">${dms+yc}</div></div>
+          <div class="sum-card"><div class="sum-label">총 수량(박스)</div><div class="sum-val blue">${getQty(d)}</div></div>
+          <div class="sum-card"><div class="sum-label">파렛트(팔렛)</div><div class="sum-val purple">${d.plt||0}</div></div>
+          <div class="sum-card"><div class="sum-label">종근당(박스)</div><div class="sum-val pink">${jkg}</div></div>
+          <div class="sum-card"><div class="sum-label">기타업체(박스)</div><div class="sum-val orange">${other}</div></div>
+          <div class="sum-card"><div class="sum-label">직배(박스)</div><div class="sum-val green">${jb}</div></div>
+          <div class="sum-card"><div class="sum-label">도매/용차(박스)</div><div class="sum-val yellow">${dms+yc}</div></div>
         </div>
       </div>
     </div>
@@ -340,6 +343,28 @@ function renderDayReport(key, d) {
         </table>
       </div>
     </div>
+    ${(() => {
+      const instr = d?.instrData?.종근당?.instr || 0;
+      const boxes = d?.instrData?.종근당?.boxes || 0;
+      if (!instr && !boxes) return '';
+      const ratio = instr > 0 && boxes > 0 ? (instr / boxes).toFixed(1) : '—';
+      const pct   = instr > 0 && boxes > 0 ? (boxes / instr * 100).toFixed(1) : '—';
+      return `
+    <div class="card" style="border-color:rgba(233,30,140,.3);">
+      <div class="chdr" style="background:rgba(233,30,140,.08);">
+        <div class="cdot" style="background:#e91e8c;"></div>
+        <div class="ctitle" style="color:#e91e8c;">💊 위고비 실적</div>
+      </div>
+      <div class="cbody">
+        <div class="sum-grid" style="grid-template-columns:repeat(3,1fr);">
+          <div class="sum-card"><div class="sum-label">주문수량(개)</div><div class="sum-val pink">${instr.toLocaleString()}</div></div>
+          <div class="sum-card"><div class="sum-label">처리박스(박스)</div><div class="sum-val pink">${boxes.toLocaleString()}</div></div>
+          <div class="sum-card"><div class="sum-label">개/박스 비율</div><div class="sum-val orange">${ratio}</div></div>
+        </div>
+        ${pct !== '—' ? `<div style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px;">수량 ${instr}개 → 박스 ${boxes}개 (${pct}%)</div>` : ''}
+      </div>
+    </div>`;
+    })()}
     ${Object.keys(biz).length ? `
     <div class="card">
       <div class="chdr"><div class="cdot" style="background:var(--a2)"></div><div class="ctitle">기타업체 상세</div></div>
@@ -359,8 +384,8 @@ function renderDayReport(key, d) {
       <div class="chdr"><div class="cdot" style="background:var(--a5)"></div><div class="ctitle">📦 주문량 vs 작업량</div></div>
       <div class="cbody">
         <div style="display:flex;gap:10px;">
-          <div class="sum-card" style="flex:1"><div class="sum-label">주문량</div><div class="sum-val yellow">${d.orderTotal}</div></div>
-          <div class="sum-card" style="flex:1"><div class="sum-label">작업량</div><div class="sum-val blue">${getQty(d)}</div></div>
+          <div class="sum-card" style="flex:1"><div class="sum-label">주문수량(개)</div><div class="sum-val yellow">${d.orderTotal}</div></div>
+          <div class="sum-card" style="flex:1"><div class="sum-label">작업량(박스)</div><div class="sum-val blue">${getQty(d)}</div></div>
           <div class="sum-card" style="flex:1"><div class="sum-label">비율</div><div class="sum-val green">${(getQty(d)/d.orderTotal*100).toFixed(0)}%</div></div>
         </div>
       </div>
@@ -446,9 +471,9 @@ async function loadWeek() {
 
   document.getElementById('week-result').innerHTML = `
     <div class="sum-grid" style="margin-bottom:14px;">
-      <div class="sum-card"><div class="sum-label">7일 합계</div><div class="sum-val blue">${total7}</div></div>
-      <div class="sum-card"><div class="sum-label">일 평균</div><div class="sum-val green">${avg7}</div></div>
-      <div class="sum-card"><div class="sum-label">최고 일량</div><div class="sum-val orange">${max7}</div></div>
+      <div class="sum-card"><div class="sum-label">7일 합계(박스)</div><div class="sum-val blue">${total7}</div></div>
+      <div class="sum-card"><div class="sum-label">일 평균(박스)</div><div class="sum-val green">${avg7}</div></div>
+      <div class="sum-card"><div class="sum-label">최고 일량(박스)</div><div class="sum-val orange">${max7}</div></div>
     </div>
     <div class="chart-wrap">
       ${pairs.map(([k,d])=>{
@@ -470,20 +495,20 @@ async function loadWeek() {
       <div class="chdr"><div class="cdot" style="background:var(--a3)"></div><div class="ctitle">일별 상세</div></div>
       <div class="cbody">
         <table class="detail-table">
-          <tr><th>날짜</th><th style="text-align:right">총수량</th><th style="text-align:right">종근당</th><th style="text-align:right">기타</th><th style="text-align:right">파렛트</th></tr>
+          <tr><th>날짜</th><th style="text-align:right">총수량</th><th style="text-align:right">종근당</th><th style="text-align:right;color:#e91e8c;">위고비주문(개)</th><th style="text-align:right">파렛트</th></tr>
           ${pairs.map(([k,d])=>`
             <tr>
               <td style="${k===todayKey()?'color:var(--a5);font-weight:800':''}">${fmtDate(k)}</td>
               <td class="num">${getQty(d)||'-'}</td>
               <td class="num pink">${d?getJkg(d):'-'}</td>
-              <td class="num">${d?getOther(d):'-'}</td>
+              <td class="num" style="color:#e91e8c;">${d?.instrData?.종근당?.instr||'-'}</td>
               <td class="num" style="color:var(--a4)">${d?getPlt(d):'-'}</td>
             </tr>`).join('')}
           <tr style="border-top:2px solid var(--border)">
             <td style="font-weight:800;color:var(--a3)">합계</td>
             <td class="num" style="color:var(--a3)">${total7}</td>
             <td class="num pink">${pairs.reduce((s,[,d])=>s+getJkg(d),0)}</td>
-            <td class="num">${pairs.reduce((s,[,d])=>s+getOther(d),0)}</td>
+            <td class="num" style="color:#e91e8c;">${pairs.reduce((s,[,d])=>s+(d?.instrData?.종근당?.instr||0),0)||'-'}</td>
             <td class="num" style="color:var(--a4)">${pairs.reduce((s,[,d])=>s+getPlt(d),0)}</td>
           </tr>
         </table>
@@ -537,12 +562,15 @@ async function loadMonth() {
       <div class="chdr"><div class="cdot" style="background:var(--a6)"></div><div class="ctitle">${year}년 ${month}월 요약</div></div>
       <div class="cbody">
         <div class="sum-grid" style="margin-bottom:16px;">
-          <div class="sum-card"><div class="sum-label">월 합계</div><div class="sum-val blue">${totalM}</div></div>
+          <div class="sum-card"><div class="sum-label">월 합계(박스)</div><div class="sum-val blue">${totalM}</div></div>
           <div class="sum-card"><div class="sum-label">작업일수</div><div class="sum-val green">${workDays}일</div></div>
-          <div class="sum-card"><div class="sum-label">일 평균</div><div class="sum-val orange">${avgM}</div></div>
-          <div class="sum-card"><div class="sum-label">최고 일량</div><div class="sum-val yellow">${maxM}</div></div>
-          <div class="sum-card"><div class="sum-label">종근당 합계</div><div class="sum-val pink">${pairs.reduce((s,[,d])=>s+getJkg(d),0)}</div></div>
-          <div class="sum-card"><div class="sum-label">파렛트 합계</div><div class="sum-val purple">${pairs.reduce((s,[,d])=>s+getPlt(d),0)}</div></div>
+          <div class="sum-card"><div class="sum-label">일 평균(박스)</div><div class="sum-val orange">${avgM}</div></div>
+          <div class="sum-card"><div class="sum-label">최고 일량(박스)</div><div class="sum-val yellow">${maxM}</div></div>
+          <div class="sum-card"><div class="sum-label">종근당 합계(박스)</div><div class="sum-val pink">${pairs.reduce((s,[,d])=>s+getJkg(d),0)}</div></div>
+          <div class="sum-card"><div class="sum-label">파렛트 합계(팔렛)</div><div class="sum-val purple">${pairs.reduce((s,[,d])=>s+getPlt(d),0)}</div></div>
+          <div class="sum-card" style="border-color:rgba(233,30,140,.3);"><div class="sum-label">💊 위고비 주문합계(개)</div><div class="sum-val pink">${pairs.reduce((s,[,d])=>s+(d?.instrData?.종근당?.instr||0),0)||'-'}</div></div>
+          <div class="sum-card" style="border-color:rgba(233,30,140,.3);"><div class="sum-label">💊 위고비 건수합계</div><div class="sum-val pink">${pairs.reduce((s,[,d])=>s+(d?.instrData?.종근당?.count||0),0)||'-'}</div></div>
+          <div class="sum-card" style="border-color:rgba(233,30,140,.3);"><div class="sum-label">💊 위고비 평균박스(일)</div><div class="sum-val orange">${(()=>{const jkgDays=pairs.filter(([,d])=>d?.instrData?.종근당?.boxes>0);return jkgDays.length?Math.round(jkgDays.reduce((s,[,d])=>s+d.instrData.종근당.boxes,0)/jkgDays.length):'-';})()}</div></div>
         </div>
         <div class="chart-wrap">
           ${pairs.map(([k,d])=>{
@@ -721,6 +749,7 @@ function calcTotal() {
 function v(id) { return parseInt(document.getElementById(id)?.value) || 0; }
 
 async function saveManual() {
+  if (_TM) { setMStatus('🧪 테스트 모드 — Firebase 저장 차단', true); return; }
   const dateKey = document.getElementById('m-date')?.value;
   if (!dateKey) { setMStatus('날짜를 선택하세요', true); return; }
 
@@ -839,16 +868,161 @@ async function runAnalysis() {
 function computeAnalysis(pairs) {
   const DOW_KR = ['일','월','화','수','목','금','토'];
 
-  // 주말(토/일) 제외
-  const workPairs = pairs.filter(([k]) => {
-    const dow = new Date(k).getDay();
-    return dow !== 0 && dow !== 6; // 일=0, 토=6 제외
+  // ── 공휴일 정의 ──
+  const FIXED_HOLIDAYS = new Set(['01-01','03-01','05-01','05-05','06-06','08-15','10-03','10-09','12-25']);
+  const LUNAR_HOLIDAYS = new Set([
+    // 2023 설날·추석·석가탄신일·대체공휴일
+    '2023-01-21','2023-01-22','2023-01-23','2023-01-24',
+    '2023-05-27',
+    '2023-09-27','2023-09-28','2023-09-29','2023-09-30','2023-10-02',
+    // 2024
+    '2024-02-08','2024-02-09','2024-02-10','2024-02-11','2024-02-12',
+    '2024-05-06','2024-05-15',
+    '2024-09-15','2024-09-16','2024-09-17','2024-09-18',
+    // 2025
+    '2025-01-27','2025-01-28','2025-01-29','2025-01-30','2025-01-31',
+    '2025-05-06',
+    '2025-10-04','2025-10-05','2025-10-06','2025-10-07','2025-10-08',
+    // 2026
+    '2026-02-15','2026-02-16','2026-02-17','2026-02-18','2026-02-19',
+    '2026-05-24','2026-05-25',
+    '2026-09-23','2026-09-24','2026-09-25','2026-09-26','2026-09-28',
+    // 2027
+    '2027-02-05','2027-02-06','2027-02-07','2027-02-08','2027-02-09',
+    '2027-05-13',
+    '2027-10-13','2027-10-14','2027-10-15','2027-10-16',
+  ]);
+  const isHoliday = k => LUNAR_HOLIDAYS.has(k) || FIXED_HOLIDAYS.has(k.slice(5));
+
+  // 명절 코어 날짜 (설날·추석 당일) — 전후 패턴 분석용
+  const HOLIDAY_CORES = [
+    '2023-01-22','2023-09-29',
+    '2024-02-10','2024-09-17',
+    '2025-01-29','2025-10-06',
+    '2026-02-17','2026-09-25',
+    '2027-02-07','2027-10-15',
+  ];
+  function daysToNearestCore(dateStr) {
+    const t = new Date(dateStr).getTime();
+    let best = Infinity;
+    HOLIDAY_CORES.forEach(c => {
+      const d = (t - new Date(c).getTime()) / 864e5;
+      if (Math.abs(d) < Math.abs(best)) best = d;
+    });
+    return best; // 음수=명절 전, 양수=명절 후
+  }
+
+  // 주말(토/일) + 공휴일 + 휴무(qty=0) 제외
+  const weekdayPairs = pairs.filter(([k]) => { const d = new Date(k).getDay(); return d !== 0 && d !== 6; });
+  const nonHolidayPairs = weekdayPairs.filter(([k]) => !isHoliday(k));
+  const workPairs = nonHolidayPairs.filter(([, d]) => getQty(d) > 0);
+  const holidayExcluded = weekdayPairs.length - nonHolidayPairs.length;
+  const offDayExcluded = nonHolidayPairs.length - workPairs.length;
+  if (!workPairs.length) workPairs.push(...pairs);
+
+  // ── 명절 전후 패턴 (코어 기준 1~7 캘린더일 이내 작업일) ──
+  const preHolidayQtys = [], postHolidayQtys = [];
+  workPairs.forEach(([k, d]) => {
+    const dist = daysToNearestCore(k);
+    if (dist >= -7 && dist <= -1) preHolidayQtys.push(getQty(d));
+    else if (dist >= 1 && dist <= 7) postHolidayQtys.push(getQty(d));
   });
-  if (!workPairs.length) workPairs.push(...pairs); // 데이터 없으면 전체 사용
+  const preHolidayAvg  = preHolidayQtys.length  >= 2 ? Math.round(preHolidayQtys.reduce((a,b)=>a+b,0)/preHolidayQtys.length)  : 0;
+  const postHolidayAvg = postHolidayQtys.length >= 2 ? Math.round(postHolidayQtys.reduce((a,b)=>a+b,0)/postHolidayQtys.length) : 0;
+  const holidayPattern = { preAvg: preHolidayAvg, postAvg: postHolidayAvg, preCnt: preHolidayQtys.length, postCnt: postHolidayQtys.length };
+
+  // ── 공휴일/휴무 직다음날 계수 (ALL 공휴일 + 데이터없는 평일) ──
+  // 데이터 범위 내 평일인데 데이터 없는 날 = 휴무일
+  const _dataSet = new Set(pairs.map(([k])=>k));
+  const _closedSet = new Set();
+  if (pairs.length >= 2) {
+    const _sf = new Date(pairs[0][0]), _sl = new Date(pairs[pairs.length-1][0]);
+    for (let _dd = new Date(_sf); _dd <= _sl; _dd.setDate(_dd.getDate()+1)) {
+      const _dk = _dd.toISOString().slice(0,10);
+      const _dw = _dd.getDay();
+      if (_dw !== 0 && _dw !== 6 && !_dataSet.has(_dk)) _closedSet.add(_dk);
+    }
+  }
+  function _prevWorkday(ds) {
+    const d = new Date(ds);
+    for(let i=1;i<=10;i++){d.setDate(d.getDate()-1);const dw=d.getDay();if(dw!==0&&dw!==6)return d.toISOString().slice(0,10);}
+    return null;
+  }
+  function _isClosedDay(ds) { return isHoliday(ds) || _closedSet.has(ds); }
+  const _ndQtys=[], _normNdQtys=[];
+  workPairs.forEach(([k,d])=>{
+    const prev=_prevWorkday(k);
+    if(prev && _isClosedDay(prev)) _ndQtys.push(getQty(d));
+    else if(prev) _normNdQtys.push(getQty(d));
+  });
+  const _ndAvg = _ndQtys.length>=2 ? _ndQtys.reduce((a,b)=>a+b,0)/_ndQtys.length : 0;
+  const _normNdAvg = _normNdQtys.length>=2 ? _normNdQtys.reduce((a,b)=>a+b,0)/_normNdQtys.length : 0;
+  let nextDayFactor;
+  if(_ndQtys.length>=2 && _normNdAvg>0){
+    const _raw=_ndAvg/_normNdAvg;
+    nextDayFactor=parseFloat(Math.min(1.9,Math.max(0.85,0.45+_raw*0.55)).toFixed(3));
+  } else {
+    nextDayFactor=1.2; // 데이터 부족 시 기본 +20% 가정
+  }
+  const nextDayCount=_ndQtys.length;
+
+  // ── 공휴일/휴무 직전날 계수 (택배 주문 감소) ──
+  function _nextWorkday(ds) {
+    const d = new Date(ds);
+    for(let i=1;i<=10;i++){d.setDate(d.getDate()+1);const dw=d.getDay();if(dw!==0&&dw!==6)return d.toISOString().slice(0,10);}
+    return null;
+  }
+  const _pdQtys=[], _normPdQtys=[];
+  workPairs.forEach(([k,d])=>{
+    const next=_nextWorkday(k);
+    if(next && _isClosedDay(next)) _pdQtys.push(getQty(d));
+    else _normPdQtys.push(getQty(d));
+  });
+  const _pdAvg = _pdQtys.length>=2 ? _pdQtys.reduce((a,b)=>a+b,0)/_pdQtys.length : 0;
+  const _normPdAvg = _normPdQtys.length>=2 ? _normPdQtys.reduce((a,b)=>a+b,0)/_normPdQtys.length : 0;
+  let prevDayFactor;
+  if(_pdQtys.length>=2 && _normPdAvg>0){
+    const _raw=_pdAvg/_normPdAvg;
+    prevDayFactor=parseFloat(Math.min(1.0,Math.max(0.5,0.3+_raw*0.7)).toFixed(3));
+  } else {
+    prevDayFactor=0.8; // 데이터 부족 시 기본 -20% 가정
+  }
+  const prevDayCount=_pdQtys.length;
 
   // 기초 통계 (주말 제외)
   const qtys = workPairs.map(([,d]) => getQty(d));
   const overall = qtys.reduce((a,b)=>a+b,0) / qtys.length;
+
+  // ── 이상치 제거 (±2σ) 후 정제 평균 ──
+  const _mu = overall;
+  const _sigma = Math.sqrt(qtys.map(v=>(v-_mu)**2).reduce((a,b)=>a+b,0)/qtys.length);
+  const cleanQtys = qtys.filter(v=>Math.abs(v-_mu)<=2*_sigma);
+  const overallClean = Math.round(cleanQtys.length ? cleanQtys.reduce((a,b)=>a+b,0)/cleanQtys.length : overall);
+
+  // ── 종근당 매핑 전용 분석 ──
+  const jkgPairs = workPairs.filter(([,d]) => getJkg(d) > 0);
+  const jkgQtys = jkgPairs.map(([,d]) => getJkg(d));
+  const jkgOverall = jkgQtys.length ? Math.round(jkgQtys.reduce((a,b)=>a+b,0) / jkgQtys.length) : 0;
+  // 종근당 요일별 평균
+  const jkgDowSum = Array(7).fill(0), jkgDowCnt = Array(7).fill(0);
+  jkgPairs.forEach(([k,d]) => { const dw=new Date(k).getDay(); jkgDowSum[dw]+=getJkg(d); jkgDowCnt[dw]++; });
+  const jkgDowAvg = jkgDowSum.map((s,i) => jkgDowCnt[i] ? Math.round(s/jkgDowCnt[i]) : 0);
+  const jkgDowFactor = jkgDowAvg.map(a => jkgOverall > 0 ? parseFloat((a/jkgOverall).toFixed(3)) : 1);
+  // 종근당 최근 4주 가중평균
+  const jkgRecent4w = Array(7).fill(0);
+  for (let dw=1; dw<=5; dw++) {
+    const _sd = jkgPairs.filter(([k])=>new Date(k).getDay()===dw).slice(-4);
+    if (_sd.length > 0) {
+      const ws=[4,3,2,1].slice(4-_sd.length), tw=ws.reduce((a,b)=>a+b,0);
+      jkgRecent4w[dw] = Math.round(_sd.reduce((s,[,d],i)=>s+getJkg(d)*ws[i],0)/tw);
+    }
+  }
+  // 종근당 비율 (총량 대비)
+  const jkgRatioPairs = workPairs.filter(([,d]) => getQty(d) > 0 && getJkg(d) > 0);
+  const jkgRatio = jkgRatioPairs.length
+    ? parseFloat((jkgRatioPairs.reduce((s,[,d])=>s+getJkg(d)/getQty(d),0)/jkgRatioPairs.length).toFixed(3))
+    : 0.786;
+  const jkgAnalysis = { overall: jkgOverall, dowAvg: jkgDowAvg, dowFactor: jkgDowFactor, recent4w: jkgRecent4w, ratio: jkgRatio, cnt: jkgPairs.length };
 
   // ── 요일별 (주말 제외) ──
   const dowSum = Array(7).fill(0), dowCnt = Array(7).fill(0);
@@ -876,28 +1050,89 @@ function computeAnalysis(pairs) {
   });
   const monAvg = monSum.map((s,i) => monCnt[i] ? Math.round(s/monCnt[i]) : 0);
 
-  // ── 월초(1~5일) vs 일반 비교 ──
-  const earlyQtys = workPairs.filter(([k])=>parseInt(k.split('-')[2])<=5).map(([,d])=>getQty(d));
-  const lateQtys  = workPairs.filter(([k])=>parseInt(k.split('-')[2])>5).map(([,d])=>getQty(d));
+  // ── 월초(첫 3 작업일) vs 일반 비교 ──
+  // 월별로 그룹화 → 첫 3 작업일 추출 (캘린더 날짜 고정 아님, 공휴일/휴무 이후 실제 작업일 기준)
+  const _monthMap = new Map();
+  workPairs.forEach(([k]) => {
+    const ym = k.slice(0, 7);
+    if (!_monthMap.has(ym)) _monthMap.set(ym, []);
+    _monthMap.get(ym).push(k);
+  });
+  const _earlyKeys = new Set();
+  _monthMap.forEach(keys => keys.sort().slice(0, 3).forEach(k => _earlyKeys.add(k)));
+  const earlyQtys = workPairs.filter(([k]) => _earlyKeys.has(k)).map(([,d]) => getQty(d));
+  const lateQtys  = workPairs.filter(([k]) => !_earlyKeys.has(k)).map(([,d]) => getQty(d));
   const earlyAvg = earlyQtys.length ? Math.round(earlyQtys.reduce((a,b)=>a+b,0)/earlyQtys.length) : 0;
   const lateAvg  = lateQtys.length  ? Math.round(lateQtys.reduce((a,b)=>a+b,0)/lateQtys.length)  : 0;
+  const earlyMonthFactor = overall > 0 && earlyAvg > 0 ? parseFloat((earlyAvg / overall).toFixed(3)) : 1;
 
-  // ── 향후 7일 예측 (주말 제외) ──
-  const forecast = [];
-  for (let i=1; i<=10; i++) {
-    const fd = new Date(); fd.setDate(fd.getDate()+i);
-    const dow = fd.getDay();
-    if (dow === 0 || dow === 6) continue; // 주말 건너뜀
-    if (forecast.length >= 7) break;
-    const fKey = `${fd.getFullYear()}-${pad(fd.getMonth()+1)}-${pad(fd.getDate())}`;
-    const dom  = fd.getDate();
-    const mon  = fd.getMonth()+1;
-    const monF = monCnt[mon] >= 2 ? monAvg[mon]/overall : 1;
-    const predicted = Math.round(overall * (dowFactor[dow]||1) * (domFactor[dom]||1) * (monF||1));
-    forecast.push({ key:fKey, dow, dom, mon, predicted });
+  // ── ② 최근 4주 같은 요일 (단순 + 가중 4:3:2:1) ──
+  const recent4wAvg = Array(7).fill(0), recent4wCnt = Array(7).fill(0);
+  const weighted4wAvg = Array(7).fill(0);
+  for (let _dow=1; _dow<=5; _dow++) {
+    const _sd = workPairs.filter(([k])=>new Date(k).getDay()===_dow);
+    const _last4 = _sd.slice(-4);
+    if (_last4.length > 0) {
+      recent4wAvg[_dow] = Math.round(_last4.reduce((s,[,d])=>s+getQty(d),0)/_last4.length);
+      recent4wCnt[_dow] = _last4.length;
+      const _ws=[4,3,2,1].slice(4-_last4.length);
+      const _tw=_ws.reduce((a,b)=>a+b,0);
+      weighted4wAvg[_dow] = Math.round(_last4.reduce((s,[,d],i)=>s+getQty(d)*_ws[i],0)/_tw);
+    }
   }
 
-  // ── 주문량-작업량 비율 학습 ──
+  // ── ③ 단기 트렌드 계수 (최근 2주 vs 이전 2주 같은 요일) ──
+  const trendFactor = Array(7).fill(1);
+  for (let _dow=1; _dow<=5; _dow++) {
+    const _sd = workPairs.filter(([k])=>new Date(k).getDay()===_dow);
+    if (_sd.length >= 4) {
+      const _l2 = _sd.slice(-2).reduce((s,[,d])=>s+getQty(d),0)/2;
+      const _p2 = _sd.slice(-4,-2).reduce((s,[,d])=>s+getQty(d),0)/2;
+      if (_p2 > 0) trendFactor[_dow] = parseFloat(Math.min(1.35,Math.max(0.65,_l2/_p2)).toFixed(3));
+    }
+  }
+
+  // ── ④ 주차별 계수 (1주차:1-7일 / 2주차:8-14 / 3주차:15-21 / 4주차:22+) ──
+  const _womSum=Array(4).fill(0),_womCnt=Array(4).fill(0);
+  workPairs.forEach(([k,d])=>{
+    const _dom=parseInt(k.split('-')[2]);
+    const _wi=_dom<=7?0:_dom<=14?1:_dom<=21?2:3;
+    _womSum[_wi]+=getQty(d); _womCnt[_wi]++;
+  });
+  const _womAvg=_womSum.map((s,i)=>_womCnt[i]?s/_womCnt[i]:0);
+  const _womBase=_womAvg.filter(v=>v>0);
+  const _womOverall=_womBase.length?_womBase.reduce((a,b)=>a+b,0)/_womBase.length:overallClean;
+  const weekOfMonthFactor=_womAvg.map(v=>(_womOverall>0&&v>0)?parseFloat((v/_womOverall).toFixed(3)):1);
+  const womCnt=_womCnt;
+
+  // ── ⑤ 월말 계수 (25일+) ──
+  const _lateQ=workPairs.filter(([k])=>parseInt(k.split('-')[2])>=25).map(([,d])=>getQty(d));
+  const _lateAvg=_lateQ.length>=3?_lateQ.reduce((a,b)=>a+b,0)/_lateQ.length:overallClean;
+  const lateMonthFactor=overallClean>0?parseFloat((_lateAvg/overallClean).toFixed(3)):1;
+
+  // ── ⑥ 예측 정확도 보정 (back-test: 최근 8회 같은 요일) ──
+  const accuracyFactor=Array(7).fill(1);
+  for (let _dow=1; _dow<=5; _dow++) {
+    const _sd=workPairs.filter(([k])=>new Date(k).getDay()===_dow);
+    if (_sd.length<5) continue;
+    const _test=_sd.slice(-8);
+    const _ratios=[];
+    _test.forEach(([,d],_idx)=>{
+      const _before=_sd.slice(0,_sd.length-_test.length+_idx);
+      const _b4=_before.slice(-4);
+      if(_b4.length<2) return;
+      const _ws=[4,3,2,1].slice(4-_b4.length),_tw=_ws.reduce((a,b)=>a+b,0);
+      const _sim=_b4.reduce((s,[,d2],i)=>s+getQty(d2)*_ws[i],0)/_tw;
+      const _act=getQty(d);
+      if(_sim>0&&_act>0) _ratios.push(_act/_sim);
+    });
+    if(_ratios.length>=2){
+      const _raw=_ratios.reduce((a,b)=>a+b,0)/_ratios.length;
+      accuracyFactor[_dow]=parseFloat(Math.min(1.25,Math.max(0.75,0.4+_raw*0.6)).toFixed(3));
+    }
+  }
+
+  // ── ⑦ 주문량-작업량 비율 학습 ──
   const orderPairs = workPairs.filter(([,d]) => d.orderTotal > 0 && getQty(d) > 0);
   let orderRatio = 0;
   if (orderPairs.length >= 5) {
@@ -905,22 +1140,228 @@ function computeAnalysis(pairs) {
     orderRatio = parseFloat((ratios.reduce((a,b)=>a+b,0) / ratios.length).toFixed(3));
   }
 
-  // ── 최근 4주 같은 요일 평균 (핵심 예측값) ──
-  const recent4wAvg = Array(7).fill(0);
-  const recent4wCnt = Array(7).fill(0);
-  for (let dow = 1; dow <= 5; dow++) { // 월~금
-    const sameDowPairs = workPairs.filter(([k]) => new Date(k).getDay() === dow);
-    const last4 = sameDowPairs.slice(-4); // 가장 최근 4번
-    if (last4.length > 0) {
-      recent4wAvg[dow] = Math.round(last4.reduce((s,[,d])=>s+getQty(d),0) / last4.length);
-      recent4wCnt[dow] = last4.length;
+  // ── ⑧ A0 지시수량 → 박스 비율 학습 ──
+  const A0_BRANDS_RPT = ['동구바이오','삼천당제약','국제약품','대우제약','아주약품','비씨월드','종근당','기타'];
+  const instrBrandSum = {}, instrBrandCnt = {};
+  A0_BRANDS_RPT.forEach(b => { instrBrandSum[b]={instr:0,boxes:0,count:0}; instrBrandCnt[b]=0; });
+  let instrDayCount=0, instrTotalRatioSum=0, instrDayRatioCnt=0;
+  workPairs.forEach(([,d]) => {
+    if (!d.instrData) return;
+    instrDayCount++;
+    A0_BRANDS_RPT.forEach(brand => {
+      const bd = d.instrData[brand];
+      if (bd && bd.instr > 0 && bd.boxes > 0) {
+        instrBrandSum[brand].instr += bd.instr;
+        instrBrandSum[brand].boxes += bd.boxes;
+        if (brand === '종근당' && bd.count > 0) instrBrandSum[brand].count += bd.count;
+        instrBrandCnt[brand]++;
+      }
+    });
+    if (d.instrTotal > 0 && getQty(d) > 0) {
+      instrTotalRatioSum += d.instrTotal / getQty(d);
+      instrDayRatioCnt++;
     }
+  });
+  const instrRatios = {};
+  A0_BRANDS_RPT.forEach(brand => {
+    if (instrBrandCnt[brand] >= 1 && instrBrandSum[brand].boxes > 0) {
+      instrRatios[brand] = {
+        ratio: parseFloat((instrBrandSum[brand].instr / instrBrandSum[brand].boxes).toFixed(2)),
+        days: instrBrandCnt[brand],
+        totalInstr: instrBrandSum[brand].instr,
+        totalBoxes: instrBrandSum[brand].boxes,
+        ...(brand==='종근당' && instrBrandSum[brand].count>0 ? {
+          totalCount: instrBrandSum[brand].count,
+          countToBoxRatio: parseFloat((instrBrandSum[brand].boxes / instrBrandSum[brand].count).toFixed(3))
+        } : {})
+      };
+    }
+  });
+  const instrOverallRatio = instrDayRatioCnt > 0
+    ? parseFloat((instrTotalRatioSum / instrDayRatioCnt).toFixed(3)) : 0;
+
+  // ── ⑨ 향후 7일 예측 — 모든 계수 통합 블렌드 ──
+  const forecast = [];
+  for (let i=1; i<=10; i++) {
+    const fd = new Date(); fd.setDate(fd.getDate()+i);
+    const _fdow = fd.getDay();
+    if (_fdow===0||_fdow===6) continue;
+    if (forecast.length>=7) break;
+    const fKey = `${fd.getFullYear()}-${pad(fd.getMonth()+1)}-${pad(fd.getDate())}`;
+    if (isHoliday(fKey)) continue;
+    const _fdom = fd.getDate(), _fmon = fd.getMonth()+1;
+    // 월 계수 (30% 반영)
+    const _monF = monCnt[_fmon]>=2&&monAvg[_fmon]>0 ? 1+(monAvg[_fmon]/overallClean-1)*0.3 : 1;
+    // 날짜 계수 — domFactor vs weekOfMonth 중 데이터 많은 쪽 (50% 반영)
+    const _rawDomF = domFactor[_fdom]||1;
+    const _wi = _fdom<=7?0:_fdom<=14?1:_fdom<=21?2:3;
+    const _rawWomF = weekOfMonthFactor[_wi]||1;
+    const _dateF = domCnt[_fdom]>=3 ? 1+(_rawDomF-1)*0.5 : 1+(_rawWomF-1)*0.5;
+    // 월말 계수 (60% 반영)
+    const _latef = _fdom>=25 ? 1+(lateMonthFactor-1)*0.6 : 1;
+    // 베이스 블렌딩
+    const _w4w = weighted4wAvg[_fdow];
+    const _cnt = recent4wCnt[_fdow]||0;
+    const _trend = trendFactor[_fdow]||1;
+    const _pBase = Math.round(overallClean * (dowFactor[_fdow]||1));
+    let _base;
+    if (_w4w>0&&_cnt>=3)      { _base = _w4w*_trend*0.60 + _pBase*0.40; }
+    else if (_w4w>0&&_cnt>=2) { _base = _w4w*_trend*0.40 + _pBase*0.60; }
+    else if (_w4w>0)           { _base = _w4w*0.25 + _pBase*0.75; }
+    else                       { _base = _pBase; }
+    // 월초 첫 3 작업일 계수 (50% 반영)
+    let _fNthWD = 0;
+    for (let _dy = 1; _dy <= 31; _dy++) {
+      const _dd = new Date(fd.getFullYear(), fd.getMonth(), _dy);
+      if (_dd.getMonth() !== fd.getMonth()) break;
+      const _kk = `${fd.getFullYear()}-${pad(fd.getMonth()+1)}-${pad(_dy)}`;
+      if (_dd.getDay() !== 0 && _dd.getDay() !== 6 && !isHoliday(_kk)) {
+        _fNthWD++;
+        if (_kk === fKey) break;
+      }
+    }
+    const _earlyF = _fNthWD <= 3 && earlyMonthFactor > 1.05 ? 1 + (earlyMonthFactor - 1) * 0.5 : 1;
+    // 공휴일/휴무 직다음날 여부
+    const _prevWd = _prevWorkday(fKey);
+    const _isNextDay = !!(_prevWd && _isClosedDay(_prevWd));
+    const _ndF = _isNextDay ? nextDayFactor : 1;
+    // 공휴일/휴무 직전날 여부
+    const _nextWd = _nextWorkday(fKey);
+    const _isPrevDay = !!(_nextWd && _isClosedDay(_nextWd));
+    const _pdF = _isPrevDay ? prevDayFactor : 1;
+    // 정확도 보정 + 날짜/월/월초/공휴일다음날/공휴일전날 계수
+    let _pred = Math.round(_base * _dateF * _monF * _latef * _earlyF * (accuracyFactor[_fdow]||1) * _ndF * _pdF);
+    // 클램핑 (공휴일 다음날은 상한 더 넓게, 공휴일 전날은 하한 더 낮게)
+    _pred = Math.max(Math.round(overallClean*(_isPrevDay?0.25:0.35)), Math.min(Math.round(overallClean*(_isNextDay?2.6:2.1)), _pred));
+    const _conf = _cnt>=4?'high':_cnt>=3?'med':'low';
+    forecast.push({ key:fKey, dow:_fdow, dom:_fdom, mon:_fmon, predicted:_pred, confidence:_conf, isNextDay:_isNextDay, isPrevDay:_isPrevDay });
   }
 
   // ── 베스트/워스트 요일 (주말 제외) ──
   const validDow = dowAvg.map((a,i)=>({i,a,kr:DOW_KR[i],cnt:dowCnt[i]}))
-    .filter(x => x.cnt >= 2 && x.i !== 0 && x.i !== 6); // 주말 제외
+    .filter(x => x.cnt >= 4 && x.i !== 0 && x.i !== 6); // 주말 제외, 최소 4일 이상 데이터
   validDow.sort((a,b)=>b.a-a.a);
+
+  // ── 작업자 설정 (경력기준 등급 포함) ──
+  const _wcfg = JSON.parse(localStorage.getItem('sys_config_v1') || '{}');
+  const _wMeta = {};
+  (_wcfg.workers || []).forEach(w => {
+    if (!w || !w.name) return;
+    const obj = typeof w === 'string' ? {name:w, grade:'B'} : w;
+    const days = obj.startDate ? Math.floor((Date.now() - new Date(obj.startDate).getTime()) / 86400000) : null;
+    let expGrade = null;
+    if (days !== null) {
+      expGrade = days >= 181 ? 'A' : days >= 121 ? 'B' : days >= 61 ? 'C' : 'D';
+    }
+    _wMeta[obj.name] = { grade: obj.grade || 'B', startDate: obj.startDate || null, days, expGrade };
+  });
+
+  // ── 위고비 계절성 분석 ──
+  const _pMeta = _wcfg.productMeta || JSON.parse('{}');
+  const _peakMonths = new Set(_pMeta.peakMonths || [3,4,5,6,7,8]);
+  const _lowMonths  = new Set(_pMeta.lowMonths  || [12,1,2]);
+  const peakQtys = workPairs.filter(([k]) => _peakMonths.has(parseInt(k.slice(5,7)))).map(([,d]) => getQty(d));
+  const lowQtys  = workPairs.filter(([k]) => _lowMonths.has(parseInt(k.slice(5,7)))).map(([,d]) => getQty(d));
+  const peakAvg  = peakQtys.length >= 3 ? Math.round(peakQtys.reduce((a,b)=>a+b,0)/peakQtys.length) : 0;
+  const lowAvg   = lowQtys.length  >= 3 ? Math.round(lowQtys.reduce((a,b)=>a+b,0)/lowQtys.length)  : 0;
+  const seasonalFactor = (peakAvg > 0 && lowAvg > 0) ? parseFloat((peakAvg / lowAvg).toFixed(2)) : 0;
+  const seasonalAnalysis = { peakAvg, lowAvg, peakCnt: peakQtys.length, lowCnt: lowQtys.length, seasonalFactor, productName: _pMeta.name || '' };
+
+  // ── 작업자별 기여도 분석 (workerSnapshot 있는 이력만) ──
+  const workerPairs = workPairs.filter(([,d]) => d.workerSnapshot && d.workerSnapshot.members);
+  const workerAnalysis = {};
+  if (workerPairs.length >= 3) {
+    // 팀계수로 나눈 "표준화 물량" 기준으로 각 작업자 기여도 추정
+    const allNames = new Set();
+    workerPairs.forEach(([,d]) => Object.keys(d.workerSnapshot.members).forEach(n => allNames.add(n)));
+    allNames.forEach(name => {
+      const presentDays = workerPairs.filter(([,d]) => {
+        const s = d.workerSnapshot.members[name]?.status;
+        return s === 'present' || s === 'late';
+      });
+      const absentDays = workerPairs.filter(([,d]) => {
+        const s = d.workerSnapshot.members[name]?.status;
+        return !s || s === 'absent';
+      });
+      if (presentDays.length < 2) return;
+      // 팀계수 보정 물량: qty / (teamFactor/100)
+      const normQty = days => days.map(([,d]) => {
+        const tf = d.workerSnapshot.teamFactor || 100;
+        return getQty(d) / (tf / 100);
+      });
+      const pNorm = normQty(presentDays);
+      const aNorm = normQty(absentDays);
+      const pAvg = Math.round(pNorm.reduce((a,b)=>a+b,0) / pNorm.length);
+      const aAvg = aNorm.length >= 2 ? Math.round(aNorm.reduce((a,b)=>a+b,0) / aNorm.length) : 0;
+      // 등급 이력 (가장 최근 기록 기준)
+      const lastRecord = [...presentDays].reverse()[0];
+      const grade = lastRecord[1].workerSnapshot.members[name]?.grade || 'B';
+      // 최근 추세 (최근 5회 vs 이전 5회 출근 비교)
+      let trend = 0;
+      if (presentDays.length >= 6) {
+        const half = Math.floor(presentDays.length / 2);
+        const recentN = normQty(presentDays.slice(-half));
+        const olderN  = normQty(presentDays.slice(0, half));
+        const rA = recentN.reduce((a,b)=>a+b,0)/recentN.length;
+        const oA = olderN.reduce((a,b)=>a+b,0)/olderN.length;
+        trend = oA > 0 ? Math.round((rA - oA) / oA * 100) : 0;
+      }
+      const meta = _wMeta[name] || {};
+      workerAnalysis[name] = {
+        grade, presentCount: presentDays.length, absentCount: absentDays.length,
+        pAvg, aAvg, trend,
+        liftPct: aAvg > 0 ? Math.round((pAvg - aAvg) / aAvg * 100) : 0,
+        startDate: meta.startDate || null,
+        days: meta.days || null,
+        expGrade: meta.expGrade || null
+      };
+    });
+  }
+  // 성과 데이터 없는 작업자도 경력기준 정보 표시
+  Object.entries(_wMeta).forEach(([name, meta]) => {
+    if (!workerAnalysis[name]) {
+      workerAnalysis[name] = {
+        grade: meta.grade, presentCount: 0, absentCount: 0,
+        pAvg: 0, aAvg: 0, trend: 0, liftPct: 0,
+        startDate: meta.startDate, days: meta.days, expGrade: meta.expGrade
+      };
+    }
+  });
+
+  // ── 예측 정확도 분석 (최근 10일 백테스트) ──
+  // 각 날짜의 "그 날 이전 데이터"만으로 예측 시뮬레이션 → 실제와 비교
+  const predAccuracyLog = [];
+  workPairs.slice(-10).forEach(([k, d]) => {
+    const dw = new Date(k).getDay();
+    const actual = getQty(d);
+    const prevAll = workPairs.filter(([pk]) => pk < k);
+    const prevSameDay = prevAll.filter(([pk]) => new Date(pk).getDay() === dw);
+    let pred = 0;
+    if (prevSameDay.length >= 1) {
+      const last4 = prevSameDay.slice(-4);
+      const ws = [4,3,2,1].slice(4-last4.length), tw = ws.reduce((a,b)=>a+b,0);
+      pred = Math.round(last4.reduce((s,[,d2],i)=>s+getQty(d2)*ws[i],0)/tw);
+    } else if (prevAll.length >= 1) {
+      pred = Math.round(prevAll.reduce((s,[,d2])=>s+getQty(d2),0)/prevAll.length);
+    }
+    if (pred <= 0 || actual <= 0) return;
+    const err = Math.round((actual - pred) / pred * 100);
+    const reason = Math.abs(err)<10?'정상':err>=30?'급증':err>=10?'예상초과':err<=-30?'급감':'예상미달';
+    predAccuracyLog.push({ key:k, dw, actual, pred, err, reason });
+  });
+  const _absErrs = predAccuracyLog.map(x=>Math.abs(x.err));
+  const predAvgErr = _absErrs.length > 0 ? Math.round(_absErrs.reduce((a,b)=>a+b,0)/_absErrs.length) : 0;
+  const predAccuracy = { log: predAccuracyLog, avgErr: predAvgErr, confidence: Math.max(0, 100-predAvgErr) };
+
+  // ── 처리기준 인원 계산 (09:00~18:00, 유효 8시간) ──
+  let _avgPresent;
+  if (workerPairs.length >= 3) {
+    _avgPresent = parseFloat((workerPairs.reduce((s,[,d]) => s + (d.workerSnapshot?.presentCount || 0), 0) / workerPairs.length).toFixed(1));
+  } else {
+    _avgPresent = (_wcfg.workers || []).length || 7;
+  }
+  const _ratePerPH = _avgPresent > 0 ? parseFloat((overallClean / (_avgPresent * 8)).toFixed(2)) : 0;
+  const capacityAnalysis = { avgPresent: _avgPresent, ratePerPH: _ratePerPH };
 
   // ── 최근 30일 트렌드 (평일만) ──
   const recent30 = workPairs.slice(-30);
@@ -934,6 +1375,10 @@ function computeAnalysis(pairs) {
     overall: Math.round(overall),
     totalDays: workPairs.length,
     totalDaysAll: pairs.length,
+    holidayExcluded,
+    offDayExcluded,
+    holidayPattern,
+    earlyMonthFactor,
     recent4wAvg, recent4wCnt, orderRatio,
     totalQtySum: qtys.reduce((a,b)=>a+b,0),
     maxQty: Math.max(...qtys), maxDay: workPairs[qtys.indexOf(Math.max(...qtys))][0],
@@ -943,7 +1388,16 @@ function computeAnalysis(pairs) {
     monAvg, monCnt,
     earlyAvg, lateAvg, earlyPct: overall>0?Math.round(earlyAvg/overall*100):100,
     forecast,
-    trendPct, r30firstAvg, r30lastAvg
+    trendPct, r30firstAvg, r30lastAvg,
+    instrRatios, instrOverallRatio, instrDayCount,
+    overallClean, weighted4wAvg,
+    trendFactor, weekOfMonthFactor, womCnt,
+    lateMonthFactor, accuracyFactor,
+    nextDayFactor, nextDayCount,
+    prevDayFactor, prevDayCount,
+    workerAnalysis, workerDataDays: workerPairs.length,
+    seasonalAnalysis, wMeta: _wMeta,
+    jkgAnalysis, capacityAnalysis, predAccuracy
   };
 
   // ✅ 예측 데이터를 config.json에 저장 → work.html에서 사용
@@ -953,25 +1407,97 @@ function computeAnalysis(pairs) {
 }
 
 async function savePredictionToConfig(a) {
+  if (_TM) return; // 🧪 테스트 모드: Firebase 차단
   try {
     const r = await fetch(`${API}/config.json?t=${Date.now()}`);
     const cfg = (await r.json().catch(()=>({}))) || {};
     cfg.prediction = {
-      overall: a.overall,
+      overall: a.overallClean || a.overall,
+      overallRaw: a.overall,
       dowAvg: a.dowAvg,
+      dowFactor: a.dowFactor,
       domFactor: a.domFactor,
+      domCnt: a.domCnt,
       monAvg: a.monAvg,
       monCnt: a.monCnt,
       recent4wAvg: a.recent4wAvg,
       recent4wCnt: a.recent4wCnt,
-      orderRatio: a.orderRatio,     // ← 주문량 비율 (5일 이상 데이터 있으면)
+      weighted4wAvg: a.weighted4wAvg,
+      trendFactor: a.trendFactor,
+      weekOfMonthFactor: a.weekOfMonthFactor,
+      lateMonthFactor: a.lateMonthFactor,
+      accuracyFactor: a.accuracyFactor,
+      nextDayFactor: a.nextDayFactor || 1.2,
+      prevDayFactor: a.prevDayFactor || 0.8,
+      orderRatio: a.orderRatio,
+      forecast: (a.forecast || []).slice(0, 7).map(f => ({ key: f.key, predicted: f.predicted, confidence: f.confidence })),
+      avgPresent: a.capacityAnalysis?.avgPresent || 0,
       updatedAt: new Date().toISOString().slice(0,10),
       baseDays: a.totalDays
+      // autoCalc 없음 → 리포트 분석 결과임을 표시
     };
+    // 종근당 매핑 전용 예측 데이터 저장
+    if (a.jkgAnalysis && a.jkgAnalysis.cnt >= 3) {
+      cfg.jkgPrediction = {
+        overall: a.jkgAnalysis.overall,
+        dowAvg: a.jkgAnalysis.dowAvg,
+        dowFactor: a.jkgAnalysis.dowFactor,
+        recent4w: a.jkgAnalysis.recent4w,
+        ratio: a.jkgAnalysis.ratio,
+        cnt: a.jkgAnalysis.cnt,
+        updatedAt: new Date().toISOString().slice(0,10)
+      };
+    }
+    // A0 지시수량 비율 별도 저장 (A0지시 탭과 공유)
+    if (Object.keys(a.instrRatios).length > 0) {
+      cfg.instrRatios = {};
+      Object.entries(a.instrRatios).forEach(([brand, v]) => {
+        cfg.instrRatios[brand] = { ratio: v.ratio, days: v.days };
+      });
+      cfg.instrOverallRatio = a.instrOverallRatio;
+      cfg.instrDayCount = a.instrDayCount;
+      cfg.instrUpdatedAt = new Date().toISOString().slice(0,10);
+    }
     await fetch(`${API}/config.json`, {
       method:'PUT',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify(cfg)
+    });
+    // 분석 완료 자동 공지
+    await postAnalysisNotice(a);
+  } catch(e) {}
+}
+
+async function postAnalysisNotice(a) {
+  try {
+    const API2 = typeof API !== 'undefined' ? API : '';
+    if (!API2) return;
+    const r = await fetch(`${API2}/notice.json?t=${Date.now()}`);
+    const d = (r.ok ? await r.json().catch(()=>null) : null) || {};
+    const notices = d.notices || [];
+    // 오늘 이미 분석 공지가 있으면 업데이트, 없으면 추가
+    const today = new Date().toISOString().slice(0,10);
+    const idx = notices.findIndex(n => n.type==='analysis' && n.date===today);
+    const newNotice = {
+      id: idx >= 0 ? notices[idx].id : Date.now().toString(),
+      type: 'analysis',
+      title: `📊 예측 데이터 업데이트 (${today})`,
+      content: `리포트 분석이 완료되어 예측 데이터가 갱신되었습니다.\n\n` +
+        `• 평일 평균: ${a.overall}박스\n` +
+        `• 분석 기준일수: ${a.totalDays}일\n` +
+        `• 최근 트렌드: ${a.trendPct >= 0 ? '+' : ''}${a.trendPct}%\n` +
+        `• 내일 예상: ${a.forecast && a.forecast.length > 0 ? a.forecast[0].predicted + '박스' : '계산중'}`,
+      date: today,
+      important: false,
+      auto: true
+    };
+    if (idx >= 0) notices[idx] = newNotice;
+    else notices.push(newNotice);
+    if (notices.length > 50) notices.splice(0, notices.length - 50);
+    await fetch(`${API2}/notice.json`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ notices })
     });
   } catch(e) {}
 }
@@ -998,13 +1524,79 @@ function renderAnalysis(a) {
   const trendIcon = a.trendPct > 5 ? '📈' : a.trendPct < -5 ? '📉' : '➡️';
   const trendColor = a.trendPct > 5 ? 'var(--a3)' : a.trendPct < -5 ? 'var(--red)' : 'var(--a5)';
 
+  // ── 0. 핵심 인사이트 (누구나 이해하는 쉬운 언어) ──
+  const DOW_LABELS = ['일','월','화','수','목','금','토'];
+
+  // 베스트/워스트 요일 (데이터 있는 평일만)
+  const validDowList = [1,2,3,4,5].filter(d=>a.dowCnt[d]>=4).map(d=>({d,avg:a.dowAvg[d]}));
+  validDowList.sort((x,y)=>y.avg-x.avg);
+  const bestDow = validDowList[0];
+  const worstDow = validDowList[validDowList.length-1];
+
+  // 트렌드 판단
+  const trendMsg = a.trendPct > 10 ? `📈 최근 물량이 늘고 있습니다 (+${a.trendPct}%)`
+    : a.trendPct < -10 ? `📉 최근 물량이 줄고 있습니다 (${a.trendPct}%)`
+    : `➡️ 물량이 비교적 안정적입니다`;
+
+  // 월초 패턴
+  const earlyPct2 = a.overall>0?Math.round((a.earlyAvg-a.overall)/a.overall*100):0;
+  const earlyMsg = earlyPct2 >= 10 ? `📅 월초(첫 3 작업일)는 평소보다 <strong style="color:var(--a6)">${earlyPct2}% 더 많습니다</strong>`
+    : earlyPct2 <= -10 ? `📅 월초(첫 3 작업일)는 평소보다 <strong style="color:var(--muted)">${Math.abs(earlyPct2)}% 더 적습니다</strong>`
+    : `📅 월초 첫 3 작업일과 다른 날의 차이가 크지 않습니다`;
+
+  // 이번달/요일 예측 메시지
+  const todayDow = new Date().getDay();
+  const todayDom = new Date().getDate();
+  let todayMsg = '';
+  if (todayDow >= 1 && todayDow <= 5) {
+    const todayPred = a.forecast && a.forecast.length > 0 ? a.forecast[0] : null;
+    if (todayPred) {
+      const diff = todayPred.predicted - a.overall;
+      const dpct = Math.round(diff/a.overall*100);
+      todayMsg = dpct > 10 ? `🔥 내일은 평소보다 많을 것 같습니다 (약 ${todayPred.predicted}개)`
+        : dpct < -10 ? `😌 내일은 평소보다 적을 것 같습니다 (약 ${todayPred.predicted}개)`
+        : `📊 내일은 평소와 비슷할 것 같습니다 (약 ${todayPred.predicted}개)`;
+    }
+  }
+
+  // 주차 패턴
+  const womLabels = ['1주차(1~7일)','2주차(8~14일)','3주차(15~21일)','4주차(22일~)'];
+  const womValid = (a.weekOfMonthFactor||[]).map((f,i)=>({i,f,label:womLabels[i],cnt:a.womCnt?a.womCnt[i]:0})).filter(x=>x.cnt>=4);
+  let womMsg = '';
+  if (womValid.length >= 2) {
+    const sorted = [...womValid].sort((x,y)=>y.f-x.f);
+    womMsg = `📆 ${sorted[0].label}에 물량이 가장 많은 경향입니다`;
+  }
+
+  const insightHtml = `
+    <div class="card" style="border-color:rgba(59,158,255,.3);background:rgba(59,158,255,.04);">
+      <div class="chdr"><div class="cdot" style="background:var(--a1)"></div><div class="ctitle">💡 핵심 요약</div><div class="csub">누구나 알기 쉽게</div></div>
+      <div class="cbody">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px 14px;border:1px solid var(--border);">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:3px;">📊 평균 하루 작업량</div>
+            <div style="font-size:22px;font-weight:900;color:var(--a1)">${a.overall} <span style="font-size:13px;font-weight:600;color:var(--muted)">박스 / 일</span></div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">${a.totalDays}일 평균 (주말·공휴일 제외)</div>
+          </div>
+          ${bestDow ? `<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:11px 14px;border:1px solid var(--border);font-size:13px;line-height:1.8;">
+            🏆 <strong style="color:var(--a3)">${DOW_LABELS[bestDow.d]}요일</strong>에 가장 많고 (평균 ${bestDow.avg}개)
+            ${worstDow && worstDow.d !== bestDow.d ? `, <strong style="color:var(--muted)">${DOW_LABELS[worstDow.d]}요일</strong>에 가장 적습니다 (평균 ${worstDow.avg}개)` : ''}
+          </div>` : ''}
+          <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:11px 14px;border:1px solid var(--border);font-size:13px;line-height:1.8;">${earlyMsg}</div>
+          ${womMsg ? `<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:11px 14px;border:1px solid var(--border);font-size:13px;line-height:1.8;">${womMsg}</div>` : ''}
+          <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:11px 14px;border:1px solid var(--border);font-size:13px;">${trendMsg}</div>
+          ${todayMsg ? `<div style="background:rgba(59,158,255,.08);border-radius:10px;padding:11px 14px;border:1px solid rgba(59,158,255,.3);font-size:13px;color:var(--a1);">${todayMsg}</div>` : ''}
+        </div>
+      </div>
+    </div>`;
+
   // ── 1. 전체 요약 ──
   const summaryHtml = `
     <div class="card">
       <div class="chdr"><div class="cdot" style="background:var(--a5)"></div><div class="ctitle">📊 전체 요약</div><div class="csub">평일 ${a.totalDays}일 기준</div></div>
       <div class="cbody">
         <div style="font-size:10px;color:var(--muted);margin-bottom:10px;padding:7px 10px;background:rgba(148,163,184,.07);border-radius:8px;line-height:1.7;">
-          📌 토·일요일은 분석에서 제외됩니다 &nbsp;|&nbsp; 전체 데이터: ${a.totalDaysAll}일 중 평일 ${a.totalDays}일
+          📌 토·일·공휴일·휴무는 분석에서 제외됩니다 &nbsp;|&nbsp; 전체 데이터: ${a.totalDaysAll}일 중 실작업 ${a.totalDays}일${a.holidayExcluded > 0 ? ` · 공휴일 ${a.holidayExcluded}일` : ''}${a.offDayExcluded > 0 ? ` · 회사휴무 ${a.offDayExcluded}일 제외` : ''}
         </div>
         <div class="sum-grid">
           <div class="sum-card"><div class="sum-label">평일 평균</div><div class="sum-val blue">${a.overall}</div></div>
@@ -1023,11 +1615,11 @@ function renderAnalysis(a) {
   const earlyDiff = a.earlyAvg - a.overall;
   const earlyHtml = `
     <div class="card">
-      <div class="chdr"><div class="cdot" style="background:var(--a6)"></div><div class="ctitle">📅 월초 패턴 (1~5일)</div></div>
+      <div class="chdr"><div class="cdot" style="background:var(--a6)"></div><div class="ctitle">📅 월초 패턴 (첫 3 작업일)</div><div class="csub">공휴일·휴무 이후 실제 첫날 기준</div></div>
       <div class="cbody">
         <div style="display:flex;gap:10px;margin-bottom:14px;">
           <div class="sum-card" style="flex:1;background:rgba(255,107,157,.1);border-color:rgba(255,107,157,.3)">
-            <div class="sum-label">월초 1~5일 평균</div>
+            <div class="sum-label">월초 첫 3 작업일 평균</div>
             <div class="sum-val pink">${a.earlyAvg}</div>
           </div>
           <div class="sum-card" style="flex:1">
@@ -1135,16 +1727,18 @@ function renderAnalysis(a) {
             const isLow  = pct <= -10;
             const isMon = f.dow === 1;
             const isEarly = f.dom <= 5;
-            return `<tr>
-              <td style="${isEarly?'color:var(--a6);font-weight:800':''}">
-                ${f.key.slice(5)}${isEarly?'<span style="font-size:9px;color:var(--a6);margin-left:3px;">월초</span>':''}
+            const isND = f.isNextDay;
+            return `<tr style="${isND?'background:rgba(167,139,250,.07);':''}">
+              <td style="${isEarly?'color:var(--a6);font-weight:800':''}${isND?';color:var(--a4);font-weight:800':''}">
+                ${f.key.slice(5)}${isEarly?'<span style="font-size:9px;color:var(--a6);margin-left:3px;">월초</span>':''}${isND?'<span style="font-size:9px;color:var(--a4);margin-left:3px;background:rgba(167,139,250,.2);padding:1px 5px;border-radius:4px;">🏖️휴일다음</span>':''}
               </td>
               <td style="color:${DOW_COLOR[f.dow]};font-weight:800">
                 ${DOW_LABEL[f.dow]}${isMon?'<span style="font-size:9px;margin-left:2px;">🔥</span>':''}
               </td>
-              <td class="num" style="color:${isHigh?'var(--a6)':isLow?'var(--muted)':'var(--a1)'};font-size:17px">${f.predicted}</td>
-              <td class="num" style="color:${isHigh?'var(--a6)':isLow?'var(--red)':'var(--muted)'}">
+              <td class="num" style="color:${isND?'var(--a4)':isHigh?'var(--a6)':isLow?'var(--muted)':'var(--a1)'};font-size:17px">${f.predicted}</td>
+              <td class="num" style="color:${isND?'var(--a4)':isHigh?'var(--a6)':isLow?'var(--red)':'var(--muted)'}">
                 ${pct>=0?'+':''}${pct}%
+                ${f.confidence==='high'?'<span style="font-size:9px;color:var(--a3);margin-left:2px;">●</span>':f.confidence==='med'?'<span style="font-size:9px;color:var(--a5);margin-left:2px;">●</span>':'<span style="font-size:9px;color:var(--muted);margin-left:2px;">○</span>'}
               </td>
             </tr>`;
           }).join('')}
@@ -1157,7 +1751,686 @@ function renderAnalysis(a) {
       </div>
     </div>`;
 
-  document.getElementById('ana-result').innerHTML = summaryHtml + earlyHtml + dowHtml + forecastHtml + domHtml + (monHtml||'');
+  // ── 7. A0 지시수량 분석 ──
+  const A0_BRANDS_DISP = ['동구바이오','삼천당제약','국제약품','대우제약','아주약품','비씨월드','종근당','기타'];
+  const A0_COLORS = ['#3b9eff','#2ecc71','#a78bfa','#f97316','#ff6b9d','#ffd600','#06b6d4','#94a3b8'];
+  let instrHtml = '';
+  const instrEntries = A0_BRANDS_DISP.map((b,i)=>({ brand:b, color:A0_COLORS[i], data:a.instrRatios[b]||null }))
+    .filter(x=>x.data);
+  if (instrEntries.length > 0) {
+    const brandRows = instrEntries.map(({brand,color,data})=>`
+      <tr>
+        <td style="color:${color};font-weight:800">${brand}</td>
+        <td class="num" style="color:${color};font-weight:900">${data.ratio}</td>
+        <td class="num" style="color:var(--muted)">${data.days}일</td>
+        <td class="num" style="color:var(--a1)">${data.totalBoxes ? Math.round(data.totalInstr).toLocaleString() : '-'}</td>
+        <td class="num" style="color:var(--a3)">${data.totalBoxes ? data.totalBoxes.toLocaleString() : '-'}</td>
+      </tr>`).join('');
+    instrHtml = `
+      <div class="card">
+        <div class="chdr"><div class="cdot" style="background:#ffd600"></div><div class="ctitle">📦 A0 지시수량 분석</div><div class="csub">입력된 ${a.instrDayCount}일 기준</div></div>
+        <div class="cbody">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:12px;padding:8px 10px;background:rgba(255,214,0,.06);border:1px solid rgba(255,214,0,.18);border-radius:8px;line-height:1.8;">
+            💡 <strong style="color:var(--a5)">지시수량 ÷ 박스수 = 비율</strong> (1박스당 지시수량)<br>
+            예측 시 지시수량 ÷ 비율 = 예상 박스수&nbsp;&nbsp;|&nbsp;&nbsp;전체 평균 비율: <strong style="color:var(--a5)">${a.instrOverallRatio > 0 ? a.instrOverallRatio : '-'}</strong>
+          </div>
+          <table class="detail-table">
+            <tr><th>브랜드</th><th style="text-align:right">비율(지시/박스)</th><th style="text-align:right">학습일수</th><th style="text-align:right">누적지시</th><th style="text-align:right">누적박스</th></tr>
+            ${brandRows}
+          </table>
+          ${instrEntries.length >= 2 ? `
+          <div style="margin-top:14px;">
+            ${barChart(
+              instrEntries.map(({brand,color,data})=>({ label:brand, val:data.ratio, bold:false, color })),
+              x => x.color,
+              Math.max(...instrEntries.map(x=>x.data.ratio), 1)
+            )}
+          </div>` : ''}
+          <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.9;">
+            📌 데이터가 쌓일수록 비율 정확도가 높아집니다.<br>
+            ✅ 이 비율은 <strong style="color:var(--a3)">A0지시 탭</strong>의 예상박스 계산에 자동 적용됩니다.
+          </div>
+        </div>
+      </div>`;
+  } else {
+    instrHtml = `
+      <div class="card">
+        <div class="chdr"><div class="cdot" style="background:#ffd600"></div><div class="ctitle">📦 A0 지시수량 분석</div></div>
+        <div class="cbody">
+          <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;line-height:1.9;">
+            📭 아직 A0 지시수량 데이터가 없습니다.<br>
+            <span style="font-size:11px">관리자 모바일 → A0지시 탭에서 날짜별로 입력하면<br>브랜드별 비율이 자동 학습됩니다.</span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ── 패턴 분석 (쉬운 언어 인사이트) ──
+  const patternInsights = [];
+
+  // 요일 패턴
+  if (bestDow && worstDow && bestDow.d !== worstDow.d) {
+    const diff = bestDow.avg - worstDow.avg;
+    const diffPct = Math.round(diff / (worstDow.avg||1) * 100);
+    patternInsights.push({
+      icon:'📅',
+      title:`${DOW_LABELS[bestDow.d]}요일 = 바쁜 날`,
+      desc:`${DOW_LABELS[bestDow.d]}요일(평균 ${bestDow.avg}개)이 ${DOW_LABELS[worstDow.d]}요일(${worstDow.avg}개)보다 ${diffPct}% 더 많습니다. ${DOW_LABELS[bestDow.d]}요일은 인력을 충분히 준비하세요.`,
+      color: 'var(--a3)'
+    });
+  }
+
+  // 금요일 패턴
+  if (a.dowCnt[5] >= 4 && a.dowAvg[5] > 0) {
+    const friDiff = Math.round((a.dowAvg[5] - a.overall) / a.overall * 100);
+    if (friDiff <= -10) {
+      patternInsights.push({icon:'😌', title:'금요일은 여유있는 날', desc:`금요일 평균 ${a.dowAvg[5]}개로 평소보다 ${Math.abs(friDiff)}% 적습니다. 금요일 오후는 비교적 여유롭습니다.`, color:'var(--muted)'});
+    }
+  }
+
+  // 월요일 패턴
+  if (a.dowCnt[1] >= 4 && a.dowAvg[1] > 0) {
+    const monDiff = Math.round((a.dowAvg[1] - a.overall) / a.overall * 100);
+    if (monDiff >= 10) {
+      patternInsights.push({icon:'🔥', title:'월요일은 바쁜 날', desc:`월요일 평균 ${a.dowAvg[1]}개로 평소보다 ${monDiff}% 더 많습니다. 주말이 지나면 물량이 몰립니다.`, color:'var(--a6)'});
+    }
+  }
+
+  // 월초 패턴
+  if (earlyPct2 >= 10) {
+    patternInsights.push({icon:'📈', title:'월초 첫 3 작업일 물량 급증', desc:`매달 첫 3 작업일은 평소보다 ${earlyPct2}% 더 많습니다. 월초에는 인력과 장비를 미리 준비하세요.`, color:'var(--a6)'});
+  } else if (earlyPct2 <= -10) {
+    patternInsights.push({icon:'📉', title:'월초 첫 3 작업일 한가함', desc:`매달 첫 3 작업일은 평소보다 ${Math.abs(earlyPct2)}% 더 적습니다.`, color:'var(--muted)'});
+  }
+
+  // 주차 패턴
+  if (womValid.length >= 3) {
+    const womSorted = [...womValid].sort((x,y)=>y.f-x.f);
+    const busyWeek = womSorted[0];
+    const quietWeek = womSorted[womSorted.length-1];
+    if (busyWeek.f > 1.1 && busyWeek.f !== quietWeek.f) {
+      patternInsights.push({
+        icon:'📆', title:`${busyWeek.label}가 가장 바쁨`,
+        desc:`${busyWeek.label}는 평균보다 ${Math.round((busyWeek.f-1)*100)}% 더 많고, ${quietWeek.label}는 ${Math.round((1-quietWeek.f)*100)}% 더 적습니다.`,
+        color:'var(--a2)'
+      });
+    }
+  }
+
+  // 명절 전후 패턴
+  if (a.holidayPattern && a.holidayPattern.preCnt >= 2 && a.overall > 0) {
+    const preDiff = Math.round((a.holidayPattern.preAvg - a.overall) / a.overall * 100);
+    if (Math.abs(preDiff) >= 10) {
+      patternInsights.push({
+        icon: preDiff > 0 ? '🎎' : '😌',
+        title: `명절 전 물량 ${preDiff > 0 ? '증가' : '감소'}`,
+        desc: `설날·추석 전 1~7일은 평균 ${a.holidayPattern.preAvg}개로 평소보다 ${Math.abs(preDiff)}% ${preDiff > 0 ? '더 많습니다. 인력·재고를 미리 준비하세요.' : '더 적습니다.'}`,
+        color: preDiff > 0 ? 'var(--a6)' : 'var(--muted)'
+      });
+    }
+  }
+  if (a.holidayPattern && a.holidayPattern.postCnt >= 2 && a.overall > 0) {
+    const postDiff = Math.round((a.holidayPattern.postAvg - a.overall) / a.overall * 100);
+    if (Math.abs(postDiff) >= 10) {
+      patternInsights.push({
+        icon: postDiff > 0 ? '🔥' : '🐢',
+        title: `명절 후 물량 ${postDiff > 0 ? '급증' : '저조'}`,
+        desc: `설날·추석 후 1~7일은 평균 ${a.holidayPattern.postAvg}개로 평소보다 ${Math.abs(postDiff)}% ${postDiff > 0 ? '더 많습니다. 복귀 후 첫 주를 대비하세요.' : '더 적습니다.'}`,
+        color: postDiff > 0 ? 'var(--a6)' : 'var(--muted)'
+      });
+    }
+  }
+
+  // 트렌드 패턴
+  if (Math.abs(a.trendPct) >= 10) {
+    patternInsights.push({
+      icon: a.trendPct > 0 ? '📈' : '📉',
+      title: a.trendPct > 0 ? '최근 물량 증가 추세' : '최근 물량 감소 추세',
+      desc: `최근 2주 평균(${a.r30lastAvg}개)이 그 이전 2주(${a.r30firstAvg}개)보다 ${Math.abs(a.trendPct)}% ${a.trendPct>0?'증가':'감소'}했습니다.`,
+      color: a.trendPct > 0 ? 'var(--a3)' : 'var(--red)'
+    });
+  }
+
+  // 공휴일/휴무 직다음날 패턴
+  if (a.nextDayCount >= 2) {
+    const ndPct = Math.round((a.nextDayFactor - 1) * 100);
+    patternInsights.push({
+      icon: '🏖️',
+      title: `공휴일·휴무 다음날 물량 ${ndPct >= 5 ? '급증' : ndPct <= -5 ? '감소' : '평소와 비슷'}`,
+      desc: `공휴일이나 휴무 후 첫 출근일은 평소보다 ${Math.abs(ndPct)}% ${ndPct >= 0 ? '더 많습니다. 인력을 미리 준비하세요.' : '더 적습니다.'} (${a.nextDayCount}회 실측)`,
+      color: ndPct >= 5 ? 'var(--a4)' : 'var(--muted)'
+    });
+  } else {
+    patternInsights.push({
+      icon: '🏖️',
+      title: '공휴일 다음날 패턴 — 학습 중',
+      desc: `아직 데이터가 ${a.nextDayCount||0}건 뿐입니다. 현재는 기본 +20% 가정으로 예측합니다. 공휴일 후 근무일이 쌓이면 실제 패턴으로 자동 업데이트됩니다.`,
+      color: 'var(--muted)'
+    });
+  }
+
+  // 공휴일/휴무 직전날 패턴
+  if (a.prevDayCount >= 2) {
+    const pdPct = Math.round((a.prevDayFactor - 1) * 100);
+    patternInsights.push({
+      icon: '📦',
+      title: `공휴일·휴무 전날 물량 ${pdPct <= -5 ? '감소' : pdPct >= 5 ? '증가' : '평소와 비슷'}`,
+      desc: `택배 미운행으로 공휴일 전날은 평소보다 ${Math.abs(pdPct)}% ${pdPct <= 0 ? '더 적습니다. 예측에 자동 반영됩니다.' : '더 많습니다.'} (${a.prevDayCount}회 실측)`,
+      color: pdPct <= -5 ? 'var(--a1)' : 'var(--muted)'
+    });
+  } else {
+    patternInsights.push({
+      icon: '📦',
+      title: '공휴일 전날 패턴 — 학습 중',
+      desc: `아직 데이터가 ${a.prevDayCount||0}건 뿐입니다. 현재는 기본 -20% 가정으로 예측합니다. 데이터가 쌓이면 실제 패턴으로 자동 업데이트됩니다.`,
+      color: 'var(--muted)'
+    });
+  }
+
+  const patternHtml = patternInsights.length > 0 ? `
+    <div class="card">
+      <div class="chdr"><div class="cdot" style="background:var(--a2)"></div><div class="ctitle">🔍 패턴 분석</div><div class="csub">일하면서 알아두면 좋은 것들</div></div>
+      <div class="cbody">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">📌 과거 데이터에서 발견된 규칙들입니다. 참고용으로 활용하세요.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          ${patternInsights.map(p=>`
+            <div style="background:rgba(255,255,255,.04);border-left:3px solid ${p.color};border-radius:0 10px 10px 0;padding:12px 14px;">
+              <div style="font-size:13px;font-weight:800;color:${p.color};margin-bottom:4px;">${p.icon} ${p.title}</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.7;">${p.desc}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>` : '';
+
+  // ── 명절 전후 카드 ──
+  let holidayHtml = '';
+  if (a.holidayPattern && (a.holidayPattern.preCnt >= 2 || a.holidayPattern.postCnt >= 2)) {
+    const overall = a.overall || 1;
+    const preRow = a.holidayPattern.preCnt >= 2 ? (() => {
+      const d = Math.round((a.holidayPattern.preAvg - overall) / overall * 100);
+      const col = d > 0 ? 'var(--a6)' : d < 0 ? 'var(--muted)' : 'var(--a1)';
+      return `<div class="sum-card" style="flex:1;background:rgba(255,107,157,.07);border-color:rgba(255,107,157,.25)">
+        <div class="sum-label">명절 전 (1~7일)</div>
+        <div class="sum-val" style="color:${col}">${a.holidayPattern.preAvg}</div>
+        <div style="font-size:10px;color:${col};margin-top:2px;">${d >= 0 ? '+' : ''}${d}% &nbsp;<span style="color:var(--muted)">(${a.holidayPattern.preCnt}일)</span></div>
+      </div>`;
+    })() : '';
+    const postRow = a.holidayPattern.postCnt >= 2 ? (() => {
+      const d = Math.round((a.holidayPattern.postAvg - overall) / overall * 100);
+      const col = d > 0 ? 'var(--a3)' : d < 0 ? 'var(--muted)' : 'var(--a1)';
+      return `<div class="sum-card" style="flex:1;background:rgba(59,158,255,.07);border-color:rgba(59,158,255,.25)">
+        <div class="sum-label">명절 후 (1~7일)</div>
+        <div class="sum-val" style="color:${col}">${a.holidayPattern.postAvg}</div>
+        <div style="font-size:10px;color:${col};margin-top:2px;">${d >= 0 ? '+' : ''}${d}% &nbsp;<span style="color:var(--muted)">(${a.holidayPattern.postCnt}일)</span></div>
+      </div>`;
+    })() : '';
+    holidayHtml = `
+    <div class="card">
+      <div class="chdr"><div class="cdot" style="background:#ff6b9d"></div><div class="ctitle">🎎 명절 전후 패턴</div><div class="csub">설날·추석 기준</div></div>
+      <div class="cbody">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:12px;padding:7px 10px;background:rgba(148,163,184,.07);border-radius:8px;line-height:1.7;">
+          📌 공휴일 자체는 분석 제외 &nbsp;|&nbsp; 명절 코어 기준 앞뒤 1~7 캘린더일 작업일 대상
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+          <div class="sum-card" style="flex:1">
+            <div class="sum-label">평일 평균 (기준)</div>
+            <div class="sum-val blue">${overall}</div>
+          </div>
+          ${preRow}${postRow}
+        </div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.8;">
+          💡 데이터가 쌓일수록 명절 패턴 신뢰도가 높아집니다. 현재 ${a.holidayPattern.preCnt + a.holidayPattern.postCnt}일 기준.
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── 작업자 기여도 분석 카드 ──
+  const GRADE_ORDER = ['A','B','C','D'];
+  const GRADE_COLOR = {A:'#ffd600', B:'#3b9eff', C:'#2ecc71', D:'#94a3b8'};
+  const GRADE_NEXT  = {D:'C', C:'B', B:'A'};
+
+  // ── 위고비 계절성 카드 ──
+  let seasonalHtml = '';
+  const sa = a.seasonalAnalysis || {};
+  if (sa.productName) {
+    const hasSeasonal = sa.peakCnt >= 3 || sa.lowCnt >= 3;
+    const curMonth = new Date().getMonth() + 1;
+    const isPeak = [3,4,5,6,7,8].includes(curMonth);
+    const isLow  = [12,1,2].includes(curMonth);
+    const nowTag = isPeak ? `<span style="background:#22c55e;color:#000;font-size:10px;font-weight:800;padding:1px 8px;border-radius:8px;margin-left:6px;">📈 현재 성수기</span>`
+      : isLow  ? `<span style="background:#94a3b8;color:#000;font-size:10px;font-weight:800;padding:1px 8px;border-radius:8px;margin-left:6px;">📉 현재 비수기</span>`
+      : `<span style="background:#ffd600;color:#000;font-size:10px;font-weight:800;padding:1px 8px;border-radius:8px;margin-left:6px;">🔄 중간기</span>`;
+    seasonalHtml = `
+    <div class="card" style="border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.04);">
+      <div class="chdr"><div class="cdot" style="background:var(--a4)"></div><div class="ctitle">💊 ${sa.productName} 계절성 분석</div>${nowTag}</div>
+      <div class="cbody">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:12px;padding:7px 10px;background:rgba(148,163,184,.07);border-radius:8px;line-height:1.7;">
+          🌸 <strong style="color:#2ecc71">성수기(3~8월)</strong>: 다이어트 시즌 수요 집중 &nbsp;|&nbsp; ❄️ <strong style="color:#94a3b8">비수기(12~2월)</strong>: 연말/신년 전후 감소 예상
+        </div>
+        ${hasSeasonal ? `
+        <div class="sum-grid" style="margin-bottom:12px;">
+          ${sa.peakCnt >= 3 ? `<div class="sum-card" style="background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.25)">
+            <div class="sum-label">🌸 성수기 평균 (${sa.peakCnt}일)</div>
+            <div class="sum-val" style="color:#22c55e">${sa.peakAvg}</div>
+          </div>` : ''}
+          ${sa.lowCnt >= 3 ? `<div class="sum-card" style="background:rgba(148,163,184,.07)">
+            <div class="sum-label">❄️ 비수기 평균 (${sa.lowCnt}일)</div>
+            <div class="sum-val" style="color:#94a3b8">${sa.lowAvg}</div>
+          </div>` : ''}
+          ${sa.seasonalFactor > 0 ? `<div class="sum-card">
+            <div class="sum-label">계절 배율</div>
+            <div class="sum-val" style="color:var(--a5)">${sa.seasonalFactor}x</div>
+          </div>` : ''}
+        </div>` : `
+        <div style="text-align:center;padding:12px;color:var(--muted);font-size:12px;line-height:1.8;">
+          📊 데이터 축적 중 · 성수기 3일, 비수기 3일 이상 되면 계절 배율 산출<br>
+          <span style="font-size:10px">현재 1월 오픈 기준 — 봄·여름이 지나면 완전한 패턴 확인 가능</span>
+        </div>`}
+        <div style="font-size:11px;color:var(--muted);line-height:1.8;">
+          💡 예측 정확도는 1년 데이터가 쌓이면 계절 보정이 자동 반영됩니다.
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── 작업자 현황 + 기여도 분석 카드 ──
+  let workerHtml = '';
+  const workerEntries = Object.entries(a.workerAnalysis || {});
+  if (workerEntries.length > 0) {
+    const recommendations = [];
+    const rows = workerEntries
+      .sort((x,y) => GRADE_ORDER.indexOf(x[1].grade) - GRADE_ORDER.indexOf(y[1].grade))
+      .map(([name, w]) => {
+        const trendStr = w.presentCount >= 3 ? (w.trend > 0 ? `+${w.trend}%↑` : w.trend < 0 ? `${w.trend}%↓` : '—') : '—';
+        const trendCol = w.trend >= 10 ? '#22c55e' : w.trend <= -10 ? '#ef4444' : 'var(--muted)';
+        const expLabel = w.days !== null ? (w.days >= 60 ? `${Math.floor(w.days/30)}개월` : `${w.days}일`) : '—';
+        const expGCell = w.expGrade && w.expGrade !== w.grade
+          ? `<span style="font-size:9px;color:${GRADE_COLOR[w.expGrade]||'#94a3b8'};margin-left:3px;">(경력${w.expGrade})</span>` : '';
+        // 성과기반 추천
+        if (w.trend >= 10 && w.presentCount >= 5 && GRADE_NEXT[w.grade]) {
+          recommendations.push({name, current:w.grade, next:GRADE_NEXT[w.grade], trend:w.trend, cnt:w.presentCount, reason:'성과'});
+        }
+        // 경력기반 추천 (성과데이터 없을 때)
+        else if (w.presentCount < 3 && w.expGrade && GRADE_ORDER.indexOf(w.expGrade) < GRADE_ORDER.indexOf(w.grade) && GRADE_NEXT[w.grade]) {
+          recommendations.push({name, current:w.grade, next:w.expGrade, trend:null, cnt:0, reason:'경력', expLabel});
+        }
+        const pAvgCell = w.presentCount >= 2 ? `<td class="num" style="color:var(--a1)">${w.pAvg}</td><td class="num" style="color:${trendCol}">${trendStr}</td>` : `<td class="num" style="color:var(--muted)">축적중</td><td class="num">—</td>`;
+        return `<tr>
+          <td style="font-weight:800">${name}</td>
+          <td style="text-align:center">
+            <span style="background:${GRADE_COLOR[w.grade]};color:#000;font-weight:900;padding:1px 7px;border-radius:8px;font-size:11px">${w.grade}</span>${expGCell}
+          </td>
+          <td class="num" style="color:var(--muted)">${expLabel}</td>
+          <td class="num">${w.presentCount}일</td>
+          ${pAvgCell}
+        </tr>`;
+      }).join('');
+
+    const recoHtml = recommendations.length > 0 ? `
+      <div style="margin-top:14px;padding:12px 14px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:10px;">
+        <div style="font-size:12px;font-weight:800;color:#22c55e;margin-bottom:8px;">⬆️ 등급 조정 추천</div>
+        ${recommendations.map(r=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+            <div><span style="font-weight:800">${r.name}</span>
+              <span style="margin:0 6px;font-size:11px;background:rgba(255,255,255,.08);padding:1px 6px;border-radius:6px;">${r.current} → ${r.next}</span>
+            </div>
+            <div style="font-size:11px;color:#22c55e">
+              ${r.reason === '성과' ? `최근 ${r.trend}% 상승 · ${r.cnt}일 출근` : `경력 ${r.expLabel} 기준`}
+            </div>
+          </div>`).join('')}
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;">📌 최종 결정은 관리자가 설정관리에서 변경</div>
+      </div>` : '';
+
+    const dataNote = a.workerDataDays >= 3
+      ? `작업자 데이터 <strong style="color:var(--a3)">${a.workerDataDays}일</strong> 수집됨`
+      : `작업자 출근기록 <strong style="color:var(--a5)">${a.workerDataDays}일</strong> · 3일부터 성과분석 시작`;
+
+    workerHtml = `
+    <div class="card">
+      <div class="chdr"><div class="cdot" style="background:var(--a4)"></div><div class="ctitle">👷 작업자 현황 & 기여도</div><div class="csub">${dataNote}</div></div>
+      <div class="cbody">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:12px;padding:7px 10px;background:rgba(148,163,184,.07);border-radius:8px;line-height:1.7;">
+          📌 <strong>경력</strong>: 입사일 기준 &nbsp;|&nbsp; <strong>(경력X)</strong>: 경력일수 기준 제안등급 &nbsp;|&nbsp; <strong>평균물량</strong>: 출근일 팀보정 기준<br>
+          등급 기준: D=0~60일 / C=61~120일 / B=121~180일 / A=181일+ (성과로 상향 가능)
+        </div>
+        <table class="detail-table">
+          <tr>
+            <th>이름</th><th style="text-align:center">등급</th><th style="text-align:right">경력</th>
+            <th style="text-align:right">출근</th><th style="text-align:right">평균물량</th><th style="text-align:right">추세</th>
+          </tr>
+          ${rows}
+        </table>
+        ${recoHtml}
+      </div>
+    </div>`;
+  }
+
+  // ── 예측 정확도 분석 카드 ──
+  let accHtml = '';
+  const _pa = a.predAccuracy;
+  if (_pa && _pa.log && _pa.log.length >= 3) {
+    const _confColor = _pa.confidence >= 85 ? 'var(--a3)' : _pa.confidence >= 70 ? 'var(--a5)' : 'var(--red)';
+    const _confBg = _pa.confidence >= 85 ? 'rgba(46,204,113' : _pa.confidence >= 70 ? 'rgba(255,214,0' : 'rgba(239,68,68';
+    const _rows = _pa.log.slice().reverse().map(x => {
+      const isPos = x.err >= 0;
+      const absE = Math.abs(x.err);
+      const errCol = absE < 10 ? 'var(--a3)' : absE < 25 ? 'var(--a5)' : 'var(--red)';
+      const reasonCol = x.reason==='정상' ? 'var(--muted)' : isPos ? 'var(--a2)' : 'var(--a1)';
+      const reasonIcon = x.reason==='정상'?'✅':x.reason==='급증'?'🔥':x.reason==='예상초과'?'📈':x.reason==='급감'?'❄️':'📉';
+      return `<tr>
+        <td style="color:var(--muted);font-size:12px">${x.key.slice(5)}</td>
+        <td style="color:${DOW_COLOR[x.dw]};font-weight:700;font-size:12px">${DOW_KR[x.dw]}</td>
+        <td class="num" style="color:var(--muted)">${x.pred}</td>
+        <td class="num" style="color:var(--a1);font-weight:800">${x.actual}</td>
+        <td class="num" style="color:${errCol};font-weight:800">${isPos?'+':''}${x.err}%</td>
+        <td class="num" style="font-size:11px;color:${reasonCol}">${reasonIcon} ${x.reason}</td>
+      </tr>`;
+    }).join('');
+    // 이 분석으로 자동보정 설명
+    const autoNote = `분석 실행 시 최근 데이터가 더 높은 가중치(4:3:2:1)로 반영되어 예측이 자동 보정됩니다.`;
+    accHtml = `<div class="card" style="border-color:rgba(255,107,157,.3);background:rgba(255,107,157,.03);">
+      <div class="chdr"><div class="cdot" style="background:var(--a6)"></div><div class="ctitle">📉 예측 정확도 분석</div><div class="csub">최근 ${_pa.log.length}일 백테스트</div></div>
+      <div class="cbody">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+          <div class="sum-card" style="background:${_confBg},.08);border-color:${_confBg},.35);">
+            <div class="sum-label">예측 정확도</div>
+            <div class="sum-val" style="color:${_confColor}">${_pa.confidence}%</div>
+            <div style="font-size:10px;color:${_confColor};margin-top:4px;">${_pa.confidence>=85?'높음':_pa.confidence>=70?'보통':'개선필요'}</div>
+          </div>
+          <div class="sum-card">
+            <div class="sum-label">평균 오차</div>
+            <div class="sum-val orange">±${_pa.avgErr}%</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:4px;">${_pa.avgErr<10?'매우정확':_pa.avgErr<20?'양호':'데이터축적필요'}</div>
+          </div>
+          <div class="sum-card">
+            <div class="sum-label">분석일수</div>
+            <div class="sum-val blue">${_pa.log.length}일</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:4px;">최근 10일 기준</div>
+          </div>
+        </div>
+        <table class="detail-table">
+          <tr><th>날짜</th><th>요일</th><th style="text-align:right">예측</th><th style="text-align:right">실제</th><th style="text-align:right">오차</th><th style="text-align:right">판정</th></tr>
+          ${_rows}
+        </table>
+        <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.9;padding:10px 12px;background:rgba(255,255,255,.03);border-radius:8px;">
+          <div style="font-weight:800;color:var(--text);margin-bottom:6px;">🔄 예측이 왜 틀리고, 어떻게 자동 보정되나요?</div>
+          <div>• <strong style="color:var(--a5)">오차 원인</strong>: 정상(±10%) / 예상초과·미달(10~30%) / 급증·급감(30%+)</div>
+          <div>• <strong style="color:var(--a3)">자동 보정</strong>: 분석 실행 시 최근 같은 요일 실적(4:3:2:1 가중치)이 다음 예측에 반영</div>
+          <div>• <strong style="color:var(--a1)">정확도 향상</strong>: 데이터가 쌓일수록 패턴 인식이 정확해집니다 (목표: 85%+)</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── 처리기준 인원 계산 카드 ──
+  let capacityHtml = '';
+  const _ca = a.capacityAnalysis;
+  if (_ca && _ca.ratePerPH > 0) {
+    const _tom = a.forecast && a.forecast.length > 0 ? a.forecast[0] : null;
+    const _tPred = _tom ? _tom.predicted : a.overall;
+    const _tDate = _tom ? _tom.key.slice(5) : '평균';
+    const _tDow = _tom ? DOW_KR[_tom.dow] : '';
+    const _minN = Math.ceil(_tPred / (_ca.ratePerPH * 8));
+    const _nRows = [];
+    for (let _n = Math.max(1, _minN - 2); _n <= _minN + 4; _n++) {
+      const _wH = _tPred / (_n * _ca.ratePerPH);
+      const _cH = _wH + (_wH > 4 ? 1 : 0);
+      const _fin = Math.round(9 * 60 + _cH * 60);
+      const _fH = Math.floor(_fin / 60), _fM = _fin % 60;
+      const _finStr = `${String(_fH).padStart(2,'0')}:${String(_fM).padStart(2,'0')}`;
+      const _ok = _fH < 18 || (_fH === 18 && _fM === 0);
+      const _isMin = _n === _minN;
+      _nRows.push(`<tr style="${_isMin ? 'background:rgba(255,214,0,.08);' : ''}">
+        <td style="font-weight:${_isMin?'900':'700'};color:${_isMin?'var(--a5)':'inherit'}">${_n}명${_isMin?' <span style="font-size:10px;color:var(--a5);margin-left:3px;">← 최소</span>':''}</td>
+        <td class="num" style="color:var(--muted)">${_wH.toFixed(1)}h</td>
+        <td class="num" style="color:${_ok?'var(--a3)':'var(--red)'};font-weight:${_isMin?'900':'700'}">${_finStr}</td>
+        <td class="num" style="font-size:14px">${_ok?'✅':'❌'}</td>
+      </tr>`);
+    }
+    capacityHtml = `<div class="card" style="border-color:rgba(255,214,0,.4);background:rgba(255,214,0,.03);">
+      <div class="chdr"><div class="cdot" style="background:var(--a5)"></div><div class="ctitle">⏱️ 처리기준 인원 계산</div><div class="csub">09:00~18:00 (점심 1h 제외)</div></div>
+      <div class="cbody">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+          <div class="sum-card"><div class="sum-label">1인 시간당 처리량</div><div class="sum-val yellow">${_ca.ratePerPH}<span style="font-size:12px;font-weight:600;color:var(--muted)"> 개/h</span></div></div>
+          <div class="sum-card"><div class="sum-label">평균 출근인원</div><div class="sum-val blue">${_ca.avgPresent}<span style="font-size:12px;font-weight:600;color:var(--muted)"> 명</span></div></div>
+          <div class="sum-card" style="background:rgba(255,214,0,.1);border-color:rgba(255,214,0,.4);"><div class="sum-label">정시완료 최소인원</div><div class="sum-val yellow">${_minN}<span style="font-size:12px;font-weight:600;color:var(--muted)"> 명</span></div></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;padding:8px 12px;background:rgba(255,214,0,.06);border:1px solid rgba(255,214,0,.2);border-radius:8px;line-height:1.8;">
+          📊 기준: ${_tDate}(${_tDow}) 예상 <strong style="color:var(--a5)">${_tPred}개</strong> &nbsp;|&nbsp; 1인 시간당 <strong style="color:var(--a5)">${_ca.ratePerPH}개</strong> &nbsp;|&nbsp; 정시완료: <strong style="color:var(--a3)">18:00 이전</strong>
+        </div>
+        <table class="detail-table">
+          <tr><th>인원</th><th style="text-align:right">순수작업시간</th><th style="text-align:right">완료예상</th><th style="text-align:right">정시완료</th></tr>
+          ${_nRows.join('')}
+        </table>
+        <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.9;padding:10px 12px;background:rgba(255,255,255,.03);border-radius:8px;">
+          <div style="font-weight:800;color:var(--text);margin-bottom:6px;">📐 계산 근거</div>
+          <div>• <strong style="color:var(--a5)">1인 시간당 처리량</strong> = 평균 일량(${a.overall}개) ÷ 평균출근(${_ca.avgPresent}명) ÷ 유효근무(8h) = <strong style="color:var(--a5)">${_ca.ratePerPH}개/h</strong></div>
+          <div>• <strong style="color:var(--a5)">정시완료 최소인원</strong> = 예상물량(${_tPred}개) ÷ (${_ca.ratePerPH}개/h × 8h) = ${(_tPred/(_ca.ratePerPH*8)).toFixed(2)}명 → 올림 = <strong style="color:var(--a5)">${_minN}명</strong></div>
+          <div>• <strong>유효근무 8h</strong> = 09:00~18:00에서 점심(12:00~13:00) 1h 제외</div>
+          <div>• 실제 출근인원이 최소인원보다 많으면 일찍 완료, 적으면 연장 가능성 있음</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('ana-result').innerHTML = insightHtml + summaryHtml + accHtml + capacityHtml + seasonalHtml + workerHtml + patternHtml + holidayHtml + earlyHtml + dowHtml + forecastHtml + instrHtml + domHtml + (monHtml||'');
+}
+
+// ── 보고서 인쇄 ──
+function printReport() {
+  if (!anaCache) { showToast('먼저 분석을 실행해 주세요'); return; }
+  const a = anaCache;
+  const DK = ['일','월','화','수','목','금','토'];
+  const ca = a.capacityAnalysis || {};
+  const tom = a.forecast && a.forecast.length > 0 ? a.forecast[0] : null;
+  const tPred = tom ? tom.predicted : a.overall;
+  const tDate = tom ? tom.key.slice(5) : '평균';
+  const tDow  = tom ? DK[tom.dow] : '';
+  const jkgRatio = a.jkgAnalysis ? a.jkgAnalysis.ratio : 0.786;
+  const minN = (ca.ratePerPH > 0) ? Math.ceil(tPred / (ca.ratePerPH * 8)) : '—';
+
+  function nTable() {
+    if (!ca.ratePerPH) return '<p style="color:#888">인원 계산 데이터 부족 (분석 재실행 필요)</p>';
+    const rows = [];
+    for (let n = Math.max(1, minN-2); n <= minN+4; n++) {
+      const wH = tPred / (n * ca.ratePerPH);
+      const cH = wH + (wH > 4 ? 1 : 0);
+      const fin = Math.round(9*60 + cH*60);
+      const fH = Math.floor(fin/60), fM = fin%60;
+      const fStr = `${String(fH).padStart(2,'0')}:${String(fM).padStart(2,'0')}`;
+      const ok = fH < 18 || (fH === 18 && fM === 0);
+      const isMin = n === minN;
+      rows.push(`<tr style="background:${isMin?'#fffde7':'#fff'}">
+        <td style="font-weight:${isMin?'900':'700'};color:${isMin?'#a16207':'#333'}">${n}명${isMin?' ← 정시완료 최소':''}</td>
+        <td style="text-align:right;color:#555">${wH.toFixed(1)}h</td>
+        <td style="text-align:right;font-weight:${isMin?'900':'700'};color:${ok?'#15803d':'#dc2626'}">${fStr}</td>
+        <td style="text-align:right">${ok?'✅ 정시':'❌ 연장'}</td>
+      </tr>`);
+    }
+    return `
+<div class="info-box" style="margin-bottom:8px;">
+  <strong>📐 계산 방식</strong><br>
+  ① 1인 시간당 처리량 = 평균일량(${a.overall}개) ÷ 평균출근(${ca.avgPresent}명) ÷ 유효근무(8h) = <strong>${ca.ratePerPH}개/h</strong><br>
+  ② 정시완료 최소인원 = 예상물량(${tPred}개) ÷ (${ca.ratePerPH}개/h × 8h) = ${(tPred/(ca.ratePerPH*8)).toFixed(2)} → 올림 = <strong>${minN}명</strong><br>
+  ③ 유효근무 8h = 09:00~18:00 중 점심(12:00~13:00) 1h 제외 · 완료예상에 점심 자동 포함
+</div>
+<table><tr><th>인원</th><th style="text-align:right">순수작업시간</th><th style="text-align:right">완료예상시각</th><th style="text-align:right">정시완료</th></tr>${rows.join('')}</table>`;
+  }
+
+  function accTable() {
+    const pa = a.predAccuracy;
+    if (!pa || !pa.log || pa.log.length < 3) return '';
+    const confColor = pa.confidence>=85?'#15803d':pa.confidence>=70?'#a16207':'#dc2626';
+    const rows = pa.log.slice().reverse().map(x => {
+      const absE = Math.abs(x.err);
+      const eCol = absE<10?'#15803d':absE<25?'#a16207':'#dc2626';
+      return `<tr>
+        <td>${x.key.slice(5)}</td><td>${DK[x.dw]}요일</td>
+        <td style="text-align:right">${x.pred}</td>
+        <td style="text-align:right;font-weight:700">${x.actual}</td>
+        <td style="text-align:right;color:${eCol};font-weight:700">${x.err>0?'+':''}${x.err}%</td>
+        <td style="text-align:right">${x.reason}</td>
+      </tr>`;
+    }).join('');
+    return `
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+  <div class="mcard"><div class="mlabel">예측 정확도</div><div class="mval" style="color:${confColor}">${pa.confidence}%</div></div>
+  <div class="mcard"><div class="mlabel">평균 오차</div><div class="mval" style="color:#E65100">±${pa.avgErr}%</div></div>
+  <div class="mcard"><div class="mlabel">분석일수</div><div class="mval">${pa.log.length}일</div></div>
+</div>
+<table><tr><th>날짜</th><th>요일</th><th style="text-align:right">예측</th><th style="text-align:right">실제</th><th style="text-align:right">오차</th><th style="text-align:right">판정</th></tr>${rows}</table>
+<div class="info-box">
+  오차 판정 기준: <strong>정상</strong> ±10% 이내 / <strong>예상초과·미달</strong> 10~30% / <strong>급증·급감</strong> 30% 초과<br>
+  자동보정 원리: 분석 재실행 시 최근 같은 요일 실적(4:3:2:1 가중치)이 다음 예측에 자동 반영됨
+</div>`;
+  }
+
+  function dowTable() {
+    return [1,2,3,4,5].filter(d=>a.dowCnt[d]>=2).map(d=>{
+      const pct = a.overall>0?Math.round((a.dowAvg[d]-a.overall)/a.overall*100):0;
+      const jD  = Math.round(a.dowAvg[d]*jkgRatio);
+      return `<tr><td style="font-weight:800">${DK[d]}요일</td><td style="text-align:right">${a.dowAvg[d]}</td>
+        <td style="text-align:right;color:${pct>5?'#15803d':pct<-5?'#dc2626':'#555'}">${pct>0?'+':''}${pct}%</td>
+        <td style="text-align:right;color:#880E4F;font-weight:700">${jD}</td></tr>`;
+    }).join('');
+  }
+
+  function fcTable() {
+    return (a.forecast||[]).map(f=>{
+      const jF = Math.round(f.predicted*jkgRatio);
+      const pct= a.overall>0?Math.round((f.predicted-a.overall)/a.overall*100):0;
+      return `<tr><td>${f.key.slice(5)}</td><td>${DK[f.dow]}요일</td>
+        <td style="text-align:right;font-weight:700">${f.predicted}</td>
+        <td style="text-align:right;color:#880E4F;font-weight:800">${jF}</td>
+        <td style="text-align:right;color:${pct>0?'#15803d':pct<0?'#dc2626':'#555'}">${pct>0?'+':''}${pct}%</td></tr>`;
+    }).join('');
+  }
+
+  function workerTable() {
+    const we = Object.entries(a.workerAnalysis||{});
+    if (!we.length) return '';
+    const gc = {A:'#78350f',B:'#1e40af',C:'#14532d',D:'#374151'};
+    const gb = {A:'#fef3c7',B:'#dbeafe',C:'#dcfce7',D:'#f3f4f6'};
+    const rows = we
+      .sort((x,y)=>['A','B','C','D'].indexOf(x[1].grade)-['A','B','C','D'].indexOf(y[1].grade))
+      .map(([nm,w])=>{
+        const eL = w.days!==null?(w.days>=60?`${Math.floor(w.days/30)}개월`:`${w.days}일`):'—';
+        const eG = w.expGrade&&w.expGrade!==w.grade?` (경력기준:${w.expGrade})`:'';
+        return `<tr>
+          <td style="font-weight:800">${nm}</td>
+          <td><span style="display:inline-block;padding:1px 8px;border-radius:10px;font-weight:800;font-size:9pt;background:${gb[w.grade]};color:${gc[w.grade]}">${w.grade}</span>${eG}</td>
+          <td style="text-align:right">${eL}</td>
+          <td style="text-align:right">${w.presentCount}일</td>
+          <td style="text-align:right">${w.presentCount>=2?w.pAvg+'개':'—'}</td>
+        </tr>`;
+      }).join('');
+    return `<h2>4. 작업자 현황</h2><table>
+      <tr><th>이름</th><th>등급</th><th style="text-align:right">경력</th><th style="text-align:right">출근</th><th style="text-align:right">평균물량</th></tr>
+      ${rows}</table>`;
+  }
+
+  const today = todayKey();
+  const html = `<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8">
+<title>다야냉장팀 보고서 ${today}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR','Segoe UI',sans-serif;background:#fff;color:#111;font-size:11pt;padding:24px 32px;}
+h1{font-size:19pt;font-weight:900;text-align:center;margin-bottom:4px;color:#0d1b2a;}
+h2{font-size:13pt;font-weight:800;color:#1565C0;border-bottom:2px solid #1565C0;padding-bottom:4px;margin:20px 0 10px;}
+.subtitle{text-align:center;color:#555;font-size:10pt;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #ccc;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;}
+.grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px;}
+.mcard{border:1.5px solid #ccc;border-radius:8px;padding:10px 14px;text-align:center;}
+.mlabel{font-size:9pt;color:#555;font-weight:600;margin-bottom:4px;}
+.mval{font-size:22pt;font-weight:900;line-height:1.1;}
+.msub{font-size:9pt;color:#777;margin-top:2px;}
+.jkg-box{background:#fce4ec;border:2px solid #880E4F;border-radius:8px;padding:12px 16px;margin-bottom:16px;}
+.jkg-val{font-size:26pt;font-weight:900;color:#880E4F;line-height:1;}
+.info-box{background:#f5f5f5;border:1px solid #ddd;border-radius:6px;padding:8px 12px;font-size:10pt;color:#555;line-height:1.9;margin-bottom:12px;}
+.method-box{background:#E3F2FD;border-left:4px solid #1565C0;padding:10px 14px;font-size:10pt;color:#111;line-height:1.9;margin-bottom:10px;}
+table{width:100%;border-collapse:collapse;margin-bottom:14px;}
+th{font-size:10pt;color:#555;font-weight:700;padding:6px 10px;text-align:left;border-bottom:2px solid #333;}
+td{font-size:11pt;padding:7px 10px;border-bottom:1px solid #ddd;}
+.footer{margin-top:24px;padding-top:10px;border-top:1px solid #ccc;font-size:9pt;color:#888;text-align:center;}
+.print-btn{position:fixed;top:20px;right:20px;background:#1565C0;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:12pt;font-weight:800;cursor:pointer;z-index:100;}
+@media print{.print-btn{display:none;}@page{margin:1.5cm;}body{padding:0;}}
+</style></head>
+<body>
+<button class="print-btn" onclick="window.print()">🖨️ 인쇄</button>
+<h1>📊 다야냉장팀 작업 현황 보고서</h1>
+<div class="subtitle">보고일: ${today} &nbsp;|&nbsp; 분석기간: ${a.totalDays}일 작업일 기준 &nbsp;|&nbsp; 최고기록: ${a.maxQty}개 (${a.maxDay})</div>
+
+<h2>1. 핵심 지표</h2>
+<div class="grid-4">
+  <div class="mcard" style="border-color:#880E4F;"><div class="mlabel">종근당 매핑 평균</div><div class="mval" style="color:#880E4F;">${Math.round(a.jkgAnalysis?.overall||0)}</div><div class="msub">비중 ${Math.round(jkgRatio*100)}%</div></div>
+  <div class="mcard" style="border-color:#1565C0;"><div class="mlabel">전체 평균 (일)</div><div class="mval" style="color:#1565C0;">${a.overall}</div><div class="msub">${a.totalDays}일 기준</div></div>
+  <div class="mcard" style="border-color:#15803d;"><div class="mlabel">최고 기록</div><div class="mval" style="color:#15803d;">${a.maxQty}</div><div class="msub">${a.maxDay}</div></div>
+  <div class="mcard" style="border-color:${a.trendPct>0?'#15803d':a.trendPct<0?'#dc2626':'#555'};"><div class="mlabel">최근 트렌드</div><div class="mval" style="color:${a.trendPct>0?'#15803d':a.trendPct<0?'#dc2626':'#555'}">${a.trendPct>0?'+':''}${a.trendPct}%</div><div class="msub">${a.r30firstAvg}→${a.r30lastAvg}</div></div>
+</div>
+
+<h2>2. 내일 작업 예측 (${tDate} ${tDow}요일)</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+  <div class="jkg-box"><div style="font-size:10pt;color:#880E4F;font-weight:700;margin-bottom:4px;">💊 종근당 매핑 예상</div><div class="jkg-val">${Math.round(tPred*jkgRatio)}</div><div style="font-size:10pt;color:#555;margin-top:4px;">전체 예상 ${tPred}개 · 비중 ${Math.round(jkgRatio*100)}%</div></div>
+  <div class="mcard" style="border-color:#a16207;text-align:left;padding:14px 16px;"><div class="mlabel" style="text-align:left">⏱️ 정시완료 최소인원 (18:00 기준)</div><div class="mval" style="color:#a16207;font-size:28pt">${minN}명</div><div class="msub" style="text-align:left">1인 시간당 ${ca.ratePerPH}개 · 평균출근 ${ca.avgPresent}명</div></div>
+</div>
+
+<table>
+  <tr><th>날짜</th><th>요일</th><th style="text-align:right">예상수량</th><th style="text-align:right">종근당예상</th><th style="text-align:right">평균대비</th></tr>
+  ${fcTable()}
+</table>
+
+<h2>3. 처리기준 인원 계산</h2>
+${nTable()}
+
+${accTable() ? `<h2>${Object.keys(a.workerAnalysis||{}).length>0?5:4}. 예측 정확도 분석</h2>${accTable()}` : ''}
+
+${workerTable()}
+
+<h2>${Object.keys(a.workerAnalysis||{}).length>0?6:5}. 요일별 패턴</h2>
+<table>
+  <tr><th>요일</th><th style="text-align:right">평균수량</th><th style="text-align:right">평균대비</th><th style="text-align:right">종근당예상</th></tr>
+  ${dowTable()}
+</table>
+
+<h2>${Object.keys(a.workerAnalysis||{}).length>0?7:6}. 분석 기준 및 방법론</h2>
+<div class="method-box">
+  <strong>📊 데이터 기준</strong><br>
+  • 전체 데이터: ${a.totalDaysAll}일 중 실작업 ${a.totalDays}일 (주말·공휴일·휴무 제외)<br>
+  • 분석기간: ${a.totalDays >= 5 ? '충분' : '데이터 부족 (30일+ 권장)'} · 분석일 기준: ${today}
+</div>
+<div class="method-box">
+  <strong>🔮 예측 방법</strong><br>
+  • 베이스 예측: 최근 4주 같은 요일 가중평균 (4:3:2:1 → 최근일수록 높은 가중치)<br>
+  • 보정 계수: 월별 패턴 × 날짜 패턴 × 트렌드 × 정확도 백테스트 = 최종 예측<br>
+  • 자동보정: 분석 재실행 시 최신 실적 반영 → 예측 정확도 점진적 향상
+</div>
+<div class="method-box">
+  <strong>⏱️ 처리기준 인원 계산법</strong><br>
+  • 1인 시간당 처리량 = 평균 일량 ÷ 평균 출근인원 ÷ 유효근무시간(8h)<br>
+  • 정시완료 최소인원 = 예상물량 ÷ (1인 시간당 처리량 × 8h), 소수점 올림<br>
+  • 유효근무 8h = 09:00~18:00 중 점심(12:00~13:00) 1h 제외
+</div>
+<div class="method-box">
+  <strong>💊 종근당 예측 기준</strong><br>
+  • 종근당 전용 엔진: 종근당 매핑 실적만 별도 학습 (전체와 독립 예측)<br>
+  • 종근당 비중: ${Math.round(jkgRatio*100)}% (실적 기반 자동 산출, 고정값 아님)<br>
+  • 데이터가 없을 때: 전체 예측 × 비중으로 추정
+</div>
+<div class="method-box">
+  <strong>👷 작업자 등급 기준</strong><br>
+  • D등급: 입사 0~60일 / C등급: 61~120일 / B등급: 121~180일 / A등급: 181일+<br>
+  • 등급별 생산성 계수: A=100% / B=85% / C=70% / D=55% (설정관리에서 조정 가능)<br>
+  • 실적 데이터 3일+ 쌓이면 성과 기반 등급 조정 권고 자동 표시
+</div>
+
+<div class="footer">다야냉장팀 &nbsp;|&nbsp; 작성: ${today} &nbsp;|&nbsp; 데이터 ${a.totalDays}일 기준 자동 생성 보고서 &nbsp;|&nbsp; 이 보고서는 시스템이 자동 분석한 결과입니다</div>
+</body></html>`;
+
+  const w = window.open('', '_blank', 'width=960,height=800');
+  if (w) { w.document.write(html); w.document.close(); }
+  else showToast('팝업 차단을 해제해 주세요');
 }
 
 // 초기 로드

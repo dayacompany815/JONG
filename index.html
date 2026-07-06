@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>다야냉장팀</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:#0b0f1a;color:#e2eaf5;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:32px 16px 40px;}
+
+.logo{font-size:48px;margin-bottom:8px;}
+.title{font-size:26px;font-weight:900;color:#fff;letter-spacing:.5px;}
+.sub{font-size:12px;color:#5a7a99;margin-top:4px;margin-bottom:32px;}
+
+.section-label{font-size:11px;font-weight:700;color:#5a7a99;letter-spacing:1px;text-transform:uppercase;align-self:flex-start;margin-bottom:8px;width:100%;max-width:360px;}
+
+.card{display:flex;align-items:center;gap:14px;background:#111827;border:1px solid #1e2d45;border-radius:16px;padding:16px 18px;width:100%;max-width:360px;text-decoration:none;color:#e2eaf5;transition:background .2s,border-color .2s,transform .1s;margin-bottom:10px;}
+.card:active{transform:scale(.97);}
+.card:hover{background:#1a2235;border-color:#3b9eff;}
+.card.highlight{border-color:rgba(59,158,255,.4);background:rgba(59,158,255,.06);}
+.card.green{border-color:rgba(46,204,113,.3);background:rgba(46,204,113,.05);}
+.card.green:hover{border-color:#2ecc71;}
+.card.purple{border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.05);}
+.card.purple:hover{border-color:#a78bfa;}
+.card.orange{border-color:rgba(249,115,22,.3);background:rgba(249,115,22,.05);}
+.card.orange:hover{border-color:#f97316;}
+.card.yellow{border-color:rgba(255,214,0,.3);background:rgba(255,214,0,.05);}
+.card.yellow:hover{border-color:#ffd600;}
+
+.icon{font-size:30px;flex-shrink:0;width:44px;text-align:center;}
+.info{flex:1;}
+.name{font-size:15px;font-weight:800;}
+.desc{font-size:11px;color:#5a7a99;margin-top:3px;line-height:1.4;}
+.arrow{font-size:16px;color:#5a7a99;flex-shrink:0;}
+
+.divider{width:100%;max-width:360px;height:1px;background:#1e2d45;margin:14px 0;}
+</style>
+</head>
+<body>
+
+<div class="logo">🧊</div>
+<div class="title">다야냉장팀</div>
+<div class="sub">daya.sudalife.net</div>
+
+<div class="section-label">작업자</div>
+
+<a class="card highlight" href="/work.html">
+  <div class="icon">📋</div>
+  <div class="info">
+    <div class="name">작업현황표</div>
+    <div class="desc">수량 입력 · 직배 · 출근부</div>
+  </div>
+  <div class="arrow">›</div>
+</a>
+
+<div class="divider"></div>
+<div class="section-label">관리자</div>
+
+<a class="card green" href="/관리자PC_ver15.html?v=20260706-2028">
+  <div class="icon">🖥️</div>
+  <div class="info">
+    <div class="name">관리자 대시보드</div>
+    <div class="desc">PC용 · 실시간 모니터링 · 리포트</div>
+  </div>
+  <div class="arrow">›</div>
+</a>
+
+<a class="card purple" href="/관리자폰_ver17.html">
+  <div class="icon">📱</div>
+  <div class="info">
+    <div class="name">관리자 현황 (모바일)</div>
+    <div class="desc">모바일용 · 실시간 조회 · 기록</div>
+  </div>
+  <div class="arrow">›</div>
+</a>
+
+<a class="card orange" href="/리포트_ver1.html">
+  <div class="icon">📊</div>
+  <div class="info">
+    <div class="name">리포트</div>
+    <div class="desc">일일 · 주간 · 월간 · 수동입력</div>
+  </div>
+  <div class="arrow">›</div>
+</a>
+
+<div class="divider"></div>
+<div class="section-label">시스템</div>
+
+<a class="card yellow" href="/설정관리_ver1.html">
+  <div class="icon">⚙️</div>
+  <div class="info">
+    <div class="name">설정 관리</div>
+    <div class="desc">작업자 · 회원관리 · 시스템 설정</div>
+  </div>
+  <div class="arrow">›</div>
+</a>
+
+</body>
+</html>

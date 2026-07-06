@@ -28,6 +28,10 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
 .hdr-title{font-size:15px;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hdr-sub{font-size:10px;color:var(--muted);margin-top:1px;}
 .hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.test-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;}
+.test-btn.active{background:rgba(255,214,0,.2);border-color:#ffd600;color:#ffd600;}
+.test-mode-bar{position:fixed;top:0;left:50%;transform:translateX(-50%);max-width:480px;width:100%;z-index:9999;background:#ffd600;color:#1a2634;text-align:center;font-size:12px;font-weight:900;padding:4px 8px;pointer-events:none;display:none;}
+.test-mode-bar.show{display:block;}
 .hdr-status{display:flex;align-items:center;gap:5px;}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--a3);box-shadow:0 0 6px var(--a3);animation:pulse 2s infinite;flex-shrink:0;}
 .dot.offline{background:var(--red);box-shadow:0 0 6px var(--red);animation:none;}
@@ -56,9 +60,25 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
 
 /* ── 페이지 슬라이더 ── */
 .pages-outer{overflow:hidden;width:100%;}
-.pages-slider{display:flex;width:500vw;transition:transform .32s cubic-bezier(.4,0,.2,1);}
+.pages-slider{display:flex;width:600vw;transition:transform .32s cubic-bezier(.4,0,.2,1);}
 .page{width:100vw;min-width:100vw;padding-bottom:80px;}
 .page-inner{padding:10px;display:flex;flex-direction:column;gap:10px;}
+
+/* ── 주문 입력 탭 ── */
+.order-company-btn{border:1.5px solid;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.15);color:var(--muted);}
+.order-company-btn.active{background:rgba(233,30,140,.2);border-color:rgba(233,30,140,.6);color:#e91e8c;}
+.order-qty-input{width:100%;background:var(--card2);border:2px solid rgba(233,30,140,.35);color:#fff;border-radius:12px;padding:14px 12px;font-size:28px;font-weight:900;font-family:inherit;outline:none;text-align:center;transition:border-color .2s;}
+.order-qty-input:focus{border-color:rgba(233,30,140,.8);}
+.order-submit-btn{width:100%;background:linear-gradient(135deg,#e91e8c,#c2185b);color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;letter-spacing:.3px;transition:opacity .2s;box-shadow:0 4px 16px rgba(233,30,140,.35);}
+.order-submit-btn:active{opacity:.8;}
+.order-log-item{background:var(--card2);border-radius:10px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;}
+.order-log-del{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit;flex-shrink:0;}
+.batch-done-btn{background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);color:#2ecc71;border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit;flex-shrink:0;font-weight:700;transition:all .15s;}
+.batch-done-btn:active{opacity:.7;}
+.batch-done-btn.done{background:rgba(46,204,113,.18);border-color:#2ecc71;color:#2ecc71;}
+.batch-done-btn.cancel{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.2);color:var(--muted);font-size:10px;}
+.order-pred-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.order-pred-num{font-size:32px;font-weight:900;color:#e91e8c;line-height:1;}
 
 /* ── 카드 공통 ── */
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;position:relative;overflow:hidden;}
@@ -332,6 +352,79 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
 .adm-snap{flex-shrink:0;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:7px;padding:4px 8px;text-align:center;}
 .adm-snap-t{font-size:9px;color:var(--muted);font-weight:700;}
 .adm-snap-v{font-size:12px;font-weight:900;color:var(--a1);}
+
+/* ── A0 지시수량 탭 ── */
+.instr-header-row{display:grid;grid-template-columns:1fr 68px 68px 58px 52px;gap:3px;padding:4px 2px;border-bottom:1px solid var(--border);margin-bottom:5px;}
+.instr-col-hdr{font-size:9px;font-weight:800;color:var(--muted);text-align:center;}
+.instr-col-hdr:first-child{text-align:left;}
+.instr-brand-row{display:grid;grid-template-columns:1fr 68px 68px 58px 52px;gap:3px;align-items:center;margin-bottom:4px;}
+.instr-brand-name{font-size:12px;font-weight:700;color:var(--text);padding:2px 0;}
+.instr-inp{background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:8px;padding:7px 6px;font-size:13px;font-weight:700;width:100%;text-align:right;font-family:inherit;-webkit-appearance:none;}
+.instr-inp:focus{outline:none;border-color:var(--a1);background:rgba(59,158,255,.06);}
+.instr-ratio-cell{font-size:10px;font-weight:800;text-align:center;color:var(--muted);}
+.instr-ratio-cell.learned{color:var(--a3);}
+.instr-total-row{display:grid;grid-template-columns:1fr 78px 78px 52px;gap:3px;align-items:center;border-top:2px solid var(--border);padding-top:8px;margin-top:4px;}
+.instr-total-label{font-size:12px;font-weight:900;color:var(--text);}
+.instr-total-val{font-size:14px;font-weight:900;text-align:right;color:var(--a1);}
+.instr-save-btn{display:block;width:100%;background:linear-gradient(135deg,var(--a3),#16a34a);color:#fff;border:none;border-radius:11px;padding:13px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;margin-top:10px;letter-spacing:.3px;}
+.instr-est-row{display:flex;justify-content:space-between;align-items:center;background:var(--card2);border-radius:9px;padding:8px 11px;margin-bottom:5px;}
+.instr-est-brand{font-size:11px;color:var(--muted);font-weight:700;}
+.instr-est-info{text-align:right;}
+.instr-est-box{font-size:16px;font-weight:900;color:var(--a4);}
+.instr-est-detail{font-size:9px;color:var(--muted);}
+.instr-no-data{font-size:11px;color:var(--muted);text-align:center;padding:14px;line-height:1.8;}
+
+/* 공지 등록 섹션 */
+.notice-reg-wrap{background:rgba(255,214,0,.07);border:1.5px solid rgba(255,214,0,.2);border-radius:14px;padding:14px;margin-top:16px;}
+.notice-reg-title{font-size:13px;font-weight:800;color:var(--a5);margin-bottom:12px;}
+.notice-reg-inp{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;padding:10px 12px;font-family:inherit;margin-bottom:8px;box-sizing:border-box;}
+.notice-reg-ta{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;padding:10px 12px;font-family:inherit;margin-bottom:8px;box-sizing:border-box;height:90px;resize:none;}
+.notice-reg-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.notice-reg-chk{width:18px;height:18px;accent-color:var(--a6);}
+.notice-reg-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--a5),var(--a6));color:#000;border:none;border-radius:11px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;}
+.notice-reg-btn:disabled{opacity:.5;}
+.notice-list-prev{margin-top:12px;}
+.notice-prev-item{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;font-size:12px;}
+.notice-prev-title{font-weight:800;color:var(--text);margin-bottom:3px;}
+.notice-prev-date{color:var(--muted);}
+.notice-del-btn{float:right;background:rgba(255,100,100,.15);border:1px solid rgba(255,100,100,.3);color:#ff6b6b;border-radius:7px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;}
+/* 공지 팝업 (관리자 앱) */
+.adm-notice-overlay{display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.82);align-items:center;justify-content:center;padding:20px;}
+.adm-notice-overlay.show{display:flex;}
+.adm-notice-box{background:var(--card);border:2px solid var(--a1);border-radius:20px;padding:20px;width:100%;max-width:360px;max-height:75vh;display:flex;flex-direction:column;}
+.adm-notice-hdr{font-size:15px;font-weight:900;color:var(--a1);margin-bottom:14px;flex-shrink:0;}
+.adm-notice-scroll{flex:1;overflow-y:auto;margin-bottom:14px;}
+.adm-notice-item{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:11px 13px;margin-bottom:8px;}
+.adm-notice-item.important{border-left:3px solid var(--a6);}
+.adm-notice-item.update-type{border-left:3px solid var(--a3);}
+.adm-notice-date{font-size:10px;color:var(--muted);margin-bottom:3px;}
+.adm-notice-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:4px;}
+.adm-notice-content{font-size:11px;color:var(--muted);line-height:1.7;white-space:pre-wrap;}
+.adm-notice-close{width:100%;padding:13px;background:var(--a1);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;flex-shrink:0;}
+.adm-notice-item{cursor:pointer;}
+.adm-notice-item:active{opacity:.75;}
+/* 공지 상세 모달 */
+.adm-nd-overlay{display:none;position:fixed;inset:0;z-index:960;background:rgba(0,0,0,.9);align-items:center;justify-content:center;padding:20px;}
+.adm-nd-overlay.show{display:flex;}
+.adm-nd-box{background:var(--card);border:2px solid var(--a1);border-radius:20px;padding:20px;width:100%;max-width:360px;max-height:82vh;display:flex;flex-direction:column;gap:6px;}
+.adm-nd-meta{font-size:11px;color:var(--muted);}
+.adm-nd-title{font-size:15px;font-weight:900;color:var(--text);}
+.adm-nd-body{flex:1;overflow-y:auto;font-size:13px;color:var(--text);line-height:1.85;white-space:pre-wrap;border-top:1px solid var(--border);padding-top:12px;margin-top:4px;}
+.adm-nd-close{width:100%;padding:13px;background:var(--a1);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:8px;}
+/* ── 이력 테이블 ── */
+.hist-filter{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:var(--muted);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;}
+.hist-filter.active{background:rgba(59,158,255,.2);border-color:rgba(59,158,255,.5);color:var(--a1);}
+.hist-table{width:100%;border-collapse:collapse;font-size:11px;}
+.hist-table th{background:rgba(255,255,255,.06);color:var(--muted);font-weight:700;padding:6px 5px;text-align:center;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;white-space:nowrap;}
+.hist-table td{padding:6px 5px;text-align:center;border-bottom:1px solid rgba(255,255,255,.05);white-space:nowrap;}
+.hist-table tr.h-outlier td{background:rgba(239,68,68,.08);}
+.hist-table tr.h-outlier .h-ratio{color:#ef4444;font-weight:800;}
+.hist-table tr.h-fri td{background:rgba(255,214,0,.05);}
+.hist-table tr.h-fri .h-date{color:var(--a5);}
+.hist-table tr.h-nocount td{opacity:.5;}
+.hist-table .h-ok{color:#22c55e;}
+.hist-table tr.h-bulk td{background:rgba(249,115,22,.07);}
+.hist-table tr.h-bulk .h-date{color:#f97316;}
 </style>
 </head>
 <body>
@@ -347,19 +440,23 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
     <div class="hdr-status">
       <div class="dot offline" id="status-dot"></div>
       <div class="hdr-status-text" id="status-text" style="color:var(--red);">연결안됨</div>
+      <button class="test-btn" id="test-mode-btn" onclick="toggleTestMode()">TEST</button>
     </div>
     <div class="hdr-time" id="last-update">—</div>
   </div>
 </div>
+<div class="test-mode-bar" id="test-mode-bar">🧪 테스트 모드 — 실제 데이터 보호 중 (저장·Firebase 차단)</div>
 
 <!-- 탭 내비 -->
 <div class="tab-nav" id="tab-nav">
   <button class="tab-btn active" onclick="goTab(0)"><div class="tab-icon">📊</div><div class="tab-label">현황</div></button>
-  <button class="tab-btn" onclick="goTab(1)"><div class="tab-icon">📋</div><div class="tab-label">직배확정</div></button>
-  <button class="tab-btn" onclick="goTab(2)"><div class="tab-icon">📦</div><div class="tab-label">박스</div></button>
-  <button class="tab-btn" onclick="goTab(3)"><div class="tab-icon">📅</div><div class="tab-label">기록</div></button>
-  <button class="tab-btn" onclick="goTab(4)"><div class="tab-icon">⚙️</div><div class="tab-label">설정</div></button>
+  <button class="tab-btn" onclick="goTab(1)"><div class="tab-icon">📢</div><div class="tab-label">직배</div></button>
+  <button class="tab-btn" onclick="goTab(2)"><div class="tab-icon">👷</div><div class="tab-label">출근부</div></button>
+  <button class="tab-btn" onclick="goTab(3)" style="position:relative;"><div class="tab-icon">📋</div><div class="tab-label">주문/지시</div><div id="orderTabBadge" style="display:none;position:absolute;top:6px;right:8px;background:#e91e8c;color:#fff;border-radius:10px;font-size:9px;font-weight:900;padding:1px 5px;"></div></button>
+  <button class="tab-btn" onclick="goTab(4)"><div class="tab-icon">📦</div><div class="tab-label">박스</div></button>
+  <button class="tab-btn" onclick="goTab(5)"><div class="tab-icon">📜</div><div class="tab-label">이력</div></button>
   <a href="리포트_ver1.html" class="tab-btn" style="text-decoration:none;"><div class="tab-icon">📈</div><div class="tab-label">리포트</div></a>
+  <a href="설정관리_ver1.html" class="tab-btn" style="text-decoration:none;"><div class="tab-icon">⚙️</div><div class="tab-label">설정</div></a>
 </div>
 
 <!-- 페이지 슬라이더 -->
@@ -381,13 +478,23 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
       <!-- 예측 위젯 -->
       <div class="adm-pred" id="admPredWidget">
         <div class="adm-pred-row1">
-          <div class="adm-pred-label" style="color:var(--a3);">🔮 오늘 예상물량</div>
+          <div class="adm-pred-label" style="color:var(--a3);">🔮 오늘 예상물량 <span style="font-size:10px;background:rgba(46,204,113,.2);border-radius:4px;padding:1px 5px;color:var(--a3);">박스수</span></div>
           <div class="adm-pred-tags" id="admPredTags"></div>
         </div>
+        <div style="display:flex;gap:16px;margin-bottom:4px;">
+          <div style="font-size:9px;font-weight:800;color:var(--a1);letter-spacing:.3px;">현재처리</div>
+          <div style="font-size:9px;font-weight:800;color:var(--a5);letter-spacing:.3px;">당일예측</div>
+        </div>
         <div class="adm-pred-numbers">
-          <div class="adm-pred-cur" id="admPredCur">—</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;">
+            <div class="adm-pred-cur" id="admPredCur">—</div>
+            <div style="font-size:9px;font-weight:700;color:var(--a1);margin-top:1px;">박스</div>
+          </div>
           <div class="adm-pred-sep">/</div>
-          <div class="adm-pred-exp" id="admPredExp">—</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;">
+            <div class="adm-pred-exp" id="admPredExp">—</div>
+            <div style="font-size:9px;font-weight:700;color:var(--a5);margin-top:1px;">박스</div>
+          </div>
           <div class="adm-pred-rem" id="admPredRem"></div>
         </div>
         <div class="adm-bar-bg"><div class="adm-bar" id="admPredBar" style="width:0%"></div></div>
@@ -402,32 +509,114 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
       <div id="admMonthCard" style="display:none;"></div>
     </div>
 
+    <!-- 📦 주문량 예측 위젯 (요일 무관, 항상 표시) -->
+    <div id="orderPredWrap" style="margin:8px 10px 0;background:linear-gradient(135deg,rgba(59,158,255,.06),rgba(46,204,113,.05));border:1.5px solid rgba(59,158,255,.3);border-radius:12px;padding:11px 13px;display:none;"></div>
+
+    <!-- 🏃 페이스 판단 위젯 -->
+    <div id="admPaceWidget" style="display:none;margin:8px 10px 0;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+        <div style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.5px;">🏃 작업 페이스 판단</div>
+        <div id="admPaceTeamBadge" style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.08);color:var(--muted);"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px;">
+            <span id="admPaceSpeed">—</span>
+            <span id="admPaceTarget">목표 —</span>
+          </div>
+          <div style="height:7px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;">
+            <div id="admPaceBar" style="height:100%;border-radius:4px;transition:width .4s,background .4s;width:0%;background:var(--a3);"></div>
+          </div>
+        </div>
+        <div style="text-align:center;min-width:52px;">
+          <div id="admPaceIcon" style="font-size:18px;line-height:1;">—</div>
+          <div id="admPaceLabel" style="font-size:10px;font-weight:800;margin-top:2px;">—</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;">
+        <div id="admPaceTeamDetail" style="color:var(--muted);"></div>
+        <div id="admPaceEta" style="color:var(--muted);font-weight:600;"></div>
+      </div>
+    </div>
+
+    <!-- 종근당 메인 하이라이트 카드 -->
+    <div id="jkgHighlight" class="card" style="background:linear-gradient(135deg,rgba(233,30,140,.15),rgba(233,30,140,.04));border:2px solid rgba(233,30,140,.45);margin-bottom:10px;display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+        <div>
+          <div style="font-size:11px;color:rgba(233,30,140,.8);font-weight:800;letter-spacing:.5px;margin-bottom:4px;">💊 종근당 합계 (메인)</div>
+          <div style="font-size:38px;font-weight:900;color:#e91e8c;line-height:1.1;" id="jkgHL-val">—</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px;">예측 대비</div>
+          <div style="font-size:24px;font-weight:900;color:#e91e8c;" id="jkgHL-pct">—</div>
+          <div style="font-size:10px;color:var(--muted);" id="jkgHL-eta"></div>
+        </div>
+      </div>
+      <div style="height:7px;background:rgba(233,30,140,.12);border-radius:4px;overflow:hidden;margin-bottom:7px;">
+        <div id="jkgHL-bar" style="height:100%;background:linear-gradient(90deg,#e91e8c,#ff6b9d);border-radius:4px;transition:width .4s;width:0%"></div>
+      </div>
+      <div style="font-size:10px;color:rgba(233,30,140,.55);" id="jkgHL-detail">매핑 0 | 직배 0 | 도매 0 | 용차 0</div>
+      <div style="display:flex;gap:7px;margin-top:10px;">
+        <a href="jkg-live.html" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;
+          background:rgba(233,30,140,.15);border:1px solid rgba(233,30,140,.35);
+          border-radius:8px;padding:7px 10px;text-decoration:none;
+          font-size:11px;font-weight:800;color:#e91e8c;">
+          <span style="font-size:8px;animation:pulse 2s infinite;display:inline-block;">●</span> 실시간 현황
+        </a>
+        <a href="jkg-dashboard.html" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;
+          background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.25);
+          border-radius:8px;padding:7px 10px;text-decoration:none;
+          font-size:11px;font-weight:800;color:#3b9eff;">
+          📊 박스수 분석
+        </a>
+      </div>
+    </div>
+
     <!-- 요약 카드 -->
     <div class="sum-grid">
       <div class="card c-blue">
         <div class="sum-icon">📦</div>
-        <div class="sum-label">전체 수량</div>
-        <div class="sum-val c-blue" id="s-total">—</div>
-        <div class="sum-sub">종근당+기타+박스</div>
+        <div class="sum-label">전체 주문수량</div>
+        <div style="display:flex;align-items:baseline;gap:3px;justify-content:center;">
+          <div class="sum-val c-blue" id="s-total">—</div>
+          <div style="font-size:11px;color:var(--a1);font-weight:700;">개</div>
+        </div>
+        <div class="sum-sub">주문수량 합계 (박스수 ❌)</div>
       </div>
       <div class="card c-pink">
         <div class="sum-icon">💊</div>
-        <div class="sum-label">종근당(매핑)</div>
-        <div class="sum-val c-pink" id="s-jkg">—</div>
+        <div class="sum-label">종근당 주문수량</div>
+        <div style="display:flex;align-items:baseline;gap:3px;justify-content:center;">
+          <div class="sum-val c-pink" id="s-jkg">—</div>
+          <div style="font-size:11px;color:var(--a6);font-weight:700;">개</div>
+        </div>
         <div class="sum-sub">직배·도매·용차 제외</div>
       </div>
       <div class="card c-orange">
         <div class="sum-icon">🚚</div>
-        <div class="sum-label">기타업체</div>
-        <div class="sum-val c-orange" id="s-others">—</div>
+        <div class="sum-label">기타업체 주문수량</div>
+        <div style="display:flex;align-items:baseline;gap:3px;justify-content:center;">
+          <div class="sum-val c-orange" id="s-others">—</div>
+          <div style="font-size:11px;color:var(--a5);font-weight:700;">개</div>
+        </div>
         <div class="sum-sub">국제·삼천당 등</div>
       </div>
       <div class="card c-purple">
         <div class="sum-icon">🟦</div>
-        <div class="sum-label">파렛트</div>
-        <div class="sum-val c-purple" id="s-plt">—</div>
+        <div class="sum-label">파렛트 수</div>
+        <div style="display:flex;align-items:baseline;gap:3px;justify-content:center;">
+          <div class="sum-val c-purple" id="s-plt">—</div>
+          <div style="font-size:11px;color:#a855f7;font-weight:700;">팔렛</div>
+        </div>
         <div class="sum-sub">전체 파렛트</div>
       </div>
+    </div>
+
+    <!-- 디버그 배너 (확인 후 제거) -->
+    <div style="background:#ffd600;color:#000;text-align:center;font-size:13px;font-weight:900;padding:6px;border-radius:8px;margin-bottom:4px;">★ 신버전 확인용 ★</div>
+    <div id="dbg-banner" style="background:#1a1a2e;border:1.5px solid #ffd600;border-radius:10px;padding:10px 12px;font-size:11px;color:#ffd600;font-family:monospace;margin-bottom:4px;">
+      <div style="font-weight:900;margin-bottom:4px;">🔍 디버그</div>
+      <div id="dbg-text">JS 대기중...</div>
     </div>
 
     <!-- 시간당 생산량 -->
@@ -443,12 +632,12 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
         <div class="prod-right">
           <div class="prod-num-sm">
             <div class="prod-num-val" style="color:var(--a1);" id="m-prod-per-hour">—</div>
-            <div class="prod-num-lbl">전체/h</div>
+            <div class="prod-num-lbl">박스/h(전체)</div>
           </div>
           <div style="width:1px;height:32px;background:var(--border);flex-shrink:0;"></div>
           <div class="prod-num-sm">
             <div class="prod-num-val" style="color:var(--a4);" id="m-prod-per-person">—</div>
-            <div class="prod-num-lbl">1인/h</div>
+            <div class="prod-num-lbl">박스/h(1인)</div>
           </div>
         </div>
       </div>
@@ -523,16 +712,6 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
     <!-- 추가 + 특이사항 -->
     <div class="card c-yellow">
       <div class="sec-title">📋 추가 수량</div>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <div class="detail-name">⭐ 광교</div>
-          <div class="detail-val" id="d-gw">0</div>
-        </div>
-        <div class="detail-item">
-          <div class="detail-name">🚗 개별운송</div>
-          <div class="detail-val" id="d-gb">0</div>
-        </div>
-      </div>
     </div>
 
     <div class="card">
@@ -544,6 +723,19 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
     <div class="action-row">
       <button class="btn-refresh" onclick="fetchLive()">🔄 새로고침</button>
       <button class="btn-fb" onclick="fetchHistory()">📅 기록갱신</button>
+    </div>
+
+    <!-- 공지사항 등록 (관리자 전용) -->
+    <div class="notice-reg-wrap">
+      <div class="notice-reg-title">📢 공지사항 등록</div>
+      <input class="notice-reg-inp" id="noticeRegTitle" type="text" placeholder="제목 (예: 오늘 작업 안내)" maxlength="30">
+      <textarea class="notice-reg-ta" id="noticeRegContent" placeholder="내용을 입력하세요..."></textarea>
+      <div class="notice-reg-row">
+        <input type="checkbox" class="notice-reg-chk" id="noticeRegImportant">
+        <label style="font-size:12px;color:var(--muted);cursor:pointer;" for="noticeRegImportant">⚠️ 중요 공지 (강조 표시)</label>
+      </div>
+      <button class="notice-reg-btn" id="noticeRegBtn" onclick="submitNotice()">📢 공지 등록하기</button>
+      <div class="notice-list-prev" id="noticeListPrev"></div>
     </div>
 
   </div>
@@ -559,7 +751,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
       <textarea class="msg-textarea" id="msg-input" placeholder="직배확정 내용 입력..." maxlength="200"></textarea>
       <button class="msg-send-btn" id="msg-send-btn" onclick="sendMessage()">📤 전송하기</button>
       <span class="msg-status" id="msg-status"></span>
-    </div></div>
+    </div>
 
     <div class="card">
       <div class="sec-title">📋 전송 기록</div>
@@ -569,13 +761,293 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
   </div>
   </div>
 
-  <!-- ③ 박스 페이지 -->
+  <!-- ③ 출근부 페이지 -->
   <div class="page">
   <div class="page-inner">
 
     <div class="card c-blue">
-      <div class="sec-title">📦 제약사별 박스 현황</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;">날짜별로 각 제약사 박스 현황을 저장합니다.</div>
+      <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>👷 출근부</span>
+        <span id="attDateLabel" style="font-size:11px;color:var(--muted);font-weight:600;"></span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">팀원 출퇴근 기록 · 시간당 인당 집계용</div>
+      <!-- 현황 요약 -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:4px;" id="attSummary">
+        <div style="background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);border-radius:9px;padding:8px;text-align:center;">
+          <div style="font-size:9px;color:var(--a3);font-weight:800;margin-bottom:3px;">출근중</div>
+          <div style="font-size:20px;font-weight:900;color:var(--a3);" id="attCntWork">0</div>
+        </div>
+        <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:9px;padding:8px;text-align:center;">
+          <div style="font-size:9px;color:#ef4444;font-weight:800;margin-bottom:3px;">퇴근</div>
+          <div style="font-size:20px;font-weight:900;color:#ef4444;" id="attCntOut">0</div>
+        </div>
+        <div style="background:rgba(255,214,0,.08);border:1px solid rgba(255,214,0,.25);border-radius:9px;padding:8px;text-align:center;">
+          <div style="font-size:9px;color:var(--a5);font-weight:800;margin-bottom:3px;">조퇴</div>
+          <div style="font-size:20px;font-weight:900;color:var(--a5);" id="attCntEarly">0</div>
+        </div>
+        <div style="background:rgba(90,122,153,.1);border:1px solid rgba(90,122,153,.25);border-radius:9px;padding:8px;text-align:center;">
+          <div style="font-size:9px;color:var(--muted);font-weight:800;margin-bottom:3px;">휴무</div>
+          <div style="font-size:20px;font-weight:900;color:var(--muted);" id="attCntOff">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 팀원별 카드 -->
+    <div id="attMemberList"></div>
+
+    <!-- 저장 버튼 -->
+    <button onclick="saveAttendance()" style="display:block;width:100%;background:linear-gradient(135deg,var(--a1),#1a6fcf);color:#fff;border:none;border-radius:11px;padding:13px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;">💾 저장</button>
+
+  </div>
+  </div>
+
+  <!-- ④ 주문/지시 통합 페이지 -->
+  <div class="page">
+  <div class="page-inner">
+
+    <!-- ── A. 종근당 4차 주문 입력 ── -->
+    <div class="card" style="background:rgba(233,30,140,.06);border:2px solid rgba(233,30,140,.3);">
+      <div class="sec-title" style="color:#e91e8c;">💊 종근당 주문 (4차 배치) <span style="font-size:10px;background:rgba(233,30,140,.15);border:1px solid rgba(233,30,140,.4);border-radius:5px;padding:2px 7px;">WMS 지시수량</span></div>
+      <div style="font-size:11px;color:rgba(233,30,140,.5);margin-bottom:14px;">주문 도착 즉시 차수별 입력 — 시간 자동 기록 · <strong style="color:rgba(233,30,140,.7);">단위: 개(지시수량)</strong> · 작업자앱은 박스수로 환산됨</div>
+      <!-- 차수 선택 -->
+      <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:7px;">주문 차수</div>
+      <div id="orderRoundWrap" style="margin-bottom:12px;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="order-company-btn active" id="roundBtn1차" onclick="selectJkgRound('1차')">1차</button>
+          <button class="order-company-btn" id="roundBtn2차" onclick="selectJkgRound('2차')">2차</button>
+          <button class="order-company-btn" id="roundBtn3차" onclick="selectJkgRound('3차')">3차</button>
+          <button class="order-company-btn" id="roundBtn4차" onclick="selectJkgRound('4차')">4차</button>
+          <button class="order-company-btn" id="roundBtn추가" onclick="selectJkgRound('추가')">추가</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:6px;">
+        <div style="flex:3;">
+          <div style="font-size:9px;color:rgba(233,30,140,.5);font-weight:700;margin-bottom:4px;">지시수량</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input class="order-qty-input" id="orderQtyInput" type="number" min="1" max="99999" placeholder="수량 입력"
+              oninput="showBoxHint(this.value)" onkeydown="if(event.key==='Enter')addJkgOrderEntry()">
+            <div style="font-size:13px;color:rgba(233,30,140,.6);font-weight:700;flex-shrink:0;">개</div>
+          </div>
+        </div>
+        <div style="flex:2;">
+          <div style="font-size:9px;color:rgba(233,30,140,.5);font-weight:700;margin-bottom:4px;">건수</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input class="order-qty-input" id="orderCountInput" type="number" min="0" max="9999" placeholder="0"
+              style="font-size:22px;" onkeydown="if(event.key==='Enter')addJkgOrderEntry()">
+            <div style="font-size:13px;color:rgba(233,30,140,.6);font-weight:700;flex-shrink:0;">건</div>
+          </div>
+        </div>
+      </div>
+      <div id="boxHint" style="display:none;font-size:10px;color:var(--a3);font-weight:700;text-align:center;margin:-8px 0 10px;"></div>
+      <button class="order-submit-btn" onclick="addJkgOrderEntry()">
+        📝 종근당 입력 <span id="orderNowTime" style="font-size:12px;opacity:.75;font-weight:600;"></span>
+      </button>
+      <div style="margin-top:8px;">
+        <button id="jkgNoOrderBtn" onclick="toggleJkgNoOrder()"
+          style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.15);color:var(--muted);border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">
+          🚫 오늘 종근당 주문없음
+        </button>
+      </div>
+    </div>
+
+    <!-- 종근당 4차 현황 -->
+    <div id="orderPredCard" class="card" style="display:none;background:rgba(233,30,140,.05);border:1.5px solid rgba(233,30,140,.3);">
+      <div class="sec-title" style="color:#e91e8c;margin-bottom:12px;">🔮 종근당 오늘 예측</div>
+      <div class="order-pred-row">
+        <div style="text-align:center;">
+          <div style="font-size:10px;color:rgba(233,30,140,.5);margin-bottom:4px;">입력 합계(개)</div>
+          <div class="order-pred-num" id="orderJkgTotal">—</div>
+        </div>
+        <div style="font-size:24px;color:rgba(233,30,140,.3);">→</div>
+        <div style="text-align:center;">
+          <div style="font-size:10px;color:rgba(233,30,140,.5);margin-bottom:4px;">📦 예측박스</div>
+          <div class="order-pred-num" id="orderJkgPred">—</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:10px;color:rgba(233,30,140,.5);margin-bottom:4px;">주문 진행률</div>
+          <div class="order-pred-num" style="font-size:22px;" id="orderJkgPct">—</div>
+        </div>
+      </div>
+      <div style="height:6px;background:rgba(233,30,140,.1);border-radius:4px;overflow:hidden;margin-bottom:8px;">
+        <div id="orderJkgBar" style="height:100%;background:linear-gradient(90deg,#e91e8c,#ff6b9d);border-radius:4px;transition:width .4s;width:0%;"></div>
+      </div>
+      <div style="font-size:10px;color:rgba(233,30,140,.5);" id="orderJkgBasis"></div>
+    </div>
+
+    <!-- ── B. 기타업체 주문 ── -->
+    <div class="card" style="background:rgba(249,115,22,.05);border:2px solid rgba(249,115,22,.3);">
+      <div class="sec-title" style="color:#f97316;margin-bottom:4px;">🚚 기타업체 주문수량 <span style="font-size:10px;color:rgba(249,115,22,.5);">한 번에 입력</span></div>
+      <div style="font-size:10px;color:rgba(249,115,22,.5);margin-bottom:12px;">단위: 박스수 (작업자앱 박스수와 동일 단위)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;" id="etcOrderGrid">
+        <div style="background:var(--card2);border-radius:8px;padding:8px 10px;">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">국제</div>
+          <input type="number" inputmode="numeric" placeholder="0" id="etcOrder_국제"
+            style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:18px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:2px 0;"
+            oninput="updateEtcTotal()">
+        </div>
+        <div style="background:var(--card2);border-radius:8px;padding:8px 10px;">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">삼천당</div>
+          <input type="number" inputmode="numeric" placeholder="0" id="etcOrder_삼천당"
+            style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:18px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:2px 0;"
+            oninput="updateEtcTotal()">
+        </div>
+        <div style="background:var(--card2);border-radius:8px;padding:8px 10px;">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">비씨</div>
+          <input type="number" inputmode="numeric" placeholder="0" id="etcOrder_비씨"
+            style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:18px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:2px 0;"
+            oninput="updateEtcTotal()">
+        </div>
+        <div style="background:var(--card2);border-radius:8px;padding:8px 10px;">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">대우</div>
+          <input type="number" inputmode="numeric" placeholder="0" id="etcOrder_대우"
+            style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:18px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:2px 0;"
+            oninput="updateEtcTotal()">
+        </div>
+        <div style="background:var(--card2);border-radius:8px;padding:8px 10px;">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">동구</div>
+          <input type="number" inputmode="numeric" placeholder="0" id="etcOrder_동구"
+            style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:18px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:2px 0;"
+            oninput="updateEtcTotal()">
+        </div>
+        <div style="background:var(--card2);border-radius:8px;padding:8px 10px;">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">아주</div>
+          <input type="number" inputmode="numeric" placeholder="0" id="etcOrder_아주"
+            style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:18px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:2px 0;"
+            oninput="updateEtcTotal()">
+        </div>
+        <div style="background:var(--card2);border-radius:8px;padding:8px 10px;">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">맥널티</div>
+          <input type="number" inputmode="numeric" placeholder="0" id="etcOrder_맥널티"
+            style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:18px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:2px 0;"
+            oninput="updateEtcTotal()">
+        </div>
+        <div style="background:var(--card2);border-radius:8px;padding:8px 10px;">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">한진</div>
+          <input type="number" inputmode="numeric" placeholder="0" id="etcOrder_한진"
+            style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:18px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:2px 0;"
+            oninput="updateEtcTotal()">
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:11px;color:rgba(249,115,22,.7);">합계: <strong id="etcOrderTotal" style="color:#f97316;font-size:14px;">0</strong>개</div>
+        <button onclick="clearEtcOrders()" style="background:transparent;border:none;color:rgba(249,115,22,.5);font-size:11px;cursor:pointer;font-family:inherit;">초기화</button>
+      </div>
+      <button onclick="saveEtcOrders()" style="width:100%;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">
+        💾 기타업체 저장
+      </button>
+      <div id="etcSaveResult" style="margin-top:6px;font-size:10px;text-align:center;color:var(--muted);"></div>
+      <div style="margin-top:8px;">
+        <button id="etcNoOrderBtn" onclick="toggleEtcNoOrder()"
+          style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.15);color:var(--muted);border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">
+          🚫 오늘 기타업체 주문없음
+        </button>
+      </div>
+    </div>
+
+    <!-- 오늘 주문 기록 -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="sec-title" style="margin-bottom:0;">📋 오늘 주문 기록</div>
+        <button onclick="confirmResetOrders()"
+          style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">
+          🗑️ 초기화
+        </button>
+      </div>
+      <!-- 기타업체 완료 버튼 (기타 항목 있을 때만 표시) -->
+      <button id="etcDoneBtn" onclick="markEtcDone()" style="display:none;width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2);color:var(--text);border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px;">
+        기타업체 작업완료 ✅
+      </button>
+      <div id="orderLogList">
+        <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px 0;">입력 기록 없음</div>
+      </div>
+    </div>
+
+    <!-- ── C. 최종 오늘작업완료 (실시간 vs 수동 MAX 병합) ── -->
+    <div class="card" style="background:rgba(63,185,80,.07);border:2px solid rgba(63,185,80,.35);">
+      <div class="panel-title" style="color:var(--a3);">🏁 최종 오늘작업완료 <span style="font-size:10px;color:rgba(63,185,80,.5);">(실시간+수동 병합)</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.7;">
+        실시간(작업자앱) 데이터와 수동입력 데이터를 비교해서<br>
+        <strong style="color:var(--text)">겹치는 항목은 큰 값</strong>, 한쪽만 있으면 있는 값 → 최종 히스토리 저장
+      </div>
+      <div id="autoSavePreview" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;"></div>
+      <div id="autoSaveCompare" style="font-size:10px;color:var(--muted);margin-bottom:10px;display:none;"></div>
+      <button onclick="autoSaveToday()" style="width:100%;background:linear-gradient(135deg,var(--a3),#16a34a);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;" id="autoSaveBtn">
+        🏁 최종 오늘작업완료
+      </button>
+      <div id="autoSaveResult" style="margin-top:8px;font-size:11px;text-align:center;color:var(--muted);"></div>
+    </div>
+
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin:4px 0 8px;">── 저장 데이터 부정확 시 아래에서 직접 수정 ──</div>
+
+    <div class="card c-blue">
+      <div class="panel-title">📦 A0 지시수량 수동 입력</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;">
+        WMS에서 A0존 브랜드별 지시수량·박스수 확인 후 입력
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="font-size:11px;color:var(--muted);">날짜</div>
+        <input type="date" id="instrDate" style="flex:1;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;" onchange="loadInstrForDate()">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="instr-header-row">
+        <div class="instr-col-hdr">브랜드</div>
+        <div class="instr-col-hdr">지시수량</div>
+        <div class="instr-col-hdr">박스수</div>
+        <div class="instr-col-hdr" style="color:var(--a1);">건수</div>
+        <div class="instr-col-hdr">비율</div>
+      </div>
+      <div id="instrBrandRows"></div>
+      <div class="instr-total-row">
+        <div class="instr-total-label">합계</div>
+        <div class="instr-total-val" id="instrTotalInstr">0</div>
+        <div class="instr-total-val" id="instrTotalBox">0</div>
+        <div></div><div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin:10px 0 4px;">
+        <div style="font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap;">👷 출근인원</div>
+        <input type="number" id="instrPresentCount" min="0" max="99" placeholder="0"
+          style="width:70px;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:18px;font-weight:900;font-family:inherit;text-align:center;">
+        <div style="font-size:13px;color:var(--muted);font-weight:700;">명</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.3);line-height:1.5;">저장 시 history에<br>출근인원 포함</div>
+      </div>
+      <button class="instr-save-btn" onclick="saveInstrData()">💾 저장</button>
+    </div>
+
+    <div class="card c-purple" id="instrEstCard" style="display:none;">
+      <div class="panel-title" style="margin-bottom:8px;">📊 예상 박스수 (학습 기반)</div>
+      <div id="instrEstContent"></div>
+    </div>
+
+    <div class="card">
+      <div class="panel-title">📈 브랜드별 비율 현황</div>
+      <div id="instrRatioDisplay"><div class="instr-no-data">저장된 데이터 없음</div></div>
+    </div>
+
+    <!-- 🔴 레드팀 감시 카드 -->
+    <div class="card" id="redteamCard" style="border:1.5px solid rgba(239,68,68,.35);background:rgba(239,68,68,.05);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:800;color:#ef4444;letter-spacing:.5px;">🔴 레드팀 감시</div>
+        <button onclick="runRedTeam(true)" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#ef4444;border-radius:7px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;">재실행</button>
+      </div>
+      <div id="redteamStatus" style="font-size:12px;color:var(--muted);margin-bottom:8px;">초기화 중...</div>
+      <div id="redteamFindings"></div>
+      <div id="redteamLastRun" style="font-size:10px;color:rgba(255,255,255,.2);margin-top:8px;text-align:right;">마지막 실행: —</div>
+    </div>
+
+  </div>
+  </div>
+
+
+  <!-- ⑤ 박스 페이지 -->
+  <div class="page">
+  <div class="page-inner">
+    <div class="card c-blue">
+      <div class="panel-title">📦 제약사별 박스 현황</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;">
+        날짜별로 각 제약사 박스 현황을 저장합니다. 조회 후 바로 수정 저장할 수 있습니다.
+      </div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
         <div style="font-size:11px;color:var(--muted);font-weight:700;">날짜</div>
         <input type="date" id="boxDate" style="flex:1;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
@@ -585,7 +1057,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
     </div>
 
     <div class="card c-orange">
-      <div class="sec-title">📝 입력</div>
+      <div class="panel-title">📝 입력</div>
       <div id="boxCompanyRows"></div>
       <div style="display:flex;gap:8px;margin-top:12px;">
         <button onclick="saveBoxHistory()" style="flex:1;background:linear-gradient(135deg,var(--a3),#16a34a);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">💾 저장</button>
@@ -595,99 +1067,36 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
     </div>
 
     <div class="card">
-      <div class="sec-title">📚 최근 기록</div>
+      <div class="panel-title">📚 최근 기록</div>
       <div id="boxRecentList" style="display:flex;flex-direction:column;gap:7px;">
         <div class="jb-empty">기록을 불러오는 중...</div>
       </div>
     </div>
-
   </div>
   </div>
 
-  <!-- ④ 날짜별 기록 페이지 -->
+  <!-- ⑥ 이력 페이지 -->
   <div class="page">
-  <div class="page-inner">
-
-    <div class="card">
-      <div class="sec-title">📅 오늘 기록
-        <button onclick="fetchHistory()" style="float:right;background:rgba(59,158,255,.15);border:1.5px solid rgba(59,158,255,.4);color:var(--a1);border-radius:7px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">🔄 새로고침</button>
-      </div>
-      <div id="history-cards">
-        <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px;">기록 없음</div>
-      </div>
+  <div class="page-inner" style="padding-bottom:80px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:12px 6px 8px;">
+      <div style="font-size:14px;font-weight:800;color:var(--text);">📜 작업 이력 데이터</div>
+      <button onclick="loadHistoryTable()" style="background:rgba(59,158,255,.2);border:1px solid rgba(59,158,255,.4);color:var(--a1);border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;">새로고침</button>
     </div>
-
-    <!-- 수정 패널 -->
-    <div class="card c-blue" id="edit-panel" style="display:none;">
-      <div class="sec-title">✏️ 기록 수정</div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-        <div>
-          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">📦 전체수량</div>
-          <input class="edit-input" id="edit-total" type="number" placeholder="0">
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">🟦 파렛트</div>
-          <input class="edit-input" id="edit-plt" type="number" placeholder="0">
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">💊 종근당(매핑)</div>
-          <input class="edit-input" id="edit-jkg" type="number" placeholder="0">
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">📋 직배</div>
-          <input class="edit-input" id="edit-jb" type="number" placeholder="0">
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">🚚 기타업체</div>
-          <input class="edit-input" id="edit-others" type="number" placeholder="0">
-        </div>
-      </div>
-
-      <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">⚠️ 특이사항</div>
-      <textarea class="edit-textarea" id="edit-note" placeholder="특이사항 입력..." rows="2"></textarea>
-
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button onclick="saveHistoryEdit()" style="flex:1;background:var(--a1);color:#fff;border:none;border-radius:9px;padding:11px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">💾 저장</button>
-        <button onclick="cancelHistoryEdit()" style="flex:1;background:var(--card2);color:var(--text);border:1.5px solid var(--border);border-radius:9px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">✕ 취소</button>
-      </div>
+    <div style="font-size:10px;color:var(--muted);margin:0 6px 10px;line-height:1.5;">
+      🔴 비율이상 &nbsp; 📦 대량건(건당qty 높음) &nbsp; 🟡 금요일 &nbsp; ⬜ 건수없음<br>
+      건당qty = 주문수량÷건수 · 높을수록 소수 고객 대량주문 → 박스 비율 올라감
     </div>
-
-  </div>
-  </div>
-
-  <!-- ⑤ 설정 페이지 -->
-  <div class="page">
-  <div class="page-inner">
-
-    <div class="card c-blue">
-      <div class="sec-title">⚙️ Firebase 설정</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
-        Firebase Realtime Database URL을 입력하면 모바일 앱과 실시간 연동됩니다.
-      </div>
-      <div class="modal-label">Firebase Realtime Database URL</div>
-      <input class="modal-input" id="fb-url-input" placeholder="https://xxx-default-rtdb.firebaseio.com" style="margin-bottom:10px;"/>
-      <div class="modal-steps">
-        <strong style="color:var(--text);">🔧 Firebase 설정 방법</strong><br>
-        1. <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> 접속 → 새 프로젝트<br>
-        2. 빌드 → Realtime Database → 데이터베이스 만들기<br>
-        3. 지역: <code>asia-southeast1</code> → 테스트 모드<br>
-        4. 생성된 URL 복사 후 위에 붙여넣기
-      </div>
-      <button class="modal-btn primary" style="width:100%;padding:12px;" onclick="saveFirebaseUrl()">✅ 저장 및 연결</button>
+    <!-- 필터 -->
+    <div style="display:flex;gap:6px;margin:0 6px 10px;flex-wrap:wrap;">
+      <button class="hist-filter active" data-f="all" onclick="histSetFilter('all',this)">전체</button>
+      <button class="hist-filter" data-f="outlier" onclick="histSetFilter('outlier',this)">🔴 이상치만</button>
+      <button class="hist-filter" data-f="nocount" onclick="histSetFilter('nocount',this)">⬜ 건수없음</button>
+      <button class="hist-filter" data-f="fri" onclick="histSetFilter('fri',this)">🟡 금요일</button>
+      <button class="hist-filter" data-f="bulk" onclick="histSetFilter('bulk',this)">📦 대량건</button>
     </div>
-
-    <div class="card">
-      <div class="sec-title">📱 현재 연결 상태</div>
-      <div style="display:flex;align-items:center;gap:8px;background:var(--card2);border-radius:10px;padding:12px;">
-        <div class="dot offline" id="status-dot2"></div>
-        <div>
-          <div id="status-text2" style="font-size:14px;font-weight:700;color:var(--red);">연결 안됨</div>
-          <div id="last-update2" style="font-size:10px;color:var(--muted);">—</div>
-        </div>
-      </div>
+    <div id="histTableWrap" style="margin:0 4px;overflow-x:auto;">
+      <div style="text-align:center;padding:30px;color:var(--muted);font-size:12px;" id="histLoading">로딩중...</div>
     </div>
-
   </div>
   </div>
 
@@ -705,7 +1114,36 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
   </div>
 </div>
 
+<script src="daya-api.js?v=20250519"></script>
+<script src="daya-error-log.js?v=20250519"></script>
+<script src="daya-predict.js?v=20250519"></script>
 <script>
+// ══ 테스트 모드 ══
+const TEST_PWD = '0000';
+const _TM = sessionStorage.getItem('daya_test_mode') === '1';
+function toggleTestMode() {
+  if (_TM) {
+    sessionStorage.removeItem('daya_test_mode');
+    showToast('✅ 테스트 모드 종료 — 실제 모드로 전환');
+    setTimeout(() => location.reload(), 800);
+  } else {
+    const pwd = prompt('테스트 모드 비밀번호 입력');
+    if (pwd === null) return;
+    if (pwd !== TEST_PWD) { showToast('❌ 비밀번호 오류'); return; }
+    sessionStorage.setItem('daya_test_mode', '1');
+    showToast('🧪 테스트 모드 진입');
+    setTimeout(() => location.reload(), 800);
+  }
+}
+(function initTestMode() {
+  if (!_TM) return;
+  document.getElementById('test-mode-btn')?.classList.add('active');
+  const bar = document.getElementById('test-mode-bar');
+  if (bar) bar.classList.add('show');
+  const hdr = document.querySelector('.hdr');
+  if (hdr) hdr.style.background = 'linear-gradient(135deg,#7b4f00,#b37000)';
+})();
+
 // ══ 탭 ══
 let currentTab = 0;
 function goTab(i) {
@@ -715,55 +1153,17 @@ function goTab(i) {
   window.scrollTo({top: 0, behavior: 'smooth'});
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
-  if (i === 2) setTimeout(() => initBoxTab(), 100);
-  if (i === 3) setTimeout(() => fetchHistory(), 100);
+  if (i === 0) setTimeout(() => fetchLive(), 80);
+  if (i === 2) setTimeout(() => initAttendanceTab(), 80);
+  if (i === 3) setTimeout(() => { initOrderTab(); initInstrTab(); }, 80);
+  if (i === 4) setTimeout(() => initBoxTab(), 80);
+  if (i === 5) setTimeout(() => loadHistoryTable(), 80);
 }
 
-// ══ 로컬 NAS API (Firebase 대체) ══
-const FB_URL = 'https://daya.sudalife.net/api';
-// ── Firebase 자동 폴백 + NAS 자동 동기화 ──
-const FB_BACKUP = 'https://ice-work-d8045-default-rtdb.asia-southeast1.firebasedatabase.app';
-(function(){
-  const _f = window.fetch.bind(window);
-  function toFb(u){const p=u.replace('https://daya.sudalife.net/api','').split('?')[0];return p.endsWith('/')?FB_BACKUP+p.slice(0,-1)+'.json':FB_BACKUP+p;}
-  async function fbGet(u){
-    const p=u.replace('https://daya.sudalife.net/api','').split('?')[0],isDir=p.endsWith('/');
-    const r=await _f(toFb(u)+'?t='+Date.now());
-    if(!isDir)return r;
-    const d=await r.clone().json().catch(()=>null);
-    return new Response(JSON.stringify(d?Object.keys(d).sort().reverse():[]),{status:200});
-  }
-  window.fetch=async(url,opt)=>{
-    if(typeof url!=='string'||!url.startsWith('https://daya.sudalife.net/api')||url.includes('/stream'))return _f(url,opt);
-    const m=((opt&&opt.method)||'GET').toUpperCase();
-    if(m==='GET'){try{const r=await _f(url,opt);if(r.ok)return r;}catch(e){}return fbGet(url).catch(()=>new Response('null',{status:200}));}
-    const fo=Object.assign({},opt,{headers:{'Content-Type':'application/json'}});
-    const[r1,r2]=await Promise.all([_f(url,opt).catch(()=>null),_f(toFb(url),fo).catch(()=>null)]);
-    return(r1&&r1.ok)?r1:(r2&&r2.ok)?r2:new Response('{"error":"both failed"}',{status:500});
-  };
-  setTimeout(async()=>{
-    try{
-      const ping=await _f('/api/live.json?t='+Date.now());
-      if(!ping.ok)return;
-      const today=new Date().toISOString().slice(0,10);
-      const dates=[today];
-      for(let i=1;i<=29;i++){const d=new Date();d.setDate(d.getDate()-i);dates.push(d.toISOString().slice(0,10));}
-      const paths=['/live.json',...dates.map(d=>'/history/'+d+'.json'),'/config.json'];
-      for(const p of paths){
-        try{
-          const[nr,fr]=await Promise.all([
-            _f('/api'+p+'?t='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
-            _f(FB_BACKUP+p+'?t='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)
-          ]);
-          const nSaved=(nr&&(nr.savedAt||nr.ts||0))||0;
-          const fSaved=(fr&&(fr.savedAt||fr.ts||0))||0;
-          if(fr&&fSaved>nSaved){await _f('/api'+p,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(fr)});}
-          else if(nr&&nSaved>=fSaved&&(!fr||nSaved>0)){await _f(FB_BACKUP+p,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(nr)});}
-        }catch(e){}
-      }
-    }catch(e){}
-  },3000);
-})();
+// ══ API (daya-api.js) ══
+const APP_VERSION_ADM = 'admin-mobile-v1.11';
+var FB_URL = window.FB_URL;
+var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
 
 async function loadFbUrl() {
@@ -772,7 +1172,7 @@ async function loadFbUrl() {
     const res = await fetch(`${FB_URL}/config.json?t=${Date.now()}`);
     const cfg = await res.json();
     if (cfg) {
-      if (cfg.workers && cfg.workers.length) window.SYS_MEMBERS = cfg.workers;
+      if (cfg.workers && cfg.workers.length) window.SYS_MEMBERS = cfg.workers.map(m => typeof m === 'string' ? m : (m.name || m));
       if (cfg.startTime) window.SYS_START_TIME = cfg.startTime;
       if (cfg.company) { const hdrTitle = document.querySelector('.hdr-title'); if (hdrTitle) hdrTitle.textContent = cfg.company + ' 실시간현황'; }
       // 🔮 예측 데이터 추출
@@ -812,7 +1212,8 @@ async function loadFbUrl() {
 function saveFirebaseUrl() {
   const url = document.getElementById('fb-url-input').value.trim().replace(/\/+$/, '');
   if (!url) { alert('URL을 입력해주세요.'); return; }
-  FB_URL = url;
+  if (typeof dayaSetApiBase === 'function') dayaSetApiBase(url);
+  FB_URL = window.FB_URL || url;
   localStorage.setItem('dashboard_fb_url', url);
   localStorage.setItem('sys_fb_url', url);
   fetchLive(); fetchHistory();
@@ -826,9 +1227,9 @@ function setOnline() {
     const el = document.getElementById(id);
     if(el) { el.classList.remove('offline'); }
   });
-  setText('status-text', '실시간 연결'); document.getElementById('status-text').style.color='var(--a3)';
-  setText('status-text2', '실시간 연결'); document.getElementById('status-text2').style.color='var(--a3)';
-  document.getElementById('offline-banner').classList.remove('show');
+  const st = document.getElementById('status-text'); if(st) { st.textContent='실시간 연결'; st.style.color='var(--a3)'; }
+  const st2 = document.getElementById('status-text2'); if(st2) { st2.textContent='실시간 연결'; st2.style.color='var(--a3)'; }
+  const ob = document.getElementById('offline-banner'); if(ob) ob.classList.remove('show');
 }
 function setOffline(msg) {
   ['status-dot','status-dot2'].forEach(id => {
@@ -836,49 +1237,62 @@ function setOffline(msg) {
     if(el) { el.classList.add('offline'); }
   });
   const m = msg || '연결 안됨';
-  setText('status-text', m); document.getElementById('status-text').style.color='var(--red)';
-  setText('status-text2', m); document.getElementById('status-text2').style.color='var(--red)';
+  const st = document.getElementById('status-text'); if(st) { st.textContent=m; st.style.color='var(--red)'; }
+  const st2 = document.getElementById('status-text2'); if(st2) { st2.textContent=m; st2.style.color='var(--red)'; }
 }
 
 // ══ 실시간 데이터 ══
-const NAS_URL = 'https://dayawork.gumpmelong.workers.dev';
+let _liveFailCnt = 0;
 
 async function fetchLive() {
-  if (!FB_URL) {
-    document.getElementById('offline-banner').classList.add('show');
-    setOffline('Firebase 미설정');
-    return;
-  }
+  const _dbg = (msg) => { const _d = document.getElementById('dbg-text'); if (_d) _d.textContent = msg; };
+  _dbg(`⏳ 시작 ${new Date().toLocaleTimeString()} | BACKUP=${!!window.FB_BACKUP}`);
   try {
-    const res = await fetch(`${FB_URL}/live.json?t=${Date.now()}`);
-    if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
-    if (!data) {
-      setOffline('데이터 없음');
-      return;  // 캐시 유지 (화면 안 지움)
+    const _f = window.__dayaOrigFetch || window.fetch.bind(window);
+    const _fbBase = window.FB_BACKUP || 'https://ice-work-d8045-default-rtdb.asia-southeast1.firebasedatabase.app';
+    _dbg(`[A] Firebase 요청 중...`);
+    let data = null;
+    try {
+      const _ac = new AbortController();
+      const _tid = setTimeout(() => _ac.abort(), 7000);
+      const r = await _f(_fbBase + '/live.json?t=' + Date.now(), { signal: _ac.signal });
+      clearTimeout(_tid);
+      _dbg(`[B] ok=${r.ok} | json파싱 중...`);
+      if (r.ok) data = await r.json();
+      _dbg(`[C] 파싱완료 data=${data!=null} totalQty=${data?.totalQty}`);
+    } catch(e) {
+      _dbg(`[B-err] ${e.message}`);
     }
-    cachedLiveData = data;  // 항상 최신 데이터 캐시
+    if (!data) {
+      if (!cachedLiveData) {
+        _dbg(`❌ 데이터 없음 cache도 없음`);
+        setOffline('데이터 없음'); return;
+      }
+      _dbg(`⚠️ 캐시 사용 totalQty=${cachedLiveData.totalQty}`);
+      _liveFailCnt = 0; setOnline();
+      try { renderLive(cachedLiveData); } catch(e) { _dbg(`❌ render에러 ${e.message}`); }
+      return;
+    }
+    _liveFailCnt = 0;
+    cachedLiveData = data;
+    _dbg(`[D] setOnline 호출 전 totalQty=${data.totalQty}`);
     setOnline();
-    renderLive(data);
+    _dbg(`[E] renderLive 호출 전`);
+    try {
+      renderLive(data);
+      _dbg(`✅ 완료 totalQty=${data.totalQty} | 매핑=${data.종근당?.매핑}`);
+    } catch(e) {
+      _dbg(`❌ renderLive 에러: ${e.message}`);
+    }
     const now = new Date();
     const t = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
     setText('last-update', `업데이트: ${t}`);
     setText('last-update2', `업데이트: ${t}`);
   } catch(e) {
-    // Firebase 실패 시 NAS에서 데이터 가져오기
-    try {
-      const res2 = await fetch(`${NAS_URL}?action=get_live`);
-      const json2 = await res2.json();
-      if (json2.success && json2.data && json2.data.live) {
-        cachedLiveData = json2.data.live;
-        setOnline();
-        renderLive(json2.data.live);
-        const now = new Date();
-        const t = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-        setText('last-update', `NAS: ${t}`);
-        setText('last-update2', `NAS: ${t}`);
-      } else { setOffline('연결 실패'); }
-    } catch(e2) { setOffline('연결 실패'); }
+    _liveFailCnt++;
+    if (_liveFailCnt <= 2) { return; }
+    if (cachedLiveData) { setOffline('신호 약함 (이전 데이터)'); }
+    else { setOffline('서버 연결 실패'); }
   }
 }
 
@@ -887,12 +1301,15 @@ function renderLive(d) {
   const etc = d.기타업체 || {};
   const add = d.추가 || {};
 
-  // 🔮 예측 위젯 업데이트
-  admUpdatePredWidget(d);
-
-  setText('s-total', d.totalQty ?? '—');
-  setText('s-jkg', jkg.매핑 ?? '—');
-  const othersTotal = (etc.국제||0)+(etc.삼천당||0)+(etc.비씨||0)+(etc.대우||0)+(etc.동구||0)+(etc.한진||0)+(etc.아주||0)+(etc.맥널티||0);
+  // 핵심 수량 먼저 표시 (예측 위젯 에러와 무관하게)
+  // 주문수량(개) — 주문로그 기반
+  const _ol = d.주문로그 || {};
+  const _jkgOrd = (_ol['종근당'] || []).reduce((s, e) => s + (parseInt(e.qty)||0), 0);
+  const _etcOrd = Object.entries(_ol).filter(([k]) => k !== '종근당')
+    .reduce((s, [, arr]) => s + arr.reduce((ss, e) => ss + (parseInt(e.qty)||0), 0), 0);
+  setText('s-total', (_jkgOrd + _etcOrd) || (d.orderTotal ?? '—'));
+  setText('s-jkg', _jkgOrd || '—');
+  const othersTotal = _etcOrd || (etc.국제||0)+(etc.삼천당||0)+(etc.비씨||0)+(etc.대우||0)+(etc.동구||0)+(etc.한진||0)+(etc.아주||0)+(etc.맥널티||0);
   setText('s-others', othersTotal);
   setText('s-plt', d.plt ?? '—');
 
@@ -907,6 +1324,44 @@ function renderLive(d) {
   setText('d-dmsbox', jkg.도매상박스 || 0);
   setText('d-yc', jkg.용차 || 0);
   setText('d-ycbox', jkg.용차박스 || 0);
+
+  // ── 종근당 하이라이트 카드 업데이트 ──
+  (function() {
+    const jkgMap = jkg.매핑 || 0;
+    const jkgJb  = jkg.직배  || 0;
+    const jkgDms = jkg.도매상 || 0;
+    const jkgYc  = jkg.용차  || 0;
+    const jkgAll = jkgMap + jkgJb + jkgDms + jkgYc;
+    const hlCard = document.getElementById('jkgHighlight');
+    if (!hlCard) return;
+    hlCard.style.display = '';
+    document.getElementById('jkgHL-val').textContent = jkgAll.toLocaleString();
+    document.getElementById('jkgHL-detail').textContent = `매핑 ${jkgMap} | 직배 ${jkgJb} | 도매 ${jkgDms} | 용차 ${jkgYc}`;
+    // 주문없음 표시 시 예측 표시 숨김
+    if (d.주문없음?.종근당) {
+      const pctEl = document.getElementById('jkgHL-pct');
+      if (pctEl) { pctEl.textContent = '—'; pctEl.style.color = 'var(--muted)'; }
+      document.getElementById('jkgHL-bar').style.width = '0%';
+      const etaEl = document.getElementById('jkgHL-eta');
+      if (etaEl) etaEl.textContent = '🚫 주문없음';
+    } else {
+      const batchPredFromLive = jkg.배치예측 || 0;
+      const pred2 = admCalcPredicted(d.totalQty || 0);
+      const histPredEst = pred2 ? Math.round(pred2.predicted * 0.55) : 0;
+      let jkgPredEst = histPredEst;
+      if (jkgAll > (jkgPredEst || 0)) jkgPredEst = jkgAll;
+      if (jkgPredEst > 0) {
+        const jkgPct = Math.min(130, Math.round(jkgAll / jkgPredEst * 100));
+        const pctEl = document.getElementById('jkgHL-pct');
+        pctEl.textContent = jkgPct + '%';
+        pctEl.style.color = jkgPct >= 100 ? '#2ecc71' : jkgPct >= 70 ? '#ffd600' : '#e91e8c';
+        document.getElementById('jkgHL-bar').style.width = Math.min(100, jkgPct) + '%';
+        const eta = admCalcEta(jkgAll, jkgPredEst);
+        const etaEl = document.getElementById('jkgHL-eta');
+        if (etaEl) etaEl.textContent = eta || '';
+      }
+    }
+  })();
 
   // 직배 상세
   const jbDetailEl = document.getElementById('d-jb-detail');
@@ -934,8 +1389,6 @@ function renderLive(d) {
       <div class="biz-val" style="color:${b.val>0?b.color:'var(--muted)'}">${b.val}</div>
     </div>`).join('');
 
-  setText('d-gw', add.광교 || 0);
-  setText('d-gb', add.개별운송 || 0);
 
   // 출근부 현황 렌더링
   renderMobileAttendance(d.출근부 || null);
@@ -949,6 +1402,10 @@ function renderLive(d) {
   } else {
     noteEl.innerHTML = '<span class="note-empty">특이사항 없음</span>';
   }
+
+  // 예측 위젯 — 에러나도 위 데이터 표시에 영향 없음
+  try { admUpdatePredWidget(d); } catch(e) { console.error('[예측위젯]', e); }
+  try { if (typeof dayaRenderOrderPred === 'function') dayaRenderOrderPred('orderPredWrap', d); } catch(e) {}
 }
 
 // ══ 날짜별 기록 ══
@@ -1078,17 +1535,14 @@ async function saveHistoryEdit() {
 
 // ══ 박스 현황 ══
 const BOX_COMPANIES = ['종근당', '국제', '삼천당', '비씨', '대우'];
-let boxTabInitialized = false;
-let boxLoadSeq = 0;
-let boxFormDirty = false;
+let currentBoxHistoryKey = null;
 
 function boxTodayKey() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return new Date().toISOString().slice(0,10);
 }
 
 function boxNum(id) {
-  return Math.max(parseInt(document.getElementById(id)?.value, 10) || 0, 0);
+  return parseInt(document.getElementById(id)?.value, 10) || 0;
 }
 
 function renderBoxCompanyRows() {
@@ -1098,19 +1552,23 @@ function renderBoxCompanyRows() {
     <div style="background:var(--card2);border-radius:12px;padding:10px 10px 12px;margin-bottom:8px;border-left:3px solid ${idx===0 ? 'var(--a6)' : 'var(--a2)'};">
       <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px;">${name}</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
-        <div style="background:rgba(0,0,0,.16);border-radius:8px;padding:7px 6px;">
-          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;text-align:center;">전체</div>
-          <div id="box_total_${name}" style="background:rgba(255,255,255,.04);border-bottom:1.5px solid var(--border);color:var(--a1);font-size:17px;font-weight:900;font-family:inherit;text-align:center;padding:3px 0;min-height:28px;line-height:22px;">0</div>
-        </div>
         ${[
+          ['total', '전체'],
           ['holding', '보유'],
           ['inbound', '입고'],
           ['outbound', '출고'],
         ].map(([key, label]) => `
           <div style="background:rgba(0,0,0,.16);border-radius:8px;padding:7px 6px;">
             <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;text-align:center;">${label}</div>
-            <input id="box_${key}_${name}" type="number" min="0" inputmode="numeric" placeholder="0" oninput="boxFormDirty=true;updateBoxSummary()"
-              style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:17px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:3px 0;">
+            <input
+              id="box_${key}_${name}"
+              type="number"
+              min="0"
+              inputmode="numeric"
+              placeholder="0"
+              oninput="updateBoxSummary()"
+              style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:17px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:3px 0;"
+            >
           </div>
         `).join('')}
       </div>
@@ -1118,15 +1576,12 @@ function renderBoxCompanyRows() {
   `).join('');
 }
 
-function resetBoxForm(fromLoad = false) {
-  boxFormDirty = !fromLoad;
+function resetBoxForm() {
   BOX_COMPANIES.forEach(name => {
-    ['holding', 'inbound', 'outbound'].forEach(key => {
+    ['total', 'holding', 'inbound', 'outbound'].forEach(key => {
       const el = document.getElementById(`box_${key}_${name}`);
       if (el) el.value = '';
     });
-    const totalEl = document.getElementById(`box_total_${name}`);
-    if (totalEl) totalEl.textContent = '0';
   });
   const status = document.getElementById('boxSaveStatus');
   if (status) status.textContent = '';
@@ -1134,11 +1589,10 @@ function resetBoxForm(fromLoad = false) {
 }
 
 function fillBoxForm(data) {
-  boxFormDirty = false;
   const items = data?.items || {};
   BOX_COMPANIES.forEach(name => {
     const item = items[name] || {};
-    ['holding', 'inbound', 'outbound'].forEach(key => {
+    ['total', 'holding', 'inbound', 'outbound'].forEach(key => {
       const el = document.getElementById(`box_${key}_${name}`);
       if (el) el.value = item[key] ?? '';
     });
@@ -1149,15 +1603,11 @@ function fillBoxForm(data) {
 function collectBoxPayload() {
   const items = {};
   BOX_COMPANIES.forEach(name => {
-    const holding = boxNum(`box_holding_${name}`);
-    const inbound = boxNum(`box_inbound_${name}`);
-    const outbound = boxNum(`box_outbound_${name}`);
-    const total = holding + inbound + outbound;
     items[name] = {
-      total,
-      holding,
-      inbound,
-      outbound
+      total: boxNum(`box_total_${name}`),
+      holding: boxNum(`box_holding_${name}`),
+      inbound: boxNum(`box_inbound_${name}`),
+      outbound: boxNum(`box_outbound_${name}`)
     };
   });
   const summary = BOX_COMPANIES.reduce((acc, name) => {
@@ -1179,12 +1629,7 @@ function collectBoxPayload() {
 function updateBoxSummary() {
   const el = document.getElementById('boxSummary');
   if (!el) return;
-  const payload = collectBoxPayload();
-  const s = payload.summary;
-  BOX_COMPANIES.forEach(name => {
-    const totalEl = document.getElementById(`box_total_${name}`);
-    if (totalEl) totalEl.textContent = String(payload.items[name].total || 0);
-  });
+  const s = collectBoxPayload().summary;
   el.innerHTML = `
     <div style="background:var(--card2);border-radius:10px;padding:10px;text-align:center;">
       <div style="font-size:10px;color:var(--muted);font-weight:700;">전체 합계</div>
@@ -1206,32 +1651,32 @@ function updateBoxSummary() {
 }
 
 async function loadBoxHistory() {
+  if (!FB_URL) return;
   const dk = document.getElementById('boxDate')?.value || boxTodayKey();
-  const seq = ++boxLoadSeq;
-  boxFormDirty = false;
+  currentBoxHistoryKey = dk;
   try {
     const res = await fetch(`${FB_URL}/box_history/${dk}.json?t=${Date.now()}`);
     if (!res.ok) throw new Error(String(res.status));
     const data = await res.json();
-    if (seq !== boxLoadSeq || boxFormDirty) return;
     if (data) {
       fillBoxForm(data);
       const status = document.getElementById('boxSaveStatus');
       if (status) status.textContent = `${dk} 기록을 불러왔습니다.`;
     } else {
-      resetBoxForm(true);
+      resetBoxForm();
       const status = document.getElementById('boxSaveStatus');
       if (status) status.textContent = `${dk} 기록이 없습니다.`;
     }
   } catch(e) {
-    if (seq !== boxLoadSeq || boxFormDirty) return;
-    resetBoxForm(true);
+    resetBoxForm();
     const status = document.getElementById('boxSaveStatus');
     if (status) status.textContent = `${dk} 기록이 없습니다.`;
   }
 }
 
 async function saveBoxHistory() {
+  if (_TM) { showToast('🧪 테스트 모드 — 박스 저장 차단'); return; }
+  if (!FB_URL) { showToast('❌ 연결 설정이 없습니다'); return; }
   const payload = collectBoxPayload();
   const status = document.getElementById('boxSaveStatus');
   try {
@@ -1241,7 +1686,7 @@ async function saveBoxHistory() {
       body: JSON.stringify(payload)
     });
     if (!res.ok) throw new Error(String(res.status));
-    boxFormDirty = false;
+    currentBoxHistoryKey = payload.date;
     if (status) status.textContent = `${payload.date} 저장 완료`;
     showToast('✅ 박스 현황 저장 완료');
     await loadBoxRecentList();
@@ -1253,12 +1698,11 @@ async function saveBoxHistory() {
 
 async function loadBoxRecentList() {
   const el = document.getElementById('boxRecentList');
-  if (!el) return;
+  if (!el || !FB_URL) return;
   try {
     const res = await fetch(`${FB_URL}/box_history?t=${Date.now()}`);
     if (!res.ok) throw new Error(String(res.status));
-    const rawDates = await res.json();
-    const dates = Array.isArray(rawDates) ? rawDates : Object.keys(rawDates || {}).sort().reverse();
+    const dates = await res.json();
     if (!Array.isArray(dates) || dates.length === 0) {
       el.innerHTML = '<div class="jb-empty">저장된 기록 없음</div>';
       return;
@@ -1277,13 +1721,10 @@ async function loadBoxRecentList() {
 function openBoxHistoryDate(dateKey) {
   const dateEl = document.getElementById('boxDate');
   if (dateEl) dateEl.value = dateKey;
-  boxFormDirty = false;
   loadBoxHistory();
 }
 
 function initBoxTab() {
-  if (boxTabInitialized) return;
-  boxTabInitialized = true;
   const dateEl = document.getElementById('boxDate');
   if (dateEl && !dateEl.value) dateEl.value = boxTodayKey();
   renderBoxCompanyRows();
@@ -1332,8 +1773,8 @@ function updateMobileProd(d) {
 
 // ══ 모바일 출근부 렌더링 ══
 const ATT_M_MEMBERS = ['이지철','이성재','한태준','최태원','김제선','김성영','오영석'];
-const STATUS_COLOR_M = {present:'#34d399',late:'#3b9eff',absent:'#f97316',off:'#94a3b8'};
-const STATUS_LABEL_M = {present:'출근중',late:'퇴근',absent:'조출',off:'휴무'};
+const STATUS_COLOR_M = {present:'#34d399',late:'#3b9eff',out:'#3b9eff',done:'#3b9eff',absent:'#f97316',off:'#94a3b8',early:'#f97316'};
+const STATUS_LABEL_M = {present:'출근중',late:'퇴근',out:'퇴근',done:'퇴근',absent:'조출',off:'휴무',early:'조퇴'};
 
 function renderMobileAttendance(attData) {
   const grid = document.getElementById('att-m-grid');
@@ -1377,6 +1818,7 @@ async function sendMessage() {
   const btn = document.getElementById('msg-send-btn');
   btn.disabled = true;
   const msgData = { text, timestamp: Date.now(), confirmed: false, confirmedAt: null };
+  if (_TM) { showMsgStatus('🧪 테스트 모드 — 전송 차단', true); btn.disabled = false; return; }
   try {
     const res = await fetch(`${FB_URL}/message.json`, {method:'PUT', body:JSON.stringify(msgData)});
     if (!res.ok) throw new Error(res.status);
@@ -1449,7 +1891,7 @@ function saveMsgEdit(idx) {
   hist[idx].editedAt = Date.now();
   localStorage.setItem('msgHistory', JSON.stringify(hist));
   // Firebase 메시지도 최신이면 함께 업데이트
-  if (FB_URL && hist[idx].timestamp === hist[0].timestamp) {
+  if (!_TM && FB_URL && hist[idx].timestamp === hist[0].timestamp) {
     fetch(`${FB_URL}/message.json?t=${Date.now()}`).then(r=>r.json()).then(msg => {
       if (msg && msg.timestamp === hist[idx].timestamp) {
         fetch(`${FB_URL}/message.json`, {method:'PUT', body:JSON.stringify({...msg, text: newText})}).catch(()=>{});
@@ -1529,9 +1971,14 @@ function showToast(msg) {
 }
 
 // ══ 초기화 & 자동갱신 ══
-setInterval(() => { fetchLive(); }, 30000);
+setInterval(() => { fetchLive(); }, 45000);
 setInterval(() => { fetchHistory(); }, 300000);
 setInterval(pollMessageConfirmation, 30000);
+
+// 모바일 슬립 복귀 시 stale 데이터 즉시 갱신
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) fetchLive();
+});
 
 loadFbUrl(); // 설정관리에서 자동 로드
 renderMsgHistory();
@@ -1543,19 +1990,102 @@ let admPredConfig = null;
 let _admMonthLoaded = false, _admMonthTs = 0;
 const DOW_KR_ADM = ['일','월','화','수','목','금','토'];
 
+// 공휴일 다음날 체크 헬퍼 (관리자폰)
+const _ADM_FH = new Set(['01-01','03-01','05-01','05-05','06-06','08-15','10-03','10-09','12-25']);
+const _ADM_LH = new Set([
+  '2023-01-21','2023-01-22','2023-01-23','2023-01-24','2023-05-27',
+  '2023-09-27','2023-09-28','2023-09-29','2023-09-30','2023-10-02',
+  '2024-02-08','2024-02-09','2024-02-10','2024-02-11','2024-02-12',
+  '2024-05-06','2024-05-15','2024-09-15','2024-09-16','2024-09-17','2024-09-18',
+  '2025-01-27','2025-01-28','2025-01-29','2025-01-30','2025-01-31',
+  '2025-05-06','2025-10-04','2025-10-05','2025-10-06','2025-10-07','2025-10-08',
+  '2026-02-15','2026-02-16','2026-02-17','2026-02-18','2026-02-19',
+  '2026-05-24','2026-05-25','2026-09-23','2026-09-24','2026-09-25','2026-09-26','2026-09-28',
+  '2027-02-05','2027-02-06','2027-02-07','2027-02-08','2027-02-09',
+  '2027-05-13','2027-10-13','2027-10-14','2027-10-15','2027-10-16',
+]);
+function _admIsHol(k) { return _ADM_LH.has(k) || _ADM_FH.has(k.slice(5)); }
+function _admPrevWd(ds) {
+  const d = new Date(ds);
+  for(let i=1;i<=10;i++){d.setDate(d.getDate()-1);if(d.getDay()!==0&&d.getDay()!==6)return d.toISOString().slice(0,10);}
+  return null;
+}
+function _admIsPostHolidayToday() {
+  const today = new Date().toISOString().slice(0,10);
+  const prev = _admPrevWd(today);
+  return !!(prev && _admIsHol(prev));
+}
+function _admNextWd(ds) {
+  const d = new Date(ds);
+  for(let i=1;i<=10;i++){d.setDate(d.getDate()+1);const dw=d.getDay();if(dw!==0&&dw!==6)return d.toISOString().slice(0,10);}
+  return null;
+}
+function _admIsPreHolidayToday() {
+  const today = new Date().toISOString().slice(0,10);
+  const next = _admNextWd(today);
+  return !!(next && _admIsHol(next));
+}
+
 function admCalcPredicted(currentQty) {
   const now = new Date(), dow = now.getDay(), dom = now.getDate(), mon = now.getMonth()+1;
   if (dow === 0 || dow === 6 || !admPredConfig) return null;
-  const { overall=0, recent4wAvg=[], recent4wCnt=[], dowAvg=[], domFactor=[], monAvg=[], monCnt=[], orderRatio=0 } = admPredConfig;
+  const {
+    overall=0, overallRaw=0,
+    dowAvg=[], dowFactor=[],
+    domFactor=[], domCnt=[],
+    monAvg=[], monCnt=[],
+    weighted4wAvg=[], recent4wAvg=[], recent4wCnt=[],
+    trendFactor=[], weekOfMonthFactor=[], lateMonthFactor=1,
+    accuracyFactor=[], orderRatio=0, nextDayFactor=1.2, prevDayFactor=0.8
+  } = admPredConfig;
   if (overall <= 0) return null;
-  let baseVal, method;
-  if (recent4wAvg[dow] > 0 && (recent4wCnt[dow]||0) >= 2) { baseVal = recent4wAvg[dow]; method = `최근${recent4wCnt[dow]}주 ${DOW_KR_ADM[dow]}요일 평균`; }
-  else if (dowAvg[dow] > 0) { baseVal = dowAvg[dow]; method = `전체 ${DOW_KR_ADM[dow]}요일 평균`; }
-  else { baseVal = overall; method = '전체 평균'; }
-  const domF = domFactor[dom] || 1;
-  const monF = (monCnt[mon] >= 2 && monAvg[mon] > 0) ? monAvg[mon]/overall : 1;
-  const predicted = Math.round(baseVal * domF * monF);
-  return { predicted, overall, dow, dom, method };
+
+  // ① 베이스 — 가중 최근4주 우선
+  const w4w = weighted4wAvg[dow] || recent4wAvg[dow] || 0;
+  const w4wCnt = recent4wCnt[dow] || 0;
+  const trend = trendFactor[dow] || 1;
+  const patternBase = dowAvg[dow] || Math.round(overall * (dowFactor[dow] || 1));
+
+  let base, method;
+  if (w4w > 0 && w4wCnt >= 3) {
+    base = w4w * trend * 0.60 + patternBase * 0.40;
+    method = `최근${w4wCnt}주 ${DOW_KR_ADM[dow]}요일 가중평균`;
+  } else if (w4w > 0 && w4wCnt >= 2) {
+    base = w4w * trend * 0.40 + patternBase * 0.60;
+    method = `최근${w4wCnt}주 혼합예측`;
+  } else if (w4w > 0) {
+    base = w4w * 0.25 + patternBase * 0.75;
+    method = `요일 패턴 기반`;
+  } else {
+    base = patternBase;
+    method = `전체 ${DOW_KR_ADM[dow]}요일 평균`;
+  }
+
+  // ② 날짜 계수 (50% 반영)
+  const rawDomF = domFactor[dom] || 1;
+  const wi = dom<=7?0:dom<=14?1:dom<=21?2:3;
+  const rawWomF = (weekOfMonthFactor[wi])||1;
+  const dateF = (domCnt[dom]||0) >= 3 ? 1+(rawDomF-1)*0.5 : 1+(rawWomF-1)*0.5;
+
+  // ③ 월 계수 (30% 반영)
+  const monF = (monCnt[mon]>=2&&monAvg[mon]>0) ? 1+(monAvg[mon]/overall-1)*0.3 : 1;
+
+  // ④ 월말 계수 (60% 반영)
+  const latef = dom>=25 ? 1+((lateMonthFactor||1)-1)*0.6 : 1;
+
+  // ⑤ 정확도 보정
+  const accF = (accuracyFactor[dow])||1;
+
+  // ⑥ 공휴일/휴무 다음날 계수
+  const _isNdAdm = _admIsPostHolidayToday();
+  const ndFAdm = _isNdAdm ? nextDayFactor : 1;
+  const _isPdAdm = _admIsPreHolidayToday();
+  const pdFAdm = _isPdAdm ? prevDayFactor : 1;
+
+  let predicted = Math.round(base * dateF * monF * latef * accF * ndFAdm * pdFAdm);
+  predicted = Math.max(Math.round(overall*(_isPdAdm?0.25:0.35)), Math.min(Math.round(overall*(_isNdAdm?2.6:2.1)), predicted));
+
+  return { predicted, overall, dow, dom, method, isPostHoliday: _isNdAdm, isPreHoliday: _isPdAdm };
 }
 
 function admCalcEta(currentQty, predicted) {
@@ -1608,6 +2138,20 @@ function admUpdatePredWidget(liveData) {
   const now = new Date(), dow = now.getDay();
   if (dow === 0 || dow === 6) { wrap.style.display='none'; return; }
   wrap.style.display = '';
+
+  // 종근당 주문없음 표시 시 예측 위젯 오버라이드
+  const _noOrd = liveData?.주문없음 || {};
+  if (_noOrd.종근당) {
+    const setEl2 = (id, val) => { const e=document.getElementById(id); if(e) e.textContent=val; };
+    setEl2('admPredCur', '0');
+    setEl2('admPredExp', '—');
+    setEl2('admPredRem', '');
+    setEl2('admPredPct', '—');
+    setEl2('admPredEta', '🚫 오늘 종근당 주문없음');
+    const b=document.getElementById('admPredBar'); if(b) b.style.width='0%';
+    const pe=document.getElementById('admPredPct'); if(pe) pe.style.color='var(--muted)';
+    return;
+  }
 
   const currentQty = liveData?.totalQty || 0;
   const hanjin = liveData?.기타업체?.한진||0, jikbae = liveData?.종근당?.직배||0;
@@ -1680,9 +2224,89 @@ function admUpdatePredWidget(liveData) {
     } else { snapsEl.style.display='none'; }
   }
 
+  // 페이스 위젯
+  admUpdatePaceWidget(liveData, pInfo||null);
+
   // 월별 예상 (5분마다, admPredConfig 생기면 자동 실행)
   const _now2=Date.now();
   if(admPredConfig&&(!_admMonthLoaded||(_now2-_admMonthTs)>5*60*1000)){_admMonthLoaded=true;_admMonthTs=_now2;admLoadMonthForecast();}
+}
+
+function admGetTeamGradeFactor(liveData) {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('sys_config_v1')||'{}');
+    const workers = (cfg.workers||[]).map(w => typeof w==='string' ? {name:w,grade:'B'} : w);
+    const gf = Object.assign({A:100,B:85,C:70,D:55}, cfg.gradeFactors||{});
+    const stdHours = parseFloat(cfg.standardHours)||8;
+    const att = liveData?.출근부;
+    if (!att||!att.members||workers.length===0) return {factor:1,count:0,composition:'',stdHours};
+    const presentNames = new Set(Object.entries(att.members||{}).filter(([,s])=>s==='present'||s==='late').map(([n])=>n));
+    const present = workers.filter(w => presentNames.has(w.name));
+    if (present.length===0) return {factor:1,count:0,composition:'',stdHours};
+    const avg = present.reduce((s,w)=>s+(gf[w.grade]||85),0)/present.length/100;
+    const comp = Object.entries(present.reduce((acc,w)=>{acc[w.grade]=(acc[w.grade]||0)+1;return acc;},{}))
+      .map(([g,c])=>`${g}:${c}명`).join(' ');
+    return {factor:avg, count:present.length, composition:comp, stdHours};
+  } catch(e) { return {factor:1,count:0,composition:'',stdHours:8}; }
+}
+
+function admUpdatePaceWidget(liveData, pInfo) {
+  const el = document.getElementById('admPaceWidget'); if (!el) return;
+  if (!pInfo||!pInfo.predicted) { el.style.display='none'; return; }
+  const now = new Date(), start = new Date(now); start.setHours(9,0,0,0);
+  const elH = (now-start)/3600000;
+  const hanjin = liveData?.기타업체?.한진||0, jikbae = liveData?.종근당?.직배||0;
+  const netQty = (liveData?.totalQty||0)-hanjin-jikbae;
+  const {factor, count, composition, stdHours} = admGetTeamGradeFactor(liveData);
+  const adjPred = Math.round(pInfo.predicted*factor);
+  const setEl = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+  const setStyle = (id,s,v) => { const e=document.getElementById(id); if(e) e.style[s]=v; };
+
+  // 준비중 상태
+  if (elH<0.1||netQty<=0) {
+    el.style.display = '';
+    setEl('admPaceSpeed','—');
+    setEl('admPaceTarget',`목표 ${Math.round(adjPred/stdHours)}개/h`);
+    setEl('admPaceIcon','⏳'); setEl('admPaceLabel','준비중'); setStyle('admPaceLabel','color','var(--muted)');
+    setEl('admPaceTeamBadge', count>0?`👷 ${count}명`:'');
+    setEl('admPaceTeamDetail', `오늘 목표 ${adjPred}개`);
+    setEl('admPaceEta','');
+    const barR=document.getElementById('admPaceBar'); if(barR){barR.style.width='0%';barR.style.background='rgba(255,255,255,.15)';}
+    return;
+  }
+  el.style.display = '';
+  const currentRate = netQty/elH;
+  const targetRate = adjPred/stdHours;
+  const ratio = targetRate>0 ? currentRate/targetRate : 0;
+  const pct = Math.min(Math.round(ratio*100), 200);
+  let icon, label, color;
+  if (ratio>=1.15)      { icon='🔥'; label='빠름'; color='#22c55e'; }
+  else if (ratio>=0.9)  { icon='✅'; label='적정'; color='var(--a3)'; }
+  else if (ratio>=0.7)  { icon='⚠️'; label='느림'; color='var(--a5)'; }
+  else                  { icon='🚨'; label='위험'; color='#ef4444'; }
+  setEl('admPaceSpeed', `현재 ${Math.round(currentRate)}개/h`);
+  setEl('admPaceTarget', `목표 ${Math.round(targetRate)}개/h`);
+  const bar = document.getElementById('admPaceBar');
+  if (bar) { bar.style.width=Math.min(pct,100)+'%'; bar.style.background=color; }
+  setEl('admPaceIcon', icon); setEl('admPaceLabel', label);
+  setStyle('admPaceLabel', 'color', color);
+  if (count>0) {
+    setEl('admPaceTeamBadge', `👷 ${count}명`);
+    setEl('admPaceTeamDetail', composition ? `구성: ${composition}` : '');
+  } else {
+    setEl('admPaceTeamBadge',''); setEl('admPaceTeamDetail','');
+  }
+  const rem = Math.max(adjPred-netQty, 0);
+  if (rem>0&&currentRate>0) {
+    const etaMs = now.getTime()+rem/currentRate*3600000;
+    const etaD = new Date(etaMs);
+    const h=etaD.getHours(), m=etaD.getMinutes(), ap=h<12?'오전':'오후', hh=h>12?h-12:(h===0?12:h);
+    setEl('admPaceEta', `완료 예상: ${ap} ${hh}:${String(m).padStart(2,'0')}`);
+  } else if (rem<=0) {
+    setEl('admPaceEta', '🎉 목표 달성!');
+  } else {
+    setEl('admPaceEta', '');
+  }
 }
 
 async function admLoadMonthForecast() {
@@ -1759,21 +2383,829 @@ async function admLoadMonthForecast() {
 }
 
 // ══════════════════════════════════════════════
+// 👷 출근부 엔진
+// ══════════════════════════════════════════════
+let attData = {}; // {name: {status, inTime, outTime, memo}}
+let attMembers = []; // 팀원 목록
+let attEditName = null; // 현재 인라인 편집 중인 팀원
+
+const ATT_STATUS = {
+  none: { label: '미출근', color: 'var(--muted)', bg: 'rgba(90,122,153,.08)' },
+  work: { label: '출근중', color: 'var(--a3)',    bg: 'rgba(46,204,113,.08)' },
+  out:  { label: '퇴근',   color: '#ef4444',      bg: 'rgba(239,68,68,.06)' },
+  early:{ label: '조퇴',   color: 'var(--a5)',    bg: 'rgba(255,214,0,.08)' },
+  off:  { label: '휴무',   color: 'var(--muted)', bg: 'rgba(90,122,153,.05)' }
+};
+
+function attNow() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function attTodayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+async function initAttendanceTab() {
+  // 날짜 표시
+  const dl = document.getElementById('attDateLabel');
+  if (dl) {
+    const d = new Date();
+    const days = ['일','월','화','수','목','금','토'];
+    dl.textContent = `${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+  }
+  // 팀원 목록 로드 (config에서)
+  if (!attMembers.length) {
+    if (window.SYS_MEMBERS && window.SYS_MEMBERS.length) {
+      attMembers = window.SYS_MEMBERS.map(m => typeof m === 'string' ? m : (m.name || m));
+    } else {
+      // NAS config에서 로드 시도
+      try {
+        const r = await fetch(`${FB_URL}/config.json?t=${Date.now()}`);
+        const cfg = await r.json().catch(()=>null);
+        if (cfg && cfg.workers && cfg.workers.length) {
+          attMembers = cfg.workers.map(m => typeof m === 'string' ? m : (m.name || m));
+          window.SYS_MEMBERS = attMembers;
+        }
+      } catch(e) {}
+      // config에서 로드 실패 시 기본 멤버 목록 사용
+      if (!attMembers.length && typeof ATT_M_MEMBERS !== 'undefined') {
+        attMembers = [...ATT_M_MEMBERS];
+      }
+    }
+  }
+  // 오늘 기존 출근 데이터 로드
+  const saved = localStorage.getItem('att_' + attTodayKey());
+  if (saved) {
+    try { attData = JSON.parse(saved); } catch(e) { attData = {}; }
+  }
+  // NAS에서도 로드 시도 (더 최신 데이터)
+  // work.html은 present/late/absent, 관리자폰은 work/out/early — 읽을 때 변환
+  const _attStatusMap = { present:'work', late:'out', absent:'early', off:'off' };
+  try {
+    const r = await fetch(`${FB_URL}/attendance/${attTodayKey()}.json?t=${Date.now()}`);
+    const d = await r.json().catch(()=>null);
+    if (d && d.members) {
+      d.members.forEach(m => {
+        const st = _attStatusMap[m.status] || m.status;
+        attData[m.name] = { status: st, inTime: m.inTime||'', outTime: m.outTime||'' };
+      });
+    }
+  } catch(e) {}
+  renderAttendance();
+}
+
+function renderAttendance() {
+  const list = document.getElementById('attMemberList');
+  if (!list) return;
+  if (!attMembers.length) {
+    list.innerHTML = `<div class="card" style="text-align:center;color:var(--muted);font-size:12px;padding:20px;">팀원 목록이 없습니다<br><br>리포트 앱 → 설정에서 팀원을 등록해주세요</div>`;
+    return;
+  }
+  list.innerHTML = attMembers.map(name => {
+    const d = attData[name] || { status: 'none' };
+    const st = ATT_STATUS[d.status] || ATT_STATUS.none;
+    const timeInfo = d.status === 'work'  ? `출근 ${d.inTime||'—'}` :
+                     d.status === 'out'   ? `${d.inTime||'—'} → ${d.outTime||'—'}` :
+                     d.status === 'early' ? `출근 ${d.inTime||'—'} 조퇴 ${d.outTime||'—'}` : '';
+    // 빠른 동작 버튼
+    let btns = '';
+    if (d.status === 'none') {
+      btns = `<button onclick="attAction('${name}','work')" style="background:rgba(46,204,113,.2);color:var(--a3);border:1.5px solid rgba(46,204,113,.4);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">출근</button>
+              <button onclick="attAction('${name}','off')" style="background:rgba(90,122,153,.15);color:var(--muted);border:1.5px solid rgba(90,122,153,.3);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">휴무</button>`;
+    } else if (d.status === 'work') {
+      btns = `<button onclick="attAction('${name}','out')" style="background:rgba(239,68,68,.15);color:#ef4444;border:1.5px solid rgba(239,68,68,.35);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">퇴근</button>
+              <button onclick="attAction('${name}','early')" style="background:rgba(255,214,0,.15);color:var(--a5);border:1.5px solid rgba(255,214,0,.35);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">조퇴</button>`;
+    } else {
+      btns = `<button onclick="attAction('${name}','none')" style="background:rgba(59,158,255,.12);color:var(--a1);border:1.5px solid rgba(59,158,255,.3);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">초기화</button>`;
+    }
+    // 인라인 편집 폼
+    const isEditing = attEditName === name;
+    const safeN = name.replace(/'/g, "\\'");
+    const editForm = isEditing ? `
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:700;">상태</div>
+            <select id="att-edit-status-${name}" style="width:100%;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:7px;padding:7px 8px;font-size:12px;font-family:inherit;">
+              <option value="none"  ${d.status==='none' ?'selected':''}>미출근</option>
+              <option value="work"  ${d.status==='work' ?'selected':''}>출근중</option>
+              <option value="out"   ${d.status==='out'  ?'selected':''}>퇴근</option>
+              <option value="early" ${d.status==='early'?'selected':''}>조퇴</option>
+              <option value="off"   ${d.status==='off'  ?'selected':''}>휴무</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:700;">메모 (특이사항)</div>
+            <input id="att-edit-memo-${name}" type="text" placeholder="지각사유, 외출 등" value="${(d.memo||'').replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:7px;padding:7px 8px;font-size:12px;font-family:inherit;">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:700;">출근시간</div>
+            <input id="att-edit-in-${name}" type="time" value="${d.inTime||'09:00'}" style="width:100%;box-sizing:border-box;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:7px;padding:7px 8px;font-size:12px;font-family:inherit;">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:700;">퇴근시간</div>
+            <input id="att-edit-out-${name}" type="time" value="${d.outTime||'18:00'}" style="width:100%;box-sizing:border-box;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:7px;padding:7px 8px;font-size:12px;font-family:inherit;">
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="attSaveEdit('${safeN}')" style="flex:1;background:linear-gradient(135deg,var(--a1),#1a6fcf);color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;">✅ 저장</button>
+          <button onclick="attOpenEdit('${safeN}')" style="background:var(--card2);color:var(--muted);border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">취소</button>
+        </div>
+      </div>` : '';
+    return `<div class="card" style="background:${st.bg};border-color:${st.color}33;margin-bottom:0;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:900;color:var(--text);">${name}</div>
+          <div style="font-size:10px;color:${st.color};font-weight:800;margin-top:2px;">${st.label}${timeInfo?' · '+timeInfo:''}${d.memo?' 📝'+d.memo:''}</div>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;">
+          ${btns}
+          <button onclick="attOpenEdit('${safeN}')" title="상세수정" style="background:${isEditing?'rgba(59,158,255,.2)':'var(--card2)'};color:${isEditing?'var(--a1)':'var(--muted)'};border:1.5px solid ${isEditing?'rgba(59,158,255,.4)':'var(--border)'};border-radius:8px;padding:6px 8px;font-size:13px;cursor:pointer;font-family:inherit;">✏️</button>
+        </div>
+      </div>
+      ${editForm}
+    </div>`;
+  }).join('');
+  updateAttSummary();
+}
+
+function attOpenEdit(name) {
+  attEditName = (attEditName === name) ? null : name;
+  renderAttendance();
+}
+
+function attSaveEdit(name) {
+  const statusEl = document.getElementById(`att-edit-status-${name}`);
+  const inEl     = document.getElementById(`att-edit-in-${name}`);
+  const outEl    = document.getElementById(`att-edit-out-${name}`);
+  const memoEl   = document.getElementById(`att-edit-memo-${name}`);
+  if (!statusEl) return;
+  attData[name] = {
+    status:  statusEl.value,
+    inTime:  inEl  ? inEl.value  : (attData[name]?.inTime  || ''),
+    outTime: outEl ? outEl.value : (attData[name]?.outTime || ''),
+    memo:    memoEl ? memoEl.value.trim() : (attData[name]?.memo || '')
+  };
+  attEditName = null;
+  localStorage.setItem('att_' + attTodayKey(), JSON.stringify(attData));
+  renderAttendance();
+  pushAttToLive();
+}
+
+function attAction(name, action) {
+  if (!attData[name]) attData[name] = { status: 'none' };
+  const now = attNow();
+  const memo = attData[name].memo || '';
+  if (action === 'work') {
+    attData[name] = { status: 'work', inTime: '09:00', outTime: '', memo }; // 기본 출근 9:00
+  } else if (action === 'out') {
+    attData[name] = { ...attData[name], status: 'out', outTime: '18:00' }; // 기본 퇴근 18:00
+  } else if (action === 'early') {
+    attData[name] = { ...attData[name], status: 'early', outTime: now }; // 조퇴는 실제시간
+  } else if (action === 'off') {
+    attData[name] = { status: 'off', inTime: '', outTime: '', memo };
+  } else if (action === 'none') {
+    attData[name] = { status: 'none', inTime: '', outTime: '', memo: '' };
+  }
+  localStorage.setItem('att_' + attTodayKey(), JSON.stringify(attData));
+  renderAttendance();
+  // 실시간 반영 (live.json 업데이트)
+  pushAttToLive();
+}
+
+function updateAttSummary() {
+  const cnt = { work:0, out:0, early:0, off:0 };
+  Object.values(attData).forEach(d => { if(cnt[d.status]!==undefined) cnt[d.status]++; });
+  const setT = (id, v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+  setT('attCntWork', cnt.work);
+  setT('attCntOut', cnt.out);
+  setT('attCntEarly', cnt.early);
+  setT('attCntOff', cnt.off);
+}
+
+async function pushAttToLive() {
+  const presentCount = Object.values(attData).filter(d => d.status === 'work').length;
+  // live.출근부는 work.html 호환 상태값(present/late/absent/off)으로 정규화
+  const _toCommon = s => ({work:'present', out:'out', early:'absent', off:'off'}[s] || '');
+  const members = attMembers.map(name => {
+    const d = attData[name] || {status:'none'};
+    return { name, status: _toCommon(d.status), inTime: d.inTime||'', outTime: d.outTime||'', memo: d.memo||'' };
+  });
+  const patch = { 출근부: { presentCount, members, updatedAt: attNow() } };
+  // dayaWriteLive: NAS + Firebase 동시 기록
+  if (window.dayaWriteLive) {
+    try { await window.dayaWriteLive(patch); } catch(e) {}
+  } else {
+    // fallback: 직접 양쪽 PATCH
+    const _f = window.__dayaOrigFetch || window.fetch.bind(window);
+    const body = JSON.stringify(patch);
+    const h = {'Content-Type':'application/json'};
+    if (window.FB_URL)     _f(`${window.FB_URL}/live.json`,    {method:'PATCH', headers:h, body}).catch(()=>{});
+    if (window.FB_BACKUP)  _f(`${window.FB_BACKUP}/live.json`, {method:'PATCH', headers:h, body}).catch(()=>{});
+  }
+}
+
+async function saveAttendance() {
+  if (!FB_URL) { alert('NAS 연결 필요'); return; }
+  const presentCount = Object.values(attData).filter(d => d.status === 'work').length;
+  const members = attMembers.map(name => ({ name, ...(attData[name] || {status:'none'}) }));
+  const payload = { date: attTodayKey(), presentCount, members, savedAt: attNow() };
+  try {
+    await fetch(`${FB_URL}/attendance/${attTodayKey()}.json`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    await pushAttToLive();
+    // 저장 완료 피드백
+    const btn = document.querySelector('#attMemberList + button') || document.querySelector('[onclick="saveAttendance()"]');
+    if (btn) { btn.textContent = '✅ 저장 완료!'; setTimeout(() => btn.textContent = '💾 저장', 2000); }
+  } catch(e) { alert('저장 실패: ' + e.message); }
+}
+
+// ══════════════════════════════════════════════
+// 📦 A0 지시수량 입력·학습 엔진
+// ══════════════════════════════════════════════
+const A0_BRANDS = ['동구바이오','삼천당제약','국제약품','대우제약','아주약품','비씨월드','종근당','기타'];
+let instrRatios = {}; // 브랜드별 학습된 비율 {brand: {ratio, days, lastBox}}
+
+function instrTodayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function initInstrTab() {
+  // 날짜 기본값 = 오늘
+  const di = document.getElementById('instrDate');
+  if (di && !di.value) di.value = instrTodayKey();
+  // 브랜드 행 생성
+  renderInstrBrandRows();
+  // 기존 비율 로드
+  loadInstrRatios();
+  // 오늘 데이터 로드
+  loadInstrForDate();
+  // 자동저장 프리뷰 로드 (live + jkg_orders 현재값)
+  loadAutoSavePreview();
+}
+
+function renderInstrBrandRows() {
+  const container = document.getElementById('instrBrandRows');
+  if (!container) return;
+  container.innerHTML = A0_BRANDS.map(brand => {
+    const r = instrRatios[brand];
+    const ratioHtml = r && r.days >= 1
+      ? `<div class="instr-ratio-cell learned" title="${r.days}일 기준">1:${r.ratio.toFixed(1)}</div>`
+      : `<div class="instr-ratio-cell">—</div>`;
+    const countCell = brand === '종근당'
+      ? `<input type="number" class="instr-inp" id="instr_c_${brand}" min="0" placeholder="건수" style="border-color:rgba(88,166,255,.4);" oninput="onInstrInput()">`
+      : `<div></div>`;
+    return `<div class="instr-brand-row">
+      <div class="instr-brand-name">${brand}</div>
+      <input type="number" class="instr-inp" id="instr_i_${brand}" min="0" placeholder="0"
+        oninput="onInstrInput()">
+      <input type="number" class="instr-inp" id="instr_b_${brand}" min="0" placeholder="0"
+        oninput="onInstrInput()">
+      ${countCell}
+      ${ratioHtml}
+    </div>`;
+  }).join('');
+}
+
+function getInstrValues() {
+  const result = {};
+  let totalInstr = 0, totalBox = 0;
+  A0_BRANDS.forEach(brand => {
+    const iv = parseInt(document.getElementById(`instr_i_${brand}`)?.value||'0')||0;
+    const bv = parseInt(document.getElementById(`instr_b_${brand}`)?.value||'0')||0;
+    const cv = brand === '종근당' ? (parseInt(document.getElementById(`instr_c_${brand}`)?.value||'0')||0) : 0;
+    result[brand] = {instr: iv, boxes: bv, ...(cv > 0 ? {count: cv} : {})};
+    totalInstr += iv; totalBox += bv;
+  });
+  return {brands: result, totalInstr, totalBox};
+}
+
+function onInstrInput() {
+  const {brands, totalInstr, totalBox} = getInstrValues();
+  const ti = document.getElementById('instrTotalInstr');
+  const tb = document.getElementById('instrTotalBox');
+  if (ti) ti.textContent = totalInstr.toLocaleString();
+  if (tb) tb.textContent = totalBox.toLocaleString();
+  // 예상 박스 실시간 표시
+  showInstrEstimate(brands, totalInstr);
+}
+
+function showInstrEstimate(brands, totalInstr) {
+  const card = document.getElementById('instrEstCard');
+  const content = document.getElementById('instrEstContent');
+  if (!card || !content) return;
+  // 학습된 비율이 있는 브랜드만 계산
+  const estItems = [];
+  let estTotal = 0;
+  A0_BRANDS.forEach(brand => {
+    const iv = brands[brand]?.instr || 0;
+    const r = instrRatios[brand];
+    if (iv > 0 && r && r.days >= 1) {
+      const estBox = Math.round(iv / r.ratio);
+      estItems.push({brand, instr: iv, estBox, ratio: r.ratio, days: r.days});
+      estTotal += estBox;
+    }
+  });
+  if (estItems.length === 0) { card.style.display='none'; return; }
+  card.style.display = '';
+  content.innerHTML = estItems.map(e =>
+    `<div class="instr-est-row">
+      <div class="instr-est-brand">${e.brand}</div>
+      <div class="instr-est-info">
+        <div class="instr-est-box">~${e.estBox.toLocaleString()}박스</div>
+        <div class="instr-est-detail">지시 ${e.instr.toLocaleString()} ÷ ${e.ratio.toFixed(1)} (${e.days}일 학습)</div>
+      </div>
+    </div>`
+  ).join('') + (estItems.length > 1 ?
+    `<div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:12px;font-weight:800;color:var(--text);">예상 합계</div>
+      <div style="font-size:20px;font-weight:900;color:var(--a4);">~${estTotal.toLocaleString()}박스</div>
+    </div>` : '');
+}
+
+async function loadInstrForDate() {
+  const di = document.getElementById('instrDate');
+  const dk = di?.value || instrTodayKey();
+  if (!FB_URL) return;
+  try {
+    const r = await fetch(`${FB_URL}/history/${dk}.json?t=${Date.now()}`);
+    const hd = await r.json().catch(()=>null);
+    // 기존 데이터 초기화
+    A0_BRANDS.forEach(brand => {
+      const ii = document.getElementById(`instr_i_${brand}`);
+      const bi = document.getElementById(`instr_b_${brand}`);
+      const ci = document.getElementById(`instr_c_${brand}`);
+      if (ii) ii.value = '';
+      if (bi) bi.value = '';
+      if (ci) ci.value = '';
+    });
+    // 저장된 instrData 복원
+    if (hd && hd.instrData) {
+      A0_BRANDS.forEach(brand => {
+        const d = hd.instrData[brand];
+        if (d) {
+          const ii = document.getElementById(`instr_i_${brand}`);
+          const bi = document.getElementById(`instr_b_${brand}`);
+          const ci = document.getElementById(`instr_c_${brand}`);
+          if (ii && d.instr > 0) ii.value = d.instr;
+          if (bi && d.boxes > 0) bi.value = d.boxes;
+          if (ci && d.count > 0) ci.value = d.count;
+        }
+      });
+    }
+    // 출근인원 복원
+    const pcEl = document.getElementById('instrPresentCount');
+    if (pcEl) pcEl.value = (hd?.출근부?.presentCount > 0) ? hd.출근부.presentCount : '';
+    onInstrInput();
+  } catch(e) {}
+}
+
+// ── 최종 오늘작업완료: 실시간(live) + 수동입력(history) MAX 병합 ──
+let _autoSaveLiveData = null;
+let _autoSaveHistData = null;
+
+// 안전한 정수 추출
+function _toInt(v) { const n = parseInt(v); return isNaN(n) ? 0 : n; }
+
+// 두 객체 비교용 헬퍼 (디버깅/UI 표시)
+function _maxOf(/*...vals*/) { return Math.max.apply(null, [].slice.call(arguments).map(_toInt)); }
+
+// 주문로그 entries 병합 (ts 기준 dedupe, 같은 ts면 큰 qty 선택)
+function _mergeOrderEntries(liveArr, histArr) {
+  const liveE = Array.isArray(liveArr) ? liveArr : (liveArr ? Object.values(liveArr) : []);
+  const histE = Array.isArray(histArr) ? histArr : (histArr ? Object.values(histArr) : []);
+  const tsMap = {};
+  [...histE, ...liveE].forEach(e => {
+    if (!e || !e.ts) return;
+    const ex = tsMap[e.ts];
+    if (!ex) { tsMap[e.ts] = e; return; }
+    // 같은 ts: qty/count 더 큰 쪽 선택
+    if (_toInt(e.qty) > _toInt(ex.qty)) tsMap[e.ts] = e;
+    else if (_toInt(e.count) > _toInt(ex.count)) tsMap[e.ts] = { ...ex, count: e.count };
+  });
+  return Object.values(tsMap).sort((a,b)=>a.ts-b.ts);
+}
+
+// 최종 병합 빌더 — live + history 데이터로 최종 record 생성
+function _buildMergedRecord(ld, hd) {
+  const merged = JSON.parse(JSON.stringify(hd || {}));
+
+  // ── 종근당 박스 (매핑, 직배) ──
+  merged.종근당 = merged.종근당 || {};
+  // 매핑박스: live.종근당.매핑 vs hd.종근당.매핑 vs hd.instrData.종근당.boxes
+  merged.종근당.매핑 = _maxOf(ld?.종근당?.매핑, hd?.종근당?.매핑, hd?.instrData?.종근당?.boxes);
+  // 직배박스
+  merged.종근당.직배 = _maxOf(ld?.종근당?.직배, hd?.종근당?.직배);
+  if (merged.종근당.매핑 === 0) delete merged.종근당.매핑;
+  if (merged.종근당.직배 === 0) delete merged.종근당.직배;
+
+  // 종근당.배치 (회차별) — 차수별 MAX
+  const batchKeys = new Set([
+    ...Object.keys(ld?.종근당?.배치 || {}),
+    ...Object.keys(hd?.종근당?.배치 || {})
+  ]);
+  if (batchKeys.size > 0) {
+    merged.종근당.배치 = merged.종근당.배치 || {};
+    batchKeys.forEach(k => {
+      const lv = _toInt(typeof ld?.종근당?.배치?.[k] === 'object' ? ld.종근당.배치[k]?.qty : ld?.종근당?.배치?.[k]);
+      const hv = _toInt(typeof hd?.종근당?.배치?.[k] === 'object' ? hd.종근당.배치[k]?.qty : hd?.종근당?.배치?.[k]);
+      merged.종근당.배치[k] = Math.max(lv, hv);
+    });
+  }
+  // 배치완료 (live 우선, 한쪽만 있으면 그것)
+  if (ld?.종근당?.배치완료) merged.종근당.배치완료 = ld.종근당.배치완료;
+
+  // ── 기타업체 박스 (업체별 MAX) ──
+  const etcKeys = new Set([
+    ...Object.keys(ld?.기타업체 || {}),
+    ...Object.keys(hd?.기타업체 || {})
+  ]);
+  if (etcKeys.size > 0) {
+    merged.기타업체 = merged.기타업체 || {};
+    etcKeys.forEach(co => {
+      merged.기타업체[co] = Math.max(_toInt(ld?.기타업체?.[co]), _toInt(hd?.기타업체?.[co]));
+    });
+  }
+
+  // ── 주문로그 (ts 기준 dedupe + 큰 값 선택) ──
+  const logCompanies = new Set([
+    ...Object.keys(ld?.주문로그 || {}),
+    ...Object.keys(hd?.주문로그 || {})
+  ]);
+  if (logCompanies.size > 0) {
+    merged.주문로그 = merged.주문로그 || {};
+    logCompanies.forEach(co => {
+      merged.주문로그[co] = _mergeOrderEntries(ld?.주문로그?.[co], hd?.주문로그?.[co]);
+    });
+  }
+
+  // ── totalQty / orderTotal / plt ──
+  merged.totalQty   = _maxOf(ld?.totalQty,   hd?.totalQty);
+  merged.orderTotal = _maxOf(ld?.orderTotal, hd?.orderTotal);
+  merged.plt        = _maxOf(ld?.plt,        hd?.plt);
+  if (!merged.totalQty)   delete merged.totalQty;
+  if (!merged.orderTotal) delete merged.orderTotal;
+  if (!merged.plt)        delete merged.plt;
+
+  // ── 출근부 (presentCount MAX, members는 live 우선) ──
+  if (ld?.출근부 || hd?.출근부) {
+    merged.출근부 = merged.출근부 || {};
+    const pc = Math.max(_toInt(ld?.출근부?.presentCount), _toInt(hd?.출근부?.presentCount));
+    if (pc > 0) merged.출근부.presentCount = pc;
+    if (ld?.출근부?.members) merged.출근부.members = ld.출근부.members;
+  }
+
+  // ── 직배/개별운송 (live 우선) ──
+  if (ld?.직배)     merged.직배     = ld.직배;
+  if (ld?.개별운송) merged.개별운송 = ld.개별운송;
+
+  // ── instrData (종근당 주문 instr/boxes/count) ──
+  merged.instrData = merged.instrData || {};
+  // 주문로그에서 종근당 합계 추출 (실시간)
+  let jkgLogQty = 0, jkgLogCnt = 0;
+  if (ld?.주문로그?.종근당) {
+    const arr = Array.isArray(ld.주문로그.종근당) ? ld.주문로그.종근당 : Object.values(ld.주문로그.종근당);
+    arr.forEach(e => { jkgLogQty += _toInt(e?.qty); jkgLogCnt += _toInt(e?.count); });
+  }
+  const histJkg = hd?.instrData?.종근당 || {};
+  const finalInstr = _maxOf(histJkg.instr, jkgLogQty);
+  const finalBoxes = merged.종근당.매핑 || _maxOf(histJkg.boxes);
+  const finalCount = _maxOf(histJkg.count, jkgLogCnt);
+  if (finalInstr || finalBoxes || finalCount) {
+    merged.instrData['종근당'] = {};
+    if (finalInstr) merged.instrData['종근당'].instr = finalInstr;
+    if (finalBoxes) merged.instrData['종근당'].boxes = finalBoxes;
+    if (finalCount) merged.instrData['종근당'].count = finalCount;
+  }
+  // 기타 업체 instrData 보존
+  if (hd?.instrData) {
+    Object.entries(hd.instrData).forEach(([brand, info]) => {
+      if (brand !== '종근당' && !merged.instrData[brand]) merged.instrData[brand] = info;
+    });
+  }
+  merged.instrTotal    = _maxOf(merged.instrData['종근당']?.instr, hd?.instrTotal);
+  merged.instrBoxTotal = _maxOf(merged.instrData['종근당']?.boxes, hd?.instrBoxTotal);
+
+  // 메타 정보
+  merged.savedAt = new Date().toISOString();
+  merged.finalizedAt = Date.now();
+
+  // 주문없음 플래그 — live 우선, 한쪽만 있으면 있는 값
+  const noOrd = ld?.주문없음 || hd?.주문없음;
+  if (noOrd) merged.주문없음 = noOrd;
+
+  return merged;
+}
+
+async function loadAutoSavePreview() {
+  if (!FB_URL) return;
+  const dk = instrTodayKey();
+  let ld = null, hd = {};
+  try {
+    const [liveRes, histRes] = await Promise.all([
+      fetch(`${FB_URL}/live.json?t=${Date.now()}`),
+      fetch(`${FB_URL}/history/${dk}.json?t=${Date.now()}`)
+    ]);
+    if (liveRes.ok) ld = await liveRes.json();
+    if (histRes.ok) hd = (await histRes.json()) || {};
+  } catch(e) {}
+
+  _autoSaveLiveData = ld;
+  _autoSaveHistData = hd;
+
+  // 병합 결과 미리계산
+  const merged = _buildMergedRecord(ld, hd);
+
+  // 종근당 주문로그에서 합계
+  let jkgLogQty = 0, jkgLogCnt = 0;
+  if (ld?.주문로그?.종근당) {
+    const arr = Array.isArray(ld.주문로그.종근당) ? ld.주문로그.종근당 : Object.values(ld.주문로그.종근당);
+    arr.forEach(e => { jkgLogQty += _toInt(e?.qty); jkgLogCnt += _toInt(e?.count); });
+  }
+  const etcOrderQty = ld?.주문로그
+    ? Object.entries(ld.주문로그).filter(([co]) => co !== '종근당')
+        .reduce((s,[,arr]) => s + (Array.isArray(arr) ? arr.reduce((a,e)=>a+_toInt(e?.qty),0) : 0), 0)
+    : 0;
+
+  // chip 표시값 = 병합후 최종값
+  const finBoxes   = merged.종근당?.매핑 || 0;
+  const finTotal   = merged.totalQty || finBoxes || 0;
+  const finOthers  = merged.기타업체 ? Object.values(merged.기타업체).reduce((s,v)=>s+_toInt(v),0) : 0;
+  const finPlt     = merged.plt || 0;
+  const finPresent = merged.출근부?.presentCount || 0;
+  const finInstr   = merged.instrData?.종근당?.instr || 0;
+  const finCount   = merged.instrData?.종근당?.count || 0;
+
+  const el = document.getElementById('autoSavePreview');
+  if (!el) return;
+  const chip = (lbl, val, color) => `
+    <div style="background:rgba(0,0,0,.25);border-radius:9px;padding:8px 4px;text-align:center;">
+      <div style="font-size:8px;color:var(--muted);font-weight:700;margin-bottom:3px;">${lbl}</div>
+      <div style="font-size:17px;font-weight:900;color:${color};">${val !== undefined && val !== '' && val !== 0 ? val : '—'}</div>
+    </div>`;
+
+  el.style.gridTemplateColumns = 'repeat(3,1fr)';
+  el.innerHTML =
+    chip('전체박스', finTotal, 'var(--pink)') +
+    chip('종근당박스', finBoxes, 'var(--a6)') +
+    chip('기타박스(작업)', finOthers, 'var(--a1)') +
+    chip('파렛', finPlt, 'var(--a4)') +
+    chip('출근인원', finPresent, 'var(--a3)') +
+    chip('종근당주문', finInstr ? finInstr+'개' : 0, 'var(--a5)') +
+    chip('기타주문', etcOrderQty ? etcOrderQty+'개' : 0, 'var(--a2)') +
+    chip('건수', finCount ? finCount+'건' : 0, 'var(--a1)');
+
+  // 비교 표시 (실시간 vs 수동 → 최종)
+  const cmpEl = document.getElementById('autoSaveCompare');
+  if (cmpEl) {
+    const rows = [];
+    const addRow = (lbl, liveV, histV, finalV) => {
+      const lv = _toInt(liveV), hv = _toInt(histV), fv = _toInt(finalV);
+      if (lv === 0 && hv === 0 && fv === 0) return;
+      const liveCol = lv > 0 ? lv : '—';
+      const histCol = hv > 0 ? hv : '—';
+      const finCol  = fv > 0 ? `<strong style="color:var(--a3);">${fv}</strong>` : '—';
+      const pick = (lv > hv) ? '실시간↑' : (hv > lv) ? '수동↑' : (lv > 0 ? '동일' : '');
+      rows.push(`<tr><td>${lbl}</td><td style="text-align:right;">${liveCol}</td><td style="text-align:right;">${histCol}</td><td style="text-align:right;">${finCol}</td><td style="text-align:right;color:var(--muted);font-size:9px;">${pick}</td></tr>`);
+    };
+    addRow('종근당박스',   ld?.종근당?.매핑, Math.max(_toInt(hd?.종근당?.매핑), _toInt(hd?.instrData?.종근당?.boxes)), finBoxes);
+    addRow('종근당주문',   jkgLogQty,       hd?.instrData?.종근당?.instr,  finInstr);
+    addRow('종근당건수',   jkgLogCnt,       hd?.instrData?.종근당?.count,  finCount);
+    addRow('전체박스',     ld?.totalQty,    hd?.totalQty,                  finTotal);
+    addRow('파렛',         ld?.plt,         hd?.plt,                       finPlt);
+    addRow('출근인원',     ld?.출근부?.presentCount, hd?.출근부?.presentCount, finPresent);
+    if (rows.length > 0) {
+      cmpEl.style.display = '';
+      cmpEl.innerHTML = `
+        <div style="font-weight:700;color:var(--text);margin-bottom:4px;">📊 실시간 vs 수동 비교</div>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;">
+          <thead><tr style="color:var(--muted);">
+            <th style="text-align:left;font-weight:700;">항목</th>
+            <th style="text-align:right;font-weight:700;">실시간</th>
+            <th style="text-align:right;font-weight:700;">수동</th>
+            <th style="text-align:right;font-weight:700;">최종</th>
+            <th style="text-align:right;font-weight:700;">선택</th>
+          </tr></thead>
+          <tbody>${rows.join('')}</tbody>
+        </table>`;
+    } else {
+      cmpEl.style.display = 'none';
+    }
+  }
+}
+
+async function autoSaveToday() {
+  if (!FB_URL) { alert('API URL 없음'); return; }
+  const dk = instrTodayKey();
+  const ld = _autoSaveLiveData;
+  const hd = _autoSaveHistData || {};
+
+  const btn = document.getElementById('autoSaveBtn');
+  if (btn) { btn.textContent = '저장 중...'; btn.disabled = true; }
+
+  try {
+    // 저장 직전에 최신 데이터 한 번 더 로드 (병합 신뢰도 ↑)
+    let liveLatest = ld, histLatest = hd;
+    try {
+      const [lr, hr] = await Promise.all([
+        fetch(`${FB_URL}/live.json?t=${Date.now()}`),
+        fetch(`${FB_URL}/history/${dk}.json?t=${Date.now()}`)
+      ]);
+      if (lr.ok) liveLatest = await lr.json();
+      if (hr.ok) histLatest = (await hr.json()) || {};
+    } catch(e) {}
+
+    const merged = _buildMergedRecord(liveLatest, histLatest);
+
+    // 저장 가치 체크
+    const hasData = (merged.totalQty || merged.종근당?.매핑 || merged.instrData?.종근당?.instr);
+    if (!hasData) {
+      document.getElementById('autoSaveResult').textContent = '⚠️ 저장할 데이터 없음';
+      if (btn) { btn.textContent = '🏁 최종 오늘작업완료'; btn.disabled = false; }
+      return;
+    }
+
+    await fetch(`${FB_URL}/history/${dk}.json`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(merged)
+    });
+
+    await recalcInstrRatios();
+
+    const res = document.getElementById('autoSaveResult');
+    const parts = [];
+    if (merged.totalQty)               parts.push(`전체 ${merged.totalQty}박스`);
+    if (merged.종근당?.매핑)           parts.push(`종근당 ${merged.종근당.매핑}박스`);
+    if (merged.instrData?.종근당?.instr) parts.push(`주문 ${merged.instrData.종근당.instr}개`);
+    if (merged.instrData?.종근당?.count) parts.push(`${merged.instrData.종근당.count}건`);
+    if (merged.plt)                    parts.push(`파렛 ${merged.plt}`);
+    if (merged.출근부?.presentCount)   parts.push(`출근 ${merged.출근부.presentCount}명`);
+    if (res) res.innerHTML = `<span style="color:var(--a3);font-weight:700;">🏁 작업완료 저장됨 — ${parts.join(' · ')}</span>`;
+    if (btn) { btn.textContent = '✅ 완료!'; btn.style.background='linear-gradient(135deg,var(--a3),#16a34a)'; }
+    setTimeout(() => {
+      if (btn) { btn.textContent = '🏁 최종 오늘작업완료'; btn.disabled = false; btn.style.background = ''; }
+      loadAutoSavePreview(); // 저장 후 preview 새로고침
+    }, 3000);
+  } catch(e) {
+    const res = document.getElementById('autoSaveResult');
+    if (res) res.textContent = '❌ 저장 실패: ' + e.message;
+    if (btn) { btn.textContent = '🏁 최종 오늘작업완료'; btn.disabled = false; }
+  }
+}
+
+async function saveInstrData() {
+  if (!FB_URL) { alert('NAS 연결 필요'); return; }
+  const di = document.getElementById('instrDate');
+  const dk = di?.value || instrTodayKey();
+  const {brands, totalInstr, totalBox} = getInstrValues();
+  if (totalInstr === 0) { alert('지시수량을 입력하세요'); return; }
+
+  const btn = document.querySelector('.instr-save-btn');
+  if (btn) { btn.textContent = '저장 중...'; btn.disabled = true; }
+
+  try {
+    // 기존 history 로드 후 instrData 병합
+    let hd = {};
+    try {
+      const r = await fetch(`${FB_URL}/history/${dk}.json?t=${Date.now()}`);
+      hd = (await r.json()) || {};
+    } catch(e) {}
+
+    // 건수는 getInstrValues()에서 instr_c_종근당 입력값으로 직접 수집됨
+    // (jkg_orders 병행 조회 불필요)
+    hd.instrData = brands;
+    hd.instrTotal = totalInstr;
+    hd.instrBoxTotal = totalBox;
+
+    // 출근인원 입력 시 history에 출근부 포함
+    const instrPresent = parseInt(document.getElementById('instrPresentCount')?.value) || 0;
+    if (instrPresent > 0) {
+      hd.출근부 = Object.assign({}, hd.출근부 || {}, { presentCount: instrPresent });
+    }
+
+    await fetch(`${FB_URL}/history/${dk}.json`, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(hd)
+    });
+
+    // 비율 재계산 후 config.json 저장
+    await recalcInstrRatios();
+    renderInstrBrandRows();
+    loadInstrRatios();
+    if (btn) { btn.textContent = '✅ 저장 완료!'; btn.style.background='linear-gradient(135deg,var(--a3),#16a34a)'; }
+    setTimeout(() => { if(btn){btn.textContent='💾 저장';btn.disabled=false;btn.style.background='';} }, 2000);
+  } catch(e) {
+    if (btn) { btn.textContent = '❌ 저장 실패'; btn.disabled = false; }
+    setTimeout(() => { if(btn) btn.textContent='💾 저장'; }, 2000);
+  }
+}
+
+async function recalcInstrRatios() {
+  if (!FB_URL) return;
+  // 최근 30일 history 로드해서 비율 계산
+  const now = new Date(), today = now.getDate();
+  const keys = [];
+  for (let i = 1; i <= 45 && keys.length < 30; i++) {
+    const d = new Date(now); d.setDate(today - i);
+    const dw = d.getDay();
+    if (dw !== 0 && dw !== 6)
+      keys.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+  }
+  const results = await Promise.all(keys.map(k =>
+    fetch(`${FB_URL}/history/${k}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null)
+  ));
+  // 브랜드별 합산
+  const brandSum = {}, brandCnt = {};
+  A0_BRANDS.forEach(b => { brandSum[b]={instr:0,boxes:0}; brandCnt[b]=0; });
+  results.forEach(hd => {
+    if (!hd || !hd.instrData) return;
+    A0_BRANDS.forEach(brand => {
+      const d = hd.instrData[brand];
+      if (d && d.instr > 0 && d.boxes > 0) {
+        brandSum[brand].instr += d.instr;
+        brandSum[brand].boxes += d.boxes;
+        brandCnt[brand]++;
+      }
+    });
+  });
+  // 비율 저장
+  instrRatios = {};
+  A0_BRANDS.forEach(brand => {
+    if (brandCnt[brand] >= 1 && brandSum[brand].boxes > 0) {
+      instrRatios[brand] = {
+        ratio: brandSum[brand].instr / brandSum[brand].boxes,
+        days: brandCnt[brand]
+      };
+    }
+  });
+  // config.json에 저장 (PATCH: 기존 설정 유지)
+  try {
+    await fetch(`${FB_URL}/config.json`, {
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ instrRatios, instrBrands: A0_BRANDS })
+    });
+  } catch(e) {}
+}
+
+async function loadInstrRatios() {
+  if (!FB_URL) return;
+  try {
+    const r = await fetch(`${FB_URL}/config.json?t=${Date.now()}`);
+    const cfg = await r.json().catch(()=>null);
+    if (cfg && cfg.instrRatios) instrRatios = cfg.instrRatios;
+  } catch(e) {}
+  renderInstrRatioDisplay();
+}
+
+function renderInstrRatioDisplay() {
+  const el = document.getElementById('instrRatioDisplay');
+  if (!el) return;
+  const entries = A0_BRANDS.map(b => ({brand:b, data:instrRatios[b]})).filter(e=>e.data);
+  if (entries.length === 0) {
+    el.innerHTML = `<div class="instr-no-data">아직 학습된 데이터 없음<br>최소 1일 데이터 저장 후 표시됩니다</div>`;
+    return;
+  }
+  el.innerHTML = entries.map(e =>
+    `<div style="display:flex;justify-content:space-between;align-items:center;background:var(--card2);border-radius:8px;padding:8px 11px;margin-bottom:5px;">
+      <div>
+        <div style="font-size:12px;font-weight:800;color:var(--text);">${e.brand}</div>
+        <div style="font-size:9px;color:var(--muted);">지시 ${e.data.ratio.toFixed(1)}개 = 박스 1개 · ${e.data.days}일 기준</div>
+      </div>
+      <div style="font-size:18px;font-weight:900;color:var(--a3);">1:${e.data.ratio.toFixed(1)}</div>
+    </div>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════════
 // 🔮 자동 예측 계산 (리포트 분석 없이도 동작)
 // ══════════════════════════════════════════════
 async function admLoadQuickPred() {
   if (admPredConfig || !FB_URL) return;
   try {
+    const _FH = new Set(['01-01','03-01','05-01','05-05','06-06','08-15','10-03','10-09','12-25']);
+    const _LH = new Set([
+      '2023-01-21','2023-01-22','2023-01-23','2023-01-24','2023-05-27','2023-09-27','2023-09-28','2023-09-29','2023-09-30','2023-10-02',
+      '2024-02-08','2024-02-09','2024-02-10','2024-02-11','2024-02-12','2024-05-06','2024-05-15','2024-09-15','2024-09-16','2024-09-17','2024-09-18',
+      '2025-01-27','2025-01-28','2025-01-29','2025-01-30','2025-01-31','2025-05-06','2025-10-04','2025-10-05','2025-10-06','2025-10-07','2025-10-08',
+      '2026-02-15','2026-02-16','2026-02-17','2026-02-18','2026-02-19','2026-05-24','2026-05-25','2026-09-23','2026-09-24','2026-09-25','2026-09-26','2026-09-28',
+      '2027-02-05','2027-02-06','2027-02-07','2027-02-08','2027-02-09','2027-05-13','2027-10-13','2027-10-14','2027-10-15','2027-10-16',
+    ]);
+    const _isHol = k => _LH.has(k) || _FH.has(k.slice(5));
+
     const now = new Date(), today = now.getDate();
     const dates = [];
-    for (let i = 1; i <= 42 && dates.length < 20; i++) {
+    for (let i = 1; i <= 60 && dates.length < 20; i++) {
       const d = new Date(now); d.setDate(today - i);
       const dw = d.getDay();
-      if (dw !== 0 && dw !== 6) {
-        dates.push({
-          key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
-          dow: dw, dom: d.getDate(), mon: d.getMonth()+1
-        });
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      if (dw !== 0 && dw !== 6 && !_isHol(key)) {
+        dates.push({ key, dow: dw, dom: d.getDate(), mon: d.getMonth()+1 });
       }
     }
     if (dates.length < 3) return;
@@ -1821,13 +3253,13 @@ async function admSavePredToConfig(pred) {
     const r = await fetch(`${FB_URL}/config.json?t=${Date.now()}`);
     const cfg = (await r.json().catch(()=>null)) || {};
     if (cfg.prediction && cfg.prediction.overall > 0 && !cfg.prediction.autoCalc) return;
-    cfg.prediction = {
+    const newPrediction = {
       overall:pred.overall, dowAvg:pred.dowAvg, domFactor:pred.domFactor,
       monAvg:pred.monAvg, monCnt:pred.monCnt, recent4wAvg:pred.recent4wAvg,
       recent4wCnt:pred.recent4wCnt, orderRatio:pred.orderRatio||0,
       updatedAt:new Date().toISOString().slice(0,10), autoCalc:true
     };
-    await fetch(`${FB_URL}/config.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});
+    await fetch(`${FB_URL}/config.json`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({prediction:newPrediction})});
   } catch(e) {}
 }
 
@@ -1846,6 +3278,1473 @@ setInterval(async () => {
   } catch(e) {}
 }, 30 * 60 * 1000);
 
+// ══════════════════════════════════════════════
+// 📢 공지사항 관리자 등록 시스템
+// ══════════════════════════════════════════════
+let _adminNotices = [];
+
+async function loadAdminNotices() {
+  try {
+    const r = await fetch(`${FB_URL}/notice.json?t=${Date.now()}`);
+    if (r.ok) {
+      const d = await r.json();
+      _adminNotices = (d && d.notices) ? d.notices : [];
+    }
+  } catch(e) { _adminNotices = []; }
+  renderAdminNoticeList();
+}
+
+function renderAdminNoticeList() {
+  const wrap = document.getElementById('noticeListPrev');
+  if (!wrap) return;
+  if (!_adminNotices.length) {
+    wrap.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:10px;">등록된 공지사항 없음</div>';
+    return;
+  }
+  const list = [..._adminNotices].reverse().slice(0,5);
+  wrap.innerHTML = '<div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px;">최근 등록 공지</div>' +
+    list.map(n => `
+      <div class="notice-prev-item">
+        <button class="notice-del-btn" onclick="deleteNotice('${n.id}')">삭제</button>
+        <div class="notice-prev-title">${n.important?'⚠️ ':''}${n.title}</div>
+        <div class="notice-prev-date">${n.date}</div>
+      </div>`).join('');
+}
+
+async function submitNotice() {
+  const title = document.getElementById('noticeRegTitle')?.value.trim();
+  const content = document.getElementById('noticeRegContent')?.value.trim();
+  const important = document.getElementById('noticeRegImportant')?.checked || false;
+  if (!title) { alert('제목을 입력하세요'); return; }
+  if (!content) { alert('내용을 입력하세요'); return; }
+
+  const btn = document.getElementById('noticeRegBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '등록 중...'; }
+
+  const notice = {
+    id: Date.now().toString(),
+    type: 'notice',
+    title,
+    content,
+    date: new Date().toISOString().slice(0,10),
+    important
+  };
+
+  try {
+    await loadAdminNotices(); // 최신 목록 다시 로드
+    _adminNotices.push(notice);
+    // 최대 50개 유지
+    if (_adminNotices.length > 50) _adminNotices = _adminNotices.slice(-50);
+
+    const payload = JSON.stringify({ notices: _adminNotices });
+    // Firebase 저장
+    await fetch(`${FB_URL}/notice.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload
+    });
+    // NAS 저장 시도 (있으면)
+    if (typeof NAS_URL !== 'undefined' && NAS_URL) {
+      fetch(`${NAS_URL}/notice.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      }).catch(()=>{});
+    }
+
+    // 초기화
+    if (document.getElementById('noticeRegTitle')) document.getElementById('noticeRegTitle').value = '';
+    if (document.getElementById('noticeRegContent')) document.getElementById('noticeRegContent').value = '';
+    if (document.getElementById('noticeRegImportant')) document.getElementById('noticeRegImportant').checked = false;
+    renderAdminNoticeList();
+    if (typeof showToast === 'function') showToast('✅ 공지가 등록되었습니다');
+    else alert('공지가 등록되었습니다');
+  } catch(e) {
+    alert('등록 실패: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📢 공지 등록하기'; }
+  }
+}
+
+async function deleteNotice(id) {
+  if (!confirm('이 공지를 삭제하시겠습니까?')) return;
+  _adminNotices = _adminNotices.filter(n => n.id !== id);
+  const payload = JSON.stringify({ notices: _adminNotices });
+  try {
+    await fetch(`${FB_URL}/notice.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload
+    });
+    renderAdminNoticeList();
+  } catch(e) {}
+}
+
+// 현황 탭 열릴 때 공지 목록 로드
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(loadAdminNotices, 2000);
+});
+
+// ── 관리자 앱 공지 팝업 ──
+const ADM_NOTICE_READ_KEY = 'daya_last_notice_id_adm';
+const ADM_VER_KEY = 'daya_app_ver_adm_mobile';
+
+let _admUnreadList = [];
+async function admCheckNoticeOnLoad() {
+  try {
+    const r = await fetch(`${FB_URL}/notice.json?t=${Date.now()}`);
+    if (!r.ok) return;
+    const d = await r.json().catch(()=>null);
+    const notices = (d && d.notices) ? d.notices : [];
+    if (!notices.length) return;
+
+    const lastRead = localStorage.getItem(ADM_NOTICE_READ_KEY) || '';
+    const unread = [...notices].reverse().filter(n => n.id > lastRead);
+    if (!unread.length) return;
+
+    _admUnreadList = unread;
+    const scroll = document.getElementById('admNoticeScroll');
+    const overlay = document.getElementById('admNoticeOverlay');
+    if (!scroll || !overlay) return;
+    scroll.innerHTML = unread.map((n, idx) => {
+      const preview = (n.content||'').length > 60 ? (n.content||'').substring(0,60)+'…' : (n.content||'');
+      return `<div class="adm-notice-item${n.important?' important':''}${n.type==='update'?' update-type':''}" onclick="openAdmNoticeDetail(${idx})">
+        <div class="adm-notice-date">${n.date}${n.type==='update'?' 🔄 자동등록':''}${n.important?' ⚠️ 중요':''}</div>
+        <div class="adm-notice-title">${n.title}</div>
+        <div class="adm-notice-content">${preview}</div>
+        <div style="font-size:10px;color:var(--a1);margin-top:4px;font-weight:700;">탭하여 전체 내용 보기 ▶</div>
+      </div>`;
+    }).join('');
+    overlay.classList.add('show');
+  } catch(e) {}
+}
+
+function openAdmNoticeDetail(idx) {
+  const n = _admUnreadList[idx];
+  if (!n) return;
+  document.getElementById('admNdMeta').textContent = (n.date||'') + (n.type==='update'?' 🔄 자동등록':'') + (n.type==='analysis'?' 📊 분석결과':'') + (n.important?' ⚠️ 중요':'');
+  document.getElementById('admNdTitle').textContent = n.title||'';
+  document.getElementById('admNdBody').textContent = n.content||'';
+  document.getElementById('admNdOverlay').classList.add('show');
+}
+function closeAdmNoticeDetail() {
+  document.getElementById('admNdOverlay').classList.remove('show');
+}
+
+function closeAdmNoticePopup() {
+  const overlay = document.getElementById('admNoticeOverlay');
+  if (overlay) overlay.classList.remove('show');
+  // 읽음 처리
+  fetch(`${FB_URL}/notice.json?t=${Date.now()}`).then(r=>r.json()).then(d => {
+    const notices = (d && d.notices) ? d.notices : [];
+    const sorted = [...notices].sort((a,b)=>b.id>a.id?1:-1);
+    if (sorted.length) localStorage.setItem(ADM_NOTICE_READ_KEY, sorted[0].id);
+  }).catch(()=>{});
+}
+
+// ── 관리자 앱 버전 자동 공지 ──
+async function admCheckVersionNotice() {
+  try {
+    const stored = localStorage.getItem(ADM_VER_KEY);
+    localStorage.setItem(ADM_VER_KEY, APP_VERSION_ADM);
+    if (!stored || stored === APP_VERSION_ADM) return;
+    const r = await fetch(`${FB_URL}/notice.json?t=${Date.now()}`);
+    const d = (r.ok ? await r.json().catch(()=>null) : null) || {};
+    const notices = d.notices || [];
+    const recent = notices.filter(n => n.type==='update' && n.version===APP_VERSION_ADM);
+    if (recent.length > 0) return;
+    notices.push({
+      id: Date.now().toString(),
+      type: 'update',
+      version: APP_VERSION_ADM,
+      title: `🛠 관리자 모바일 업데이트 (${APP_VERSION_ADM})`,
+      content: `✅ 관리자 모바일 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_ADM})\n\n📌 주요 변경사항\n① 종근당 하이라이트 카드 — 화면 최상단에 종근당 수량·달성률·예측 대비·ETA 표시\n② 공지사항 등록 기능 — 현황탭 하단에서 공지 작성·삭제 가능\n③ 접속 시 미확인 공지 자동 팝업 — 새 공지 있으면 로그인 직후 표시\n④ 리포트 분석 완료 시 결과 자동 공지 등록\n⑤ 예측 정확도 대폭 향상 — 이상치 제거·가중평균·트렌드·주차·월말·백테스트 6단계 반영`,
+      date: new Date().toISOString().slice(0,10),
+      important: false,
+      auto: true
+    });
+    if (notices.length > 50) notices.splice(0, notices.length - 50);
+    await fetch(`${FB_URL}/notice.json`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ notices })
+    });
+  } catch(e) {}
+}
+
+// 앱 시작 후 2초 뒤 실행 — 버전공지 저장 완료 후 팝업 체크
+setTimeout(async () => {
+  await admCheckVersionNotice();
+  await admCheckNoticeOnLoad();
+}, 2000);
+
+// ══════════════════════════════════════════════
+// 📝 주문 수량 입력 시스템
+// ══════════════════════════════════════════════
+const ORDER_COMPANIES = ['종근당','국제','삼천당','비씨','대우','동구','한진','아주','맥널티','기타'];
+// 작업앱(work.html) order.json 형식과 동기화용
+const ORDER_SYNC_META = [
+  { id: 'jkg', name: '💊 종근당', ko: '종근당', defaultRounds: 4 },
+  { id: 'gj',  name: '🟠 국제',   ko: '국제',   defaultRounds: 2 },
+  { id: 'scd', name: '🔵 삼천당', ko: '삼천당', defaultRounds: 2 },
+  { id: 'bc',  name: '🟢 비씨',   ko: '비씨',   defaultRounds: 2 },
+  { id: 'dw',  name: '🟡 대우',   ko: '대우',   defaultRounds: 2 },
+  { id: 'dg',  name: '🟣 동구',   ko: '동구',   defaultRounds: 2 },
+  { id: 'hj',  name: '🔴 한진',   ko: '한진',   defaultRounds: 2 },
+  { id: 'aj',  name: '⬜ 아주',   ko: '아주',   defaultRounds: 2 },
+  { id: 'mn',  name: '🔷 맥널티', ko: '맥널티', defaultRounds: 2 },
+];
+// 누적 비율 [1회차, 2회차, 3회차, 4회차 이상] — 백테스트 측정값 [0.41, 0.71, 0.90] 기반 보수 보정
+const ORDER_CUM_RATIOS = [0.35, 0.65, 0.88, 1.00];
+
+function todayDateKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** 주문로그 → 작업앱 order.json 페이로드 */
+function buildOrderJsonFromLog() {
+  const companies = ORDER_SYNC_META.map(co => {
+    const rounds = (orderLog[co.ko] || []).map(e => parseInt(e.qty) || 0);
+    while (rounds.length < co.defaultRounds) rounds.push(0);
+    const total = rounds.reduce((a, b) => a + (b || 0), 0);
+    return { id: co.id, name: co.name, rounds, total };
+  });
+  const grandTotal = companies.reduce((s, c) => s + c.total, 0);
+  return { date: todayDateKey(), companies, grandTotal };
+}
+
+let selectedOrderCompany = '종근당';
+let orderLog = {}; // { '종근당': [{t,qty,ts},...], ... }
+let _lastResetTs = 0; // 마지막 초기화 시각 — 재로드 시 구버전 데이터 복원 방지
+
+function initOrderTab() {
+  selectedOrderCompany = '종근당'; // 통합탭: 기본 종근당
+  loadOrderLog();
+  updateOrderNowTime();
+  setTimeout(() => loadEtcOrdersFromLog(), 200); // 기타업체 값 복원
+}
+
+function updateOrderNowTime() {
+  const el = document.getElementById('orderNowTime');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = `(${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')})`;
+}
+setInterval(() => {
+  if (document.getElementById('orderNowTime')) updateOrderNowTime();
+}, 15000);
+
+function renderOrderCompanyTabs() {
+  const el = document.getElementById('orderCompanyTabs');
+  if (!el) return;
+  el.innerHTML = ORDER_COMPANIES.map(c => {
+    const isActive = c === selectedOrderCompany;
+    const isJkg = c === '종근당';
+    const cnt = (orderLog[c] || []).length;
+    return `<button class="order-company-btn${isActive?' active':''}" onclick="selectOrderCompany('${c}')">
+      ${isJkg ? '💊 ' : ''}${c}${cnt > 0 ? ` <span style="font-size:10px;background:rgba(233,30,140,.25);padding:1px 5px;border-radius:8px;">${cnt}</span>` : ''}
+    </button>`;
+  }).join('');
+  const customWrap = document.getElementById('orderCustomWrap');
+  if (customWrap) customWrap.style.display = selectedOrderCompany === '기타' ? '' : 'none';
+}
+
+function selectOrderCompany(c) {
+  selectedOrderCompany = c;
+  renderOrderCompanyTabs();
+  renderOrderLog();
+  if (c === '기타') setTimeout(() => document.getElementById('orderCustomName')?.focus(), 100);
+  // 종근당 선택 시 차수 UI 표시
+  const rw = document.getElementById('orderRoundWrap');
+  if (rw) rw.style.display = (c === '종근당') ? '' : 'none';
+}
+
+// ── 박스/건 학습비율 (Firebase config에서 로드) ──
+let _learnedBoxPerOrder = null; // { ratio, sampleCount }
+
+// ── 차수별 작업완료 상태 ──
+let _batchDoneMap = {}; // { b1: {t:'10:30', ts:1234}, b2: ... }
+let _etcDone = null;   // { t:'14:30', ts:... } — 기타업체 작업완료 시각
+let _jkgNoOrder = false;  // 오늘 종근당 주문없음 플래그
+let _etcNoOrder = false;  // 오늘 기타업체 주문없음 플래그
+
+async function loadBoxPerOrderRatio() {
+  if (!FB_URL) return;
+  try {
+    const cfg = await fetch(`${FB_URL}/config.json?t=${Date.now()}`).then(r=>r.json()).catch(()=>null);
+    if (cfg && cfg.boxPerOrder && cfg.boxPerOrder.ratio > 0) {
+      _learnedBoxPerOrder = cfg.boxPerOrder;
+      renderOrderLog(); // 비율 로드 후 재렌더 (타이밍 보정)
+    }
+  } catch(e) {}
+}
+setTimeout(loadBoxPerOrderRatio, 4000);
+
+// ── 과거 데이터로 박스/건 비율 학습 후 config 저장 ──
+async function learnBoxPerOrder() {
+  if (!FB_URL) return;
+  try {
+    const today = new Date();
+    const samples = [];
+    for (let i = 1; i <= 30; i++) {
+      const d = new Date(today); d.setDate(d.getDate() - i);
+      const dow = d.getDay();
+      if (dow === 5) continue; // 금요일 제외
+      const dk = d.toISOString().slice(0, 10);
+      try {
+        const hist = await fetch(`${FB_URL}/history/${dk}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null);
+        if (!hist) continue;
+        const jkgInstr = hist.instrData?.종근당;
+        // 건수: instrData 우선, 없으면 주문로그 count 합산 (4차 주문 입력 건수)
+        const jkgLogArr2 = hist.주문로그?.종근당
+            ? (Array.isArray(hist.주문로그.종근당) ? hist.주문로그.종근당 : Object.values(hist.주문로그.종근당))
+            : [];
+        const logCountFallback = jkgLogArr2.reduce((s, e) => s + (parseInt(e.count) || 0), 0);
+        const totalCount = jkgInstr?.count || logCountFallback || 0;
+        const actualBoxes = jkgInstr?.boxes || hist.종근당?.매핑 || 0;
+        // 추천안 4: 직배 vs 매핑 분리
+        const mappingBoxes = hist.종근당?.매핑 || 0;
+        const jikbaeBoxes  = hist.종근당?.직배 || 0;
+        if (totalCount < 50 || actualBoxes < 10) continue;
+        // 추천안 2: 건당qty 계산 (주문로그에서)
+        const jkgLog = hist.주문로그?.종근당;
+        let jkgQtySum = 0;
+        let roundEntries = [];
+        if (jkgLog) {
+          const arr = Array.isArray(jkgLog) ? jkgLog : Object.values(jkgLog);
+          arr.forEach(e => { jkgQtySum += parseInt(e.qty) || 0; });
+          roundEntries = arr.filter(e => (parseInt(e.qty)||0) > 0).sort((a,b) => (a.ts||0)-(b.ts||0));
+        }
+        const qtyPerCount = (totalCount > 0 && jkgQtySum > 0) ? Math.round(jkgQtySum / totalCount) : 0;
+        samples.push({ date: dk, count: totalCount, boxes: actualBoxes,
+          ratio: actualBoxes / totalCount,
+          mappingBoxes, jikbaeBoxes, qtyPerCount, roundEntries, totalQty: jkgQtySum });
+      } catch(e) {}
+    }
+    if (samples.length < 3) return;
+    // 이상치 제거: IQR 기반 (Q1-1.5×IQR ~ Q3+1.5×IQR 외부 제외) — 백테스트 검증 방식
+    const ratios = samples.map(s => s.ratio).sort((a,b) => a-b);
+    let filtered = samples;
+    if (samples.length >= 4) {
+      const n = ratios.length;
+      const q1  = ratios[Math.floor(n/4)];
+      const q3  = ratios[Math.floor(3*n/4)];
+      const iqr = q3 - q1;
+      const lo  = q1 - 1.5*iqr;
+      const hi  = q3 + 1.5*iqr;
+      filtered = samples.filter(s => s.ratio >= lo && s.ratio <= hi);
+    }
+    if (filtered.length < 3) filtered = samples; // 너무 많이 잘리면 원본 사용
+    // 최근 추세 가중평균 (최근일수록 높은 가중치)
+    const sorted = [...filtered].sort((a,b) => b.date.localeCompare(a.date));
+    let wSum = 0, wTot = 0;
+    sorted.forEach((s, i) => {
+      const w = i < 7 ? 3 : (i < 14 ? 2 : 1);
+      wSum += s.ratio * w;
+      wTot += w;
+    });
+    const avgRatio = parseFloat((wSum / wTot).toFixed(3));
+    const r7  = sorted.slice(0, 7).map(s=>s.ratio);
+    const r30 = sorted.map(s=>s.ratio);
+    const mean7  = r7.length  > 0 ? r7.reduce((a,b)=>a+b,0)/r7.length   : 0;
+    const mean30 = r30.length > 0 ? r30.reduce((a,b)=>a+b,0)/r30.length : 0;
+    const trendPct = mean30 > 0 ? parseFloat(((mean7 - mean30) / mean30 * 100).toFixed(1)) : 0;
+
+    // [DEPRECATED] 대량건(bulk) 보정: 백테스트 결과 4%만 발동되어 무효 → 제거됨
+
+    // ── 누적 비율 학습 (1회차~4회차 시점에 최종 대비 몇 % 왔나) ──
+    const cumByRound = { 1:[], 2:[], 3:[], 4:[] };
+    filtered.forEach(s => {
+      if (s.roundEntries.length >= 2 && s.totalQty > 0) {
+        let cumSum = 0;
+        s.roundEntries.forEach((e, idx) => {
+          cumSum += parseInt(e.qty) || 0;
+          const key = Math.min(idx + 1, 4);
+          cumByRound[key].push(cumSum / s.totalQty);
+        });
+      }
+    });
+    const learnedCumRatios = [1,2,3,4].map(r => {
+      const arr = cumByRound[r];
+      return arr.length >= 3
+        ? parseFloat((arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(3))
+        : ORDER_CUM_RATIOS[r-1];
+    });
+
+    // ── 추천안 4: 직배 vs 매핑 분리 학습 ──
+    const mapSamples = filtered.filter(s => s.mappingBoxes > 0 && s.count > 0);
+    const jbSamples  = filtered.filter(s => s.jikbaeBoxes  > 0 && s.count > 0);
+    const mappingRatio = mapSamples.length >= 3
+      ? parseFloat((mapSamples.reduce((a,s)=>a+s.mappingBoxes/s.count,0)/mapSamples.length).toFixed(3))
+      : null;
+    const jikbaeRatio = jbSamples.length >= 3
+      ? parseFloat((jbSamples.reduce((a,s)=>a+s.jikbaeBoxes/s.count,0)/jbSamples.length).toFixed(3))
+      : null;
+
+    _learnedBoxPerOrder = {
+      ratio: avgRatio, sampleCount: filtered.length, updatedAt: Date.now(),
+      mean7: parseFloat(mean7.toFixed(3)), mean30: parseFloat(mean30.toFixed(3)),
+      trendPct,
+      cumRatios: learnedCumRatios,// 누적비율
+      mappingRatio, jikbaeRatio   // 직배/매핑 분리
+    };
+    await fetch(`${FB_URL}/config.json`, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ boxPerOrder: _learnedBoxPerOrder })
+    }).catch(()=>{});
+    console.log(`📦 학습완료: 비율=${avgRatio} 샘플=${filtered.length}일 누적=${learnedCumRatios} 매핑=${mappingRatio} 직배=${jikbaeRatio}`);
+    renderOrderLog(); // 학습 완료 후 재렌더
+  } catch(e) { console.error('[learnBoxPerOrder]', e); }
+}
+setTimeout(learnBoxPerOrder, 8000);
+
+// ══════════════════════════════════════════════
+// 📜 작업 이력 테이블
+// ══════════════════════════════════════════════
+let _histRows = [];    // 로드된 전체 행
+let _histFilter = 'all';
+
+function histSetFilter(f, btn) {
+  _histFilter = f;
+  document.querySelectorAll('.hist-filter').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderHistTable();
+}
+
+async function loadHistoryTable() {
+  const wrap = document.getElementById('histTableWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:12px;">로딩중...</div>';
+
+  const today = new Date();
+  const dates = [];
+  for (let i = 1; i <= 90; i++) {
+    const d = new Date(today); d.setDate(today.getDate() - i);
+    const dow = d.getDay();
+    if (dow === 0 || dow === 6) continue;
+    dates.push({ key: d.toISOString().slice(0,10), dow });
+    if (dates.length >= 60) break;
+  }
+
+  const results = await Promise.allSettled(
+    dates.map(d => fetch(`${FB_URL}/history/${d.key}.json?t=${Date.now()}`)
+      .then(r => r.ok ? r.json() : null).catch(() => null))
+  );
+
+  const RATIO_BASE = 1.305;
+  const DOW_KO = ['일','월','화','수','목','금','토'];
+  _histRows = [];
+
+  dates.forEach((d, i) => {
+    const h = results[i].status === 'fulfilled' ? results[i].value : null;
+    if (!h) return;
+
+    const instr   = h.instrData?.종근당 || {};
+    const count   = instr.count  || 0;                          // 종근당 건수
+    const boxes   = instr.boxes  || h.종근당?.매핑 || 0;        // 종근당 박스
+    const ratio   = (count > 0 && boxes > 0) ? (boxes / count) : null;
+    const totalQty = h.totalQty || 0;
+
+    // 종근당 주문수량(개) 합산 — 주문로그 우선, jkg_orders 폴백
+    let jkgQtySum = 0;
+    const jkgLog = h.주문로그?.종근당;
+    if (jkgLog) {
+      const arr = Array.isArray(jkgLog) ? jkgLog : Object.values(jkgLog);
+      jkgQtySum = arr.reduce((s, e) => s + (parseInt(e.qty) || 0), 0);
+    }
+
+    // 건당 주문수량 = qty합 / 건수  (대량건 지표)
+    const qtyPerCount = (count > 0 && jkgQtySum > 0) ? Math.round(jkgQtySum / count) : null;
+
+    const isOutlier  = ratio !== null && (ratio > RATIO_BASE * 1.4 || ratio < RATIO_BASE * 0.6);
+    const isFri      = d.dow === 5;
+    const noCount    = count === 0;
+
+    _histRows.push({ date: d.key, dow: d.dow, dowKo: DOW_KO[d.dow],
+      count, boxes, ratio, totalQty, jkgQtySum, qtyPerCount,
+      isOutlier, isFri, noCount });
+  });
+
+  // 건당qty 중앙값 계산 → 대량건 기준선 (중앙값 × 1.8 이상)
+  const qpcVals = _histRows.filter(r => r.qtyPerCount > 0).map(r => r.qtyPerCount).sort((a,b)=>a-b);
+  const medQpc  = qpcVals.length > 0 ? qpcVals[Math.floor(qpcVals.length/2)] : 0;
+  const bulkThresh = Math.round(medQpc * 1.8);
+  _histRows.forEach(r => { r.isBulk = r.qtyPerCount !== null && r.qtyPerCount >= bulkThresh; });
+  _histBulkThresh = bulkThresh;
+
+  renderHistTable();
+}
+
+function renderHistTable() {
+  const wrap = document.getElementById('histTableWrap');
+  if (!wrap) return;
+  if (_histRows.length === 0) {
+    wrap.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:12px;">데이터 없음</div>';
+    return;
+  }
+
+  let filtered = _histRows;
+  if (_histFilter === 'outlier') filtered = _histRows.filter(r => r.isOutlier);
+  else if (_histFilter === 'nocount') filtered = _histRows.filter(r => r.noCount);
+  else if (_histFilter === 'fri')     filtered = _histRows.filter(r => r.isFri);
+  else if (_histFilter === 'bulk')    filtered = _histRows.filter(r => r.isBulk);
+
+  if (filtered.length === 0) {
+    wrap.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">해당 항목 없음</div>';
+    return;
+  }
+
+  const rows = filtered.map(r => {
+    // 행 클래스 — 대량건 + 이상치 복합 가능
+    let rowClass = '';
+    const badges = [];
+    if (r.isBulk)    { rowClass = 'h-bulk';    badges.push('📦대량'); }
+    if (r.isOutlier) { rowClass = rowClass || 'h-outlier'; badges.push('🔴'); }
+    if (r.isFri)     { rowClass = rowClass || 'h-fri';     badges.push('🟡금'); }
+    if (r.noCount)   { rowClass = rowClass || 'h-nocount'; badges.push('⬜'); }
+
+    const ratioStr = r.ratio !== null
+      ? `<span class="h-ratio${r.isOutlier ? '' : ' h-ok'}">${r.ratio.toFixed(3)}</span>`
+      : '<span style="color:rgba(255,255,255,.2);">—</span>';
+
+    const qpcStr = r.qtyPerCount !== null
+      ? `<span style="color:${r.isBulk ? '#f97316' : 'rgba(255,255,255,.4)'};">${r.qtyPerCount}개</span>`
+      : '<span style="color:rgba(255,255,255,.2);">—</span>';
+
+    const jkgQtyStr = r.jkgQtySum > 0
+      ? r.jkgQtySum.toLocaleString()
+      : '<span style="color:rgba(255,255,255,.2);">—</span>';
+
+    return `<tr class="${rowClass}">
+      <td class="h-date" style="text-align:left;padding-left:4px;">
+        ${r.date.slice(5)}<span style="color:rgba(255,255,255,.35);margin-left:3px;">${r.dowKo}</span>
+      </td>
+      <td>${r.count > 0 ? r.count : '<span style="color:rgba(255,255,255,.2);">—</span>'}</td>
+      <td style="color:rgba(255,255,255,.7);">${jkgQtyStr}</td>
+      <td>${qpcStr}</td>
+      <td>${r.boxes > 0 ? r.boxes : '<span style="color:rgba(255,255,255,.2);">—</span>'}</td>
+      <td>${ratioStr}</td>
+      <td style="font-size:9px;white-space:nowrap;">${badges.join(' ')}</td>
+    </tr>`;
+  }).join('');
+
+  // 요약 통계
+  const validRatios = filtered.filter(r => r.ratio !== null && !r.noCount);
+  const avgRatio = validRatios.length > 0
+    ? (validRatios.reduce((s,r)=>s+r.ratio,0)/validRatios.length).toFixed(3) : '—';
+  const outlierCnt = filtered.filter(r => r.isOutlier).length;
+  const bulkCnt    = filtered.filter(r => r.isBulk).length;
+  const thresh     = typeof _histBulkThresh !== 'undefined' ? _histBulkThresh : 0;
+
+  wrap.innerHTML = `
+    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+      <div style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.3);border-radius:8px;padding:5px 10px;font-size:11px;">
+        <span style="color:var(--muted);">표시</span> <b style="color:var(--a1);">${filtered.length}일</b>
+      </div>
+      <div style="background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);border-radius:8px;padding:5px 10px;font-size:11px;">
+        <span style="color:var(--muted);">평균비율</span> <b style="color:#22c55e;">${avgRatio}</b>
+      </div>
+      <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:5px 10px;font-size:11px;">
+        <span style="color:var(--muted);">이상치</span> <b style="color:#ef4444;">${outlierCnt}일</b>
+      </div>
+      <div style="background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);border-radius:8px;padding:5px 10px;font-size:11px;">
+        <span style="color:var(--muted);">대량건</span> <b style="color:#f97316;">${bulkCnt}일</b>
+        ${thresh > 0 ? `<span style="color:rgba(255,255,255,.3);font-size:10px;">(건당${thresh}개↑)</span>` : ''}
+      </div>
+    </div>
+    <table class="hist-table">
+      <thead>
+        <tr>
+          <th style="text-align:left;">날짜</th>
+          <th>건수</th>
+          <th>주문량(개)</th>
+          <th>건당qty</th>
+          <th>박스</th>
+          <th>비율</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="margin-top:8px;font-size:10px;color:rgba(255,255,255,.25);line-height:1.6;">
+      건당qty = 종근당 총주문수량÷건수 &nbsp;|&nbsp; 비율 = 박스÷건수<br>
+      📦대량 = 건당qty 중앙값×1.8 이상 (한고객 대량주문 많은날)
+    </div>`;
+}
+
+function showBoxHint(val) {
+  const hint = document.getElementById('boxHint');
+  if (!hint) return;
+  const qty = parseInt(val) || 0;
+  if (qty <= 0 || getOrderCompany() !== '종근당') { hint.style.display = 'none'; return; }
+  const count = parseInt(document.getElementById('orderCountInput')?.value) || 0;
+  // 건수 기반 예측 (학습비율 우선)
+  if (count > 0) {
+    const ratio = _learnedBoxPerOrder?.ratio || 1.05;
+    const perBox = Math.round(qty / count);
+    const predBoxes = Math.round(count * ratio);
+    const sampleStr = _learnedBoxPerOrder?.sampleCount > 0 ? `${_learnedBoxPerOrder.sampleCount}일 학습` : '기본비율';
+    hint.textContent = `📦 약 ${predBoxes}박스 예측 (${count}건 × ${ratio.toFixed(2)}, ${sampleStr}) · 건당 ${perBox}개`;
+  } else {
+    hint.textContent = `건수를 입력하면 박스수 예측 가능`;
+  }
+  hint.style.display = 'block';
+}
+
+let orderRound = '1차';
+function selectRound(r) {
+  orderRound = r;
+  ['1차','2차','3차','4차','추가'].forEach(x => {
+    const btn = document.getElementById('roundBtn' + x);
+    if (btn) btn.classList.toggle('active', x === r);
+  });
+}
+
+function getOrderCompany() {
+  if (selectedOrderCompany === '기타') {
+    return document.getElementById('orderCustomName')?.value.trim() || '기타';
+  }
+  return selectedOrderCompany;
+}
+
+// 종근당 전용 입력 (통합탭에서 사용)
+function selectJkgRound(r) { selectRound(r); }
+async function addJkgOrderEntry() {
+  selectedOrderCompany = '종근당';
+  await addOrderEntry();
+}
+
+// 기타업체 그리드 합계 표시
+function updateEtcTotal() {
+  const companies = ['국제','삼천당','비씨','대우','동구','아주','맥널티','한진'];
+  const total = companies.reduce((s, name) => s + (parseInt(document.getElementById('etcOrder_'+name)?.value)||0), 0);
+  const el = document.getElementById('etcOrderTotal'); if (el) el.textContent = total.toLocaleString();
+}
+
+function clearEtcOrders() {
+  ['국제','삼천당','비씨','대우','동구','아주','맥널티','한진'].forEach(name => {
+    const el = document.getElementById('etcOrder_'+name); if (el) el.value = '';
+  });
+  updateEtcTotal();
+}
+
+function loadEtcOrdersFromLog() {
+  ['국제','삼천당','비씨','대우','동구','아주','맥널티','한진'].forEach(name => {
+    const el = document.getElementById('etcOrder_'+name); if (!el) return;
+    const entries = orderLog[name] || [];
+    const total = entries.reduce((s,e) => s + (parseInt(e.qty)||0), 0);
+    if (total > 0) el.value = total;
+  });
+  updateEtcTotal();
+}
+
+async function saveEtcOrders() {
+  const companies = ['국제','삼천당','비씨','대우','동구','아주','맥널티','한진'];
+  const now = new Date();
+  const t = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  let saved = 0;
+  companies.forEach(name => {
+    const qty = parseInt(document.getElementById('etcOrder_'+name)?.value)||0;
+    if (qty > 0) {
+      orderLog[name] = [{ t, qty, ts: now.getTime() }]; // 업체당 최신 1건 유지
+      saved++;
+    }
+  });
+  if (saved === 0) { showOrderToast('입력된 수량이 없습니다', true); return; }
+  renderOrderLog();
+  await saveOrderLog();
+  const resultEl = document.getElementById('etcSaveResult');
+  if (resultEl) { resultEl.textContent = `✅ ${t} 기타업체 ${saved}개 업체 저장 완료`; resultEl.style.color='var(--a3)'; }
+  showOrderToast(`✅ 기타업체 ${saved}개 업체 저장됨`);
+}
+
+async function addOrderEntry() {
+  const qtyEl = document.getElementById('orderQtyInput');
+  const countEl = document.getElementById('orderCountInput');
+  const qty = parseInt(qtyEl?.value) || 0;
+  if (qty <= 0) {
+    showOrderToast('수량을 입력하세요', true);
+    qtyEl?.focus();
+    return;
+  }
+  const count = parseInt(countEl?.value) || 0;
+  const company = getOrderCompany();
+  // ── 추천안 1: 종근당 건수 미입력 경고 (차단 없음) ──
+  if (company === '종근당' && count === 0) {
+    const wTst = document.createElement('div');
+    wTst.textContent = '⚠️ 종근당 건수 미입력 — 박스예측 정확도 낮아짐';
+    wTst.style.cssText = 'position:fixed;bottom:130px;left:50%;transform:translateX(-50%);' +
+      'background:rgba(255,190,0,.93);color:#1a2634;padding:10px 18px;border-radius:20px;' +
+      'font-size:12px;font-weight:800;z-index:9999;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.3);';
+    document.body.appendChild(wTst);
+    setTimeout(() => { wTst.style.opacity='0'; wTst.style.transition='opacity .3s'; setTimeout(() => wTst.remove(), 300); }, 3500);
+  }
+  const now = new Date();
+  const t = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const round = company === '종근당' ? orderRound : null;
+  const entry = { t, qty, ts: now.getTime(), ...(round ? { round } : {}), ...(count > 0 ? { count } : {}) };
+
+  if (!orderLog[company]) orderLog[company] = [];
+  orderLog[company].push(entry);
+  orderLog[company].sort((a, b) => a.ts - b.ts); // 시간순 정렬
+
+  if (qtyEl) qtyEl.value = '';
+  if (countEl) countEl.value = '';
+  renderOrderLog();
+  renderOrderCompanyTabs();
+  await saveOrderLog();
+  const countStr = count > 0 ? ` · ${count}건` : '';
+  showOrderToast(`✅ ${t} ${company} ${qty}개${countStr} 입력됨`);
+  updateOrderNowTime();
+}
+
+async function deleteOrderEntry(company, ts) {
+  if (!orderLog[company]) return;
+  orderLog[company] = orderLog[company].filter(e => e.ts !== ts);
+  if (orderLog[company].length === 0) delete orderLog[company];
+  renderOrderLog();
+  renderOrderCompanyTabs();
+  await saveOrderLog();
+}
+
+function calcJkgRollingPred() {
+  const entries = orderLog['종근당'] || [];
+  if (entries.length === 0) return null;
+  const total = entries.reduce((s, e) => s + e.qty, 0);
+  const n = entries.length;
+
+  // 누적비율 (값 범위 안전 보정: 0.05 ~ 1.0)
+  const rawCum = (_learnedBoxPerOrder?.cumRatios?.length >= 4)
+    ? _learnedBoxPerOrder.cumRatios : ORDER_CUM_RATIOS;
+  const cumRatios = rawCum.map(r => Math.max(0.05, Math.min(1.0, Number(r) || 0.25)));
+  const ratio = n < cumRatios.length ? cumRatios[n - 1] : cumRatios[cumRatios.length - 1];
+
+  // 예측 최종 주문량 (개) — 기존 semantics 유지
+  const pred = Math.round(total / ratio);
+  // 진행율 (현재 / 예측 최종) — 100% 이하 정상
+  const pct = Math.round(total / pred * 100);
+
+  // ── 예측 박스수 = 예측 최종 건수 × 학습된 박스/건 비율 ──
+  // (수량÷18 같은 고정값 금지: 18은 파레트당 적재박스수일 뿐 박스환산값 아님)
+  // 건수 = 실시간 주문입력 누적 / 비율 = 과거 건수로 학습한 박스÷건수
+  const countTotal = entries.reduce((s, e) => s + (parseInt(e.count) || 0), 0);
+  // 건수도 수량과 동일한 누적비율로 최종 건수 롤링 예측
+  const predCount = countTotal > 0 ? Math.round(countTotal / ratio) : 0;
+  // 학습된 박스/건 비율 (없으면 박스 환산 불가 → null, 추측값 사용 안 함)
+  const bpoRatio = (_learnedBoxPerOrder?.ratio > 0) ? _learnedBoxPerOrder.ratio : null;
+  const predBoxes = (bpoRatio && predCount > 0) ? Math.round(predCount * bpoRatio) : null;
+
+  return { total, pred, pct, n, ratio, predBoxes, countTotal, predCount, bpoRatio,
+           isLearned: !!_learnedBoxPerOrder?.sampleCount };
+}
+
+function renderOrderLog() {
+  const logEl = document.getElementById('orderLogList');
+  const predCard = document.getElementById('orderPredCard');
+
+  // 전체 로그 (시간 역순)
+  const all = [];
+  Object.entries(orderLog).forEach(([company, entries]) => {
+    entries.forEach(e => all.push({ company, ...e }));
+  });
+  all.sort((a, b) => b.ts - a.ts);
+
+  if (all.length === 0) {
+    if (logEl) logEl.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px 0;">입력 기록 없음</div>';
+    if (predCard) predCard.style.display = 'none';
+    return;
+  }
+
+  if (logEl) {
+    // 업체별 합계 먼저
+    const totals = {};
+    all.forEach(e => { totals[e.company] = (totals[e.company] || 0) + e.qty; });
+    const totalHtml = Object.entries(totals).map(([c, tot]) => {
+      const color = c === '종근당' ? '#e91e8c' : 'var(--a2)';
+      return `<span style="background:rgba(255,255,255,.06);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:${color};">${c} ${tot}개</span>`;
+    }).join(' ');
+    // 종근당 배치 인덱스 맵 (시간순 → b1, b2, ...)
+    const jkgSorted = (orderLog['종근당'] || []).slice().sort((a,b)=>a.ts-b.ts);
+    const jkgBatchKeyMap = {}; // ts → bKey
+    jkgSorted.forEach((e, i) => { jkgBatchKeyMap[e.ts] = `b${i+1}`; });
+
+    const itemsHtml = all.map(e => {
+      const isJkg = e.company === '종근당';
+      const color = isJkg ? '#e91e8c' : 'var(--a2)';
+      const roundBadge = e.round ? `<span style="background:rgba(233,30,140,.18);border:1px solid rgba(233,30,140,.4);border-radius:5px;padding:1px 6px;font-size:9px;font-weight:800;color:#e91e8c;margin-left:5px;">${e.round}</span>` : '';
+      const countBadge = e.count > 0 ? `<span style="background:rgba(59,158,255,.15);border:1px solid rgba(59,158,255,.4);border-radius:5px;padding:1px 6px;font-size:9px;font-weight:800;color:var(--a1);margin-left:4px;">${e.count}건</span>` : '';
+      // 차수 완료 버튼 (종근당만)
+      let doneBtnHtml = '';
+      if (isJkg) {
+        const bKey = jkgBatchKeyMap[e.ts];
+        const doneInfo = bKey && _batchDoneMap[bKey] && _batchDoneMap[bKey].ts > e.ts
+          ? _batchDoneMap[bKey] : null;
+        if (doneInfo) {
+          doneBtnHtml = `<button class="batch-done-btn cancel" onclick="cancelBatchDone('${bKey}')">✅${doneInfo.t}<br>취소</button>`;
+        } else {
+          doneBtnHtml = `<button class="batch-done-btn" onclick="markBatchDone('${bKey}')">작업<br>완료✅</button>`;
+        }
+      }
+      const borderColor = isJkg && _batchDoneMap[jkgBatchKeyMap[e.ts]] ? '#2ecc71' : color;
+      return `<div class="order-log-item" style="border-left:3px solid ${borderColor};">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px;">${e.t} · <span style="color:${color};font-weight:700;">${e.company}</span>${roundBadge}${countBadge}</div>
+          <div style="font-size:22px;font-weight:900;color:var(--text);">${e.qty}개</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">${doneBtnHtml}<button class="order-log-del" onclick="deleteOrderEntry('${e.company}', ${e.ts})">삭제</button></div>
+      </div>`;
+    }).join('');
+    // 기타업체 완료 버튼 (기타 항목이 있을 때만)
+    const hasEtc = all.some(e => e.company !== '종근당');
+    const etcDoneBtnEl = document.getElementById('etcDoneBtn');
+    if (hasEtc && etcDoneBtnEl) {
+      etcDoneBtnEl.style.display = '';
+      if (_etcDone) {
+        etcDoneBtnEl.innerHTML = `✅ 기타완료 ${_etcDone.t} &nbsp;<span style="font-size:10px;opacity:.7;cursor:pointer;" onclick="cancelEtcDone()">취소</span>`;
+        etcDoneBtnEl.style.cssText = etcDoneBtnEl.style.cssText.replace(/background:[^;]+/, 'background:rgba(46,204,113,.18)');
+        etcDoneBtnEl.style.borderColor = '#2ecc71';
+        etcDoneBtnEl.style.color = '#2ecc71';
+        etcDoneBtnEl.onclick = null;
+      } else {
+        etcDoneBtnEl.innerHTML = '기타업체 작업완료 ✅';
+        etcDoneBtnEl.style.background = '';
+        etcDoneBtnEl.style.borderColor = '';
+        etcDoneBtnEl.style.color = '';
+        etcDoneBtnEl.onclick = markEtcDone;
+      }
+    } else if (etcDoneBtnEl) {
+      etcDoneBtnEl.style.display = 'none';
+    }
+
+    logEl.innerHTML = `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;">${totalHtml}</div>${itemsHtml}`;
+  }
+
+  // 종근당 롤링 예측 카드
+  const jkgPred = calcJkgRollingPred();
+  if (jkgPred && predCard) {
+    predCard.style.display = '';
+    const s = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    s('orderJkgTotal', jkgPred.total);
+    // 예측박스 = 예측최종건수 × 학습비율. 비율 미학습 시 '학습중' (추측값 표시 안 함)
+    s('orderJkgPred', (jkgPred.predBoxes > 0)
+        ? jkgPred.predBoxes + '박스'
+        : (jkgPred.countTotal > 0 ? '비율 학습중…' : jkgPred.pred + '개'));
+    s('orderJkgPct', jkgPred.pct + '%');
+    const bar = document.getElementById('orderJkgBar');
+    if (bar) bar.style.width = Math.min(jkgPred.pct, 100) + '%';
+    const rem = Math.max(jkgPred.pred - jkgPred.total, 0);
+    const pctLeft = Math.round((1 - jkgPred.ratio) * 100);
+    const learnedMark = jkgPred.isLearned ? ' 🧠학습됨' : '';
+    let basisText = `${jkgPred.n}회차 입력 · 잔여 예상 ${rem}개 (${pctLeft}% 미도착)${learnedMark}`;
+    if (jkgPred.predBoxes > 0) {
+      basisText += ` | 예측건수 ${jkgPred.predCount}건 × 비율 ${jkgPred.bpoRatio} = ${jkgPred.predBoxes}박스`;
+    }
+    if (_prevSameDow) {
+      const diff = jkgPred.pred - _prevSameDow.total;
+      const diffStr = diff >= 0 ? `+${diff}` : `${diff}`;
+      basisText += ` | 지난주 동요일 실적 ${_prevSameDow.total}개 (${diffStr})`;
+    }
+    const basisEl = document.getElementById('orderJkgBasis');
+    if (basisEl) basisEl.innerHTML = basisText; // 진단 <br>/색상 렌더 위해 innerHTML
+  } else if (predCard) {
+    predCard.style.display = 'none';
+  }
+
+  // 탭 뱃지 업데이트
+  const badge = document.getElementById('orderTabBadge');
+  if (badge) {
+    const total = all.length;
+    if (total > 0) { badge.style.display = ''; badge.textContent = total; }
+    else badge.style.display = 'none';
+  }
+}
+
+// ── 차수 완료 표시 ──
+async function markBatchDone(bKey) {
+  if (!bKey) return;
+  const now = new Date();
+  const t = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  _batchDoneMap[bKey] = { t, ts: now.getTime() };
+  renderOrderLog();
+  // Firebase live.json에 저장
+  try {
+    const patch = { 종근당: { 배치완료: _batchDoneMap }, savedAt: Date.now() };
+    if (typeof dayaWriteLive === 'function') {
+      cachedLiveData = await dayaWriteLive(patch, cachedLiveData);
+    } else {
+      await fetch(`${FB_URL}/live.json`, {
+        method: 'PATCH', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(patch)
+      }).catch(()=>{});
+    }
+    showOrderToast(`✅ ${bKey.replace('b','')}차 작업완료 ${t} 저장됨`);
+  } catch(e) { showOrderToast('저장 실패', true); }
+}
+
+async function cancelBatchDone(bKey) {
+  if (!bKey) return;
+  delete _batchDoneMap[bKey];
+  renderOrderLog();
+  try {
+    const patch = { 종근당: { 배치완료: _batchDoneMap }, savedAt: Date.now() };
+    if (typeof dayaWriteLive === 'function') {
+      cachedLiveData = await dayaWriteLive(patch, cachedLiveData);
+    } else {
+      await fetch(`${FB_URL}/live.json`, {
+        method: 'PATCH', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(patch)
+      }).catch(()=>{});
+    }
+    showOrderToast(`↩️ ${bKey.replace('b','')}차 완료 취소됨`);
+  } catch(e) {}
+}
+
+async function saveOrderLog() {
+  if (_TM) { showToast('🧪 테스트 모드 — Firebase 저장 차단'); return; }
+  if (!FB_URL) return;
+  try {
+    const jkgEntries = orderLog['종근당'] || [];
+    const jkgPred = calcJkgRollingPred();
+    const orderPayload = buildOrderJsonFromLog();
+    const dk = orderPayload.date;
+    const savedAt = Date.now();
+
+    const batchNums = {};
+    jkgEntries.forEach((e, i) => { batchNums[`b${i + 1}`] = parseInt(e.qty) || 0; });
+    const totalOrderCount = jkgEntries.reduce((s,e) => s + (parseInt(e.count)||0), 0);
+
+    const livePatch = {
+      주문없음: { 종근당: _jkgNoOrder, 기타업체: _etcNoOrder },
+      주문로그: orderLog,
+      종근당: {
+        배치: batchNums,
+        배치예측: jkgPred ? jkgPred.pred : 0,
+        총건수: totalOrderCount,
+        // 배치완료 상태 항상 포함 → fallback에서도 유실 방지
+        ...(Object.keys(_batchDoneMap).length > 0 ? { 배치완료: _batchDoneMap } : {})
+      },
+      orderTotal: orderPayload.grandTotal,
+      savedAt
+    };
+
+    // cachedLiveData를 fallback으로 전달 → NAS/Firebase 조회 실패 시 작업자 데이터 유지
+    const merged = typeof dayaWriteLive === 'function'
+      ? await dayaWriteLive(livePatch, cachedLiveData)
+      : livePatch;
+
+    // jkg_orders 동기화 페이로드
+    const jkgTotalCount = jkgEntries.reduce((s, e) => s + (parseInt(e.count) || 0), 0);
+    const jkgOrdersPayload = {
+      entries: jkgEntries.map(e => ({ qty: parseInt(e.qty) || 0, t: e.t, ...(e.round ? {round: e.round} : {}), ...(e.count > 0 ? {count: e.count} : {}) })),
+      totalQty: jkgEntries.reduce((s, e) => s + (parseInt(e.qty) || 0), 0),
+      ...(jkgTotalCount > 0 ? { totalCount: jkgTotalCount } : {}),
+      source: '관리자폰',
+      savedAt
+    };
+
+    await Promise.all([
+      typeof dayaPutJson === 'function'
+        ? dayaPutJson('/order.json', { ...orderPayload, savedAt })
+        : fetch(`${FB_URL}/order.json`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...orderPayload, savedAt }) }),
+      fetch(`${FB_URL}/history/${dk}.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 주문로그: orderLog, orderTotal: orderPayload.grandTotal, savedAt })
+      }).catch(() => {}),
+      // 주문로그를 live.json에 직접 PATCH → PC 반영 보장 (dayaWriteLive 실패 시 보험)
+      fetch(`${FB_URL}/live.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 주문로그: orderLog, savedAt })
+      }).catch(() => {}),
+      // jkg_orders 동기화 (PATCH → totalCount 기존값 보존)
+      jkgEntries.length > 0
+        ? fetch(`${FB_URL}/jkg_orders/${dk}.json`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(jkgOrdersPayload)
+          }).catch(() => {})
+        : Promise.resolve()
+    ]);
+
+    cachedLiveData = merged;
+    renderLive(merged);
+    renderOrderLog();
+    showOrderToast('✅ 저장 완료 (PC·모바일 동기화)');
+  } catch (e) {
+    showOrderToast('저장 실패: ' + e.message, true);
+  }
+}
+
+async function loadOrderLog() {
+  if (!FB_URL) return;
+  try {
+    const live = typeof dayaFetchLive === 'function'
+      ? await dayaFetchLive()
+      : await fetch(`${FB_URL}/live.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null);
+    if (!live) return;
+
+    // 리셋 이후에 저장된 데이터인지 확인 (savedAt 비교)
+    const dataSavedAt = live.savedAt || live.timestamp || 0;
+    if (_lastResetTs > 0 && dataSavedAt < _lastResetTs) return; // 구버전 데이터 무시
+
+    // 주문로그 우선, 없으면 기존 배치 데이터에서 복원
+    if (live.주문로그 && Object.keys(live.주문로그).length > 0) {
+      orderLog = live.주문로그;
+    } else if (live.종근당 && live.종근당.배치) {
+      // 기존 배치 포맷 호환
+      const entries = Object.values(live.종근당.배치)
+        .filter(b => b && (b.qty || typeof b === 'number'))
+        .map((b, i) => typeof b === 'number'
+          ? { t: '—', qty: b, ts: Date.now() + i }
+          : { t: b.t || '—', qty: b.qty, ts: b.ts || Date.now() + i }
+        );
+      if (entries.length > 0) orderLog = { '종근당': entries };
+    } else {
+      orderLog = {};
+    }
+    // 차수별 완료 상태 복원
+    if (live.종근당?.배치완료 && typeof live.종근당.배치완료 === 'object') {
+      _batchDoneMap = live.종근당.배치완료;
+    } else {
+      _batchDoneMap = {};
+    }
+    // 기타업체 완료 상태 복원
+    _etcDone = (live.기타완료 && live.기타완료.ts) ? live.기타완료 : null;
+    // 주문없음 상태 복원
+    _jkgNoOrder = !!(live.주문없음?.종근당);
+    _etcNoOrder = !!(live.주문없음?.기타업체);
+    _renderNoOrderBtns();
+    renderOrderLog();
+    renderOrderCompanyTabs();
+  } catch (e) {}
+}
+
+async function confirmResetOrders() {
+  if (!confirm('오늘 입력 기록을 모두 삭제할까요?')) return;
+  _lastResetTs = Date.now();
+  orderLog = {};
+  _batchDoneMap = {};
+  _etcDone = null;
+  renderOrderLog();
+  renderOrderCompanyTabs();
+  const dk = todayDateKey();
+  const emptyOrder = { date: dk, companies: ORDER_SYNC_META.map(co => ({
+    id: co.id, name: co.name, rounds: Array(co.defaultRounds).fill(0), total: 0
+  })), grandTotal: 0, savedAt: _lastResetTs };
+  const live = typeof dayaFetchLive === 'function' ? (await dayaFetchLive()) || {} : {};
+  const jkgMerged = { ...(live.종근당 || {}), 배치: {}, 배치예측: 0 };
+  if (typeof dayaWriteLive === 'function') {
+    const newLive = await dayaWriteLive({ 주문로그: {}, 종근당: jkgMerged, orderTotal: 0, savedAt: _lastResetTs });
+    if (newLive) { cachedLiveData = newLive; renderLive(newLive); }
+    await dayaPutJson('/order.json', emptyOrder);
+  }
+  cachedLiveData = null;
+  await fetchLive();
+  showOrderToast('🗑️ 초기화 완료');
+}
+
+function showOrderToast(msg, isErr = false) {
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.cssText = `position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+    background:${isErr ? 'rgba(239,68,68,.95)' : 'rgba(46,204,113,.95)'};
+    color:#fff;padding:11px 20px;border-radius:22px;font-size:13px;font-weight:700;
+    z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.4);`;
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 2500);
+}
+
+// ── 기타업체 작업완료 ──
+async function markEtcDone() {
+  const now = new Date();
+  const t = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  _etcDone = { t, ts: now.getTime() };
+  renderOrderLog();
+  const patch = { 기타완료: _etcDone, savedAt: Date.now() };
+  if (typeof dayaWriteLive === 'function') {
+    cachedLiveData = await dayaWriteLive(patch, cachedLiveData);
+  } else if (FB_URL) {
+    await fetch(`${FB_URL}/live.json`, {
+      method: 'PATCH', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(patch)
+    }).catch(()=>{});
+  }
+  showOrderToast(`✅ 기타업체 작업완료 ${t} 저장됨`);
+}
+
+async function cancelEtcDone() {
+  _etcDone = null;
+  renderOrderLog();
+  const patch = { 기타완료: null, savedAt: Date.now() };
+  if (typeof dayaWriteLive === 'function') {
+    cachedLiveData = await dayaWriteLive(patch, cachedLiveData);
+  } else if (FB_URL) {
+    await fetch(`${FB_URL}/live.json`, {
+      method: 'PATCH', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(patch)
+    }).catch(()=>{});
+  }
+  showOrderToast('기타완료 취소됨');
+}
+
+// ── 주문없음 토글 ──
+async function toggleJkgNoOrder() {
+  _jkgNoOrder = !_jkgNoOrder;
+  _renderNoOrderBtns();
+  const patch = { 주문없음: { 종근당: _jkgNoOrder, 기타업체: _etcNoOrder }, savedAt: Date.now() };
+  if (typeof dayaWriteLive === 'function') cachedLiveData = await dayaWriteLive(patch, cachedLiveData);
+  else if (FB_URL) await fetch(`${FB_URL}/live.json`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(patch) }).catch(()=>{});
+  showOrderToast(_jkgNoOrder ? '🚫 종근당 주문없음 저장됨' : '종근당 주문없음 취소됨');
+}
+
+async function toggleEtcNoOrder() {
+  _etcNoOrder = !_etcNoOrder;
+  _renderNoOrderBtns();
+  const patch = { 주문없음: { 종근당: _jkgNoOrder, 기타업체: _etcNoOrder }, savedAt: Date.now() };
+  if (typeof dayaWriteLive === 'function') cachedLiveData = await dayaWriteLive(patch, cachedLiveData);
+  else if (FB_URL) await fetch(`${FB_URL}/live.json`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(patch) }).catch(()=>{});
+  showOrderToast(_etcNoOrder ? '🚫 기타업체 주문없음 저장됨' : '기타업체 주문없음 취소됨');
+}
+
+function _renderNoOrderBtns() {
+  const jBtn = document.getElementById('jkgNoOrderBtn');
+  const eBtn = document.getElementById('etcNoOrderBtn');
+  if (jBtn) {
+    jBtn.textContent = _jkgNoOrder ? '✅ 종근당 주문없음 (취소하려면 탭)' : '🚫 오늘 종근당 주문없음';
+    jBtn.style.background = _jkgNoOrder ? 'rgba(239,68,68,.15)' : '';
+    jBtn.style.borderColor = _jkgNoOrder ? 'rgba(239,68,68,.5)' : '';
+    jBtn.style.color = _jkgNoOrder ? '#ef4444' : '';
+  }
+  if (eBtn) {
+    eBtn.textContent = _etcNoOrder ? '✅ 기타업체 주문없음 (취소하려면 탭)' : '🚫 오늘 기타업체 주문없음';
+    eBtn.style.background = _etcNoOrder ? 'rgba(239,68,68,.15)' : '';
+    eBtn.style.borderColor = _etcNoOrder ? 'rgba(239,68,68,.5)' : '';
+    eBtn.style.color = _etcNoOrder ? '#ef4444' : '';
+  }
+}
+
+// 앱 시작 시 주문 로그 로드 (3초 뒤)
+setTimeout(loadOrderLog, 3000);
+
+// ── 배치 비율 자동학습 ──
+// 어제 또는 이전 날짜의 완료된 주문로그에서 실제 비율 계산
+let learnedCumRatios = null; // null이면 기본값 사용
+
+async function learnBatchRatios() {
+  if (!FB_URL) return;
+  try {
+    const cfg = await fetch(`${FB_URL}/config.json?t=${Date.now()}`).then(r=>r.json()).catch(()=>null);
+    if (cfg && cfg.batchRatios && cfg.batchRatios.sampleCount >= 3) {
+      const raw = cfg.batchRatios.cumRatios || [];
+      // 값 범위 검증: 모두 0~1.5 이내여야 유효한 누적비율
+      const valid = raw.every(v => v > 0 && v <= 1.5);
+      if (valid && raw.length >= 2) { learnedCumRatios = raw; return; }
+      // 유효하지 않으면 무시하고 history에서 재계산
+    }
+    // config에 없으면 최근 14일치 history에서 계산
+    const today = new Date();
+    const samples = [];
+    for (let i = 1; i <= 14; i++) {
+      const d = new Date(today); d.setDate(d.getDate() - i);
+      const dk = d.toISOString().slice(0,10);
+      try {
+        const hist = await fetch(`${FB_URL}/history/${dk}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null);
+        if (!hist) continue;
+        const orderLog = hist.주문로그?.종근당;
+        if (!orderLog || orderLog.length < 2) continue;
+        const total = orderLog.reduce((s,e)=>s+e.qty,0); // 개 단위로 통일 (박스 단위 매핑값 사용 금지)
+        if (total <= 0) continue;
+        // 누적 비율 계산
+        let cum = 0;
+        const cumR = orderLog.map(e => { cum += e.qty; return parseFloat((cum/total).toFixed(3)); });
+        samples.push({ cumR, n: orderLog.length });
+      } catch(e) {}
+    }
+    if (samples.length < 3) return; // 샘플 부족
+    // 최대 배치 수 찾기
+    const maxN = Math.max(...samples.map(s=>s.n));
+    const learned = [];
+    for (let i = 0; i < maxN; i++) {
+      const vals = samples.filter(s=>s.cumR[i]!==undefined).map(s=>s.cumR[i]);
+      learned.push(vals.length > 0 ? parseFloat((vals.reduce((a,b)=>a+b)/vals.length).toFixed(3)) : 1);
+    }
+    if (learned.length === 0) return;
+    learnedCumRatios = learned;
+    // config에 저장 (다음 로드 시 즉시 사용)
+    await fetch(`${FB_URL}/config.json`, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ batchRatios: { cumRatios: learned, sampleCount: samples.length, updatedAt: Date.now() } })
+    }).catch(()=>{});
+  } catch(e) {}
+}
+setTimeout(learnBatchRatios, 6000);
+
+// ── calcJkgRollingPred 에서 학습된 비율 사용 ──
+// 기존 함수를 오버라이드 (학습된 비율 우선)
+const _origCalcJkg = window.calcJkgRollingPred;
+window.calcJkgRollingPred = function() {
+  const entries = orderLog['종근당'] || [];
+  if (entries.length === 0) return null;
+  const total = entries.reduce((s,e)=>s+e.qty, 0);
+  const n = entries.length;
+  const ratios = (learnedCumRatios || ORDER_CUM_RATIOS).map(r => Math.max(0.05, Math.min(1.0, Number(r) || 0.25)));
+  const ratio = n <= ratios.length ? ratios[n-1] : ratios[ratios.length-1];
+  const pred = Math.round(total / ratio);
+  const pct = Math.round(total / pred * 100);
+  const isLearned = !!learnedCumRatios;
+
+  // ── 예측 박스수 = 예측 최종 건수 × 학습된 박스/건 비율 ──
+  // (수량÷18 같은 고정값 금지: 18은 파레트당 적재박스수일 뿐 박스환산값 아님)
+  // 건수 = 실시간 주문입력 누적 / 비율 = 과거 건수로 학습한 박스÷건수
+  const countTotal = entries.reduce((s, e) => s + (parseInt(e.count) || 0), 0);
+  const predCount = countTotal > 0 ? Math.round(countTotal / ratio) : 0; // 건수도 동일 누적비율로 롤링
+  const bpoRatio = (_learnedBoxPerOrder?.ratio > 0) ? _learnedBoxPerOrder.ratio : null;
+  const predBoxes = (bpoRatio && predCount > 0) ? Math.round(predCount * bpoRatio) : null;
+
+  return { total, pred, pct, n, ratio, isLearned, countTotal, predCount, bpoRatio, predBoxes };
+};
+
+// ── 이전 같은 요일 비교 로드 ──
+let _prevSameDow = null;
+
+async function loadPrevSameDow() {
+  if (!FB_URL) return;
+  const now = new Date(), dow = now.getDay();
+  for (let w = 1; w <= 4; w++) {
+    const d = new Date(now); d.setDate(d.getDate() - w*7);
+    const dk = d.toISOString().slice(0,10);
+    try {
+      const hist = await fetch(`${FB_URL}/history/${dk}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null);
+      if (hist && hist.totalQty > 0) {
+        _prevSameDow = { date: dk, total: hist.totalQty, jkg: (hist.종근당||{}).매핑||0 };
+        renderOrderLog(); // 비교 데이터 반영
+        return;
+      }
+    } catch(e) {}
+  }
+}
+setTimeout(loadPrevSameDow, 7000);
+</script>
+<!-- 관리자 공지 팝업 -->
+<div class="adm-notice-overlay" id="admNoticeOverlay">
+  <div class="adm-notice-box">
+    <div class="adm-notice-hdr">📢 공지사항</div>
+    <div class="adm-notice-scroll" id="admNoticeScroll"></div>
+    <button class="adm-notice-close" onclick="closeAdmNoticePopup()">✓ 확인</button>
+  </div>
+</div>
+<!-- 공지 상세 모달 -->
+<div class="adm-nd-overlay" id="admNdOverlay" onclick="if(event.target===this)closeAdmNoticeDetail()">
+  <div class="adm-nd-box">
+    <div style="font-size:14px;font-weight:900;color:var(--a1);">📢 공지 상세</div>
+    <div class="adm-nd-meta" id="admNdMeta"></div>
+    <div class="adm-nd-title" id="admNdTitle"></div>
+    <div class="adm-nd-body" id="admNdBody"></div>
+    <button class="adm-nd-close" onclick="closeAdmNoticeDetail()">✓ 닫기</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// 🔴 레드팀 자동 감시 시스템
+// ══════════════════════════════════════════════
+let _rtRunning = false;
+let _rtTimer = null;
+
+async function runRedTeam(manual) {
+  if (_rtRunning) return;
+  _rtRunning = true;
+  const statusEl  = document.getElementById('redteamStatus');
+  const findingsEl = document.getElementById('redteamFindings');
+  const lastRunEl = document.getElementById('redteamLastRun');
+  if (statusEl)   statusEl.innerHTML = '<span style="color:var(--muted);">⏳ 감시 중...</span>';
+  if (findingsEl) findingsEl.innerHTML = '';
+
+  const findings = [];
+  try {
+    // ① 연결 상태
+    const t0 = Date.now();
+    let connOk = false;
+    try {
+      const r = await Promise.race([
+        fetch(`${FB_URL}/config.json?t=${Date.now()}`),
+        new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 5000))
+      ]);
+      connOk = r.ok;
+    } catch {}
+    const ms = Date.now() - t0;
+    if (!connOk) {
+      findings.push({level:'crit', title:'Firebase 연결 실패', detail:'데이터 읽기 불가 — 나머지 감시 중단'});
+      return;
+    }
+    findings.push(ms > 3000
+      ? {level:'warn', title:'Firebase 응답 느림', detail:`${ms}ms (기준 3000ms)`}
+      : {level:'ok',   title:'연결 상태', detail:`정상 (${ms}ms)`}
+    );
+
+    // ② 히스토리 90일 로드
+    const now = new Date();
+    const wdKeys = [];
+    for (let i = 1; i <= 130 && wdKeys.length < 90; i++) {
+      const d = new Date(now); d.setDate(now.getDate() - i);
+      if (d.getDay() === 0 || d.getDay() === 6) continue;
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      wdKeys.push({ key, dow: d.getDay(), weeksAgo: Math.floor(i/7) });
+    }
+    const histData = await Promise.all(wdKeys.map(k =>
+      fetch(`${FB_URL}/history/${k.key}.json?t=${Date.now()}`)
+        .then(r => r.ok ? r.json() : null).catch(() => null)
+    ));
+    const pairs = wdKeys.map((k,i) => ({...k, d: histData[i]}));
+
+    // ③ 데이터 무결성 — 최근 14일
+    const r14 = pairs.slice(0, 14);
+    const noHist  = r14.filter(p => !p.d).length;
+    const noInstr = r14.filter(p => p.d && !p.d.instrData).length;
+    findings.push(noHist > 3
+      ? {level:'warn', title:'히스토리 누락', detail:`최근 14일 중 ${noHist}일 데이터 없음`}
+      : {level:'ok',   title:'히스토리 존재', detail:`최근 14일 중 ${14-noHist}일 정상`}
+    );
+    findings.push(noInstr > 2
+      ? {level:'warn', title:'A0 미입력 날짜', detail:`최근 14일 중 ${noInstr}일 instrData 없음`}
+      : {level:'ok',   title:'A0 데이터', detail:`최근 14일 기준 정상 (${noInstr}일 미입력)`}
+    );
+
+    // ④ 이상치 탐지 — 요일별 기준선(90일) vs 최근 7일
+    const dowArr = {1:[],2:[],3:[],4:[],5:[]};
+    pairs.forEach(p => {
+      const b = (p.d?.종근당?.매핑||0) || (p.d?.instrData?.종근당?.boxes||0);
+      if (b > 0 && p.dow >= 1 && p.dow <= 5) dowArr[p.dow].push(b);
+    });
+    const baseline = {};
+    [1,2,3,4,5].forEach(dw => {
+      if (dowArr[dw].length >= 3) {
+        const avg = dowArr[dw].reduce((s,v)=>s+v,0)/dowArr[dw].length;
+        const std = Math.sqrt(dowArr[dw].reduce((s,v)=>s+Math.pow(v-avg,2),0)/dowArr[dw].length);
+        baseline[dw] = {avg, std};
+      }
+    });
+    const anomalies = [];
+    pairs.slice(0, 10).filter(p=>p.d).forEach(p => {
+      const b = (p.d?.종근당?.매핑||0)||(p.d?.instrData?.종근당?.boxes||0);
+      const bl = baseline[p.dow];
+      if (b > 0 && bl) {
+        const ratio = b / bl.avg;
+        if (ratio < 0.5 || ratio > 1.5)
+          anomalies.push(`${p.key.slice(5)}: ${b}박스 (기준 ${Math.round(bl.avg)}, ${Math.round(ratio*100)}%)`);
+      }
+    });
+    findings.push(anomalies.length > 0
+      ? {level:'warn', title:'박스수 이상치', detail: anomalies.join(' / ')}
+      : {level:'ok',   title:'박스수 이상치', detail:'최근 7일 정상 범위 (90일 기준)'}
+    );
+
+    // ⑤ 주간 트렌드
+    const getBoxes = p => (p.d?.종근당?.매핑||0)||(p.d?.instrData?.종근당?.boxes||0);
+    const thisW = pairs.slice(0,7).filter(p=>p.d&&getBoxes(p)>0).map(getBoxes);
+    const prev4W = pairs.slice(7,35).filter(p=>p.d&&getBoxes(p)>0).map(getBoxes);
+    if (thisW.length >= 2 && prev4W.length >= 5) {
+      const tA = thisW.reduce((s,v)=>s+v,0)/thisW.length;
+      const pA = prev4W.reduce((s,v)=>s+v,0)/prev4W.length;
+      const tr = tA/pA;
+      findings.push(tr < 0.8
+        ? {level:'crit', title:'주간 트렌드 급락', detail:`이번주 평균 ${Math.round(tA)}박스 vs 4주 평균 ${Math.round(pA)}박스 (${Math.round(tr*100)}%)`}
+        : tr < 0.9
+        ? {level:'warn', title:'주간 트렌드 감소', detail:`이번주 ${Math.round(tA)}박스 vs 4주 평균 ${Math.round(pA)}박스 (${Math.round(tr*100)}%)`}
+        : {level:'ok',   title:'주간 트렌드', detail:`정상 — 4주 평균 대비 ${Math.round(tr*100)}%`}
+      );
+    }
+
+    // ⑥ 예측 시스템 + 재보정 제안
+    const cfg = await fetch(`${FB_URL}/config.json?t=${Date.now()}`).then(r=>r.json()).catch(()=>null);
+    const predOK   = cfg?.prediction?.overall > 0;
+    const ratioOK  = (cfg?.prediction?.orderRatio||0) > 0;
+    const instrR   = cfg?.instrRatios?.['종근당']?.ratio || 0;
+    findings.push(!predOK
+      ? {level:'crit', title:'예측 데이터 없음', detail:'관리자PC/폰 재접속으로 예측 로드 필요'}
+      : {level:'ok',   title:'예측 시스템', detail:`기준 ${Math.round(cfg.prediction.overall)}박스/일 (${cfg.prediction.updatedAt||'—'})`}
+    );
+    findings.push(!ratioOK && !instrR
+      ? {level:'warn', title:'건수→박스 비율 미학습', detail:'A0 지시수량+박스수 데이터 누적 필요'}
+      : {level:'ok',   title:'비율 학습', detail:ratioOK ? `예측엔진 ${(cfg.prediction.orderRatio*100).toFixed(1)}%` : `A0기준 1:${instrR.toFixed(1)}`}
+    );
+
+    // ⑦ 예측 오차 재보정 제안
+    const a0valid = pairs.slice(0,14).filter(p=>p.d?.instrData?.종근당?.instr>0 && p.d?.instrData?.종근당?.boxes>0);
+    if (a0valid.length >= 3 && instrR > 0) {
+      const errs = a0valid.map(p => {
+        const actual = p.d.instrData['종근당'].boxes;
+        const pred   = Math.round(p.d.instrData['종근당'].instr / instrR);
+        return Math.abs(actual - pred) / actual;
+      });
+      const avgErr = errs.reduce((s,v)=>s+v,0)/errs.length;
+      findings.push(avgErr > 0.3
+        ? {level:'warn', title:'예측 오차 높음 — 재보정 권장', detail:`최근 ${a0valid.length}일 평균 오차 ${Math.round(avgErr*100)}% (기준 30%)`}
+        : {level:'ok',   title:'예측 정확도', detail:`오차 ${Math.round(avgErr*100)}% — ${a0valid.length}일 기준`}
+      );
+    }
+
+  } catch(e) {
+    findings.push({level:'crit', title:'감시 오류', detail: e.message});
+  } finally {
+    _rtRunning = false;
+    _renderRedTeam(findings);
+  }
+}
+
+function _renderRedTeam(findings) {
+  const statusEl   = document.getElementById('redteamStatus');
+  const findingsEl = document.getElementById('redteamFindings');
+  const lastRunEl  = document.getElementById('redteamLastRun');
+  if (!findingsEl) return;
+
+  const crits = findings.filter(f=>f.level==='crit').length;
+  const warns = findings.filter(f=>f.level==='warn').length;
+  if (statusEl) statusEl.innerHTML = crits > 0
+    ? `<span style="color:#ef4444;font-weight:800;">🚨 심각 ${crits}건 발견</span>`
+    : warns > 0
+    ? `<span style="color:#ffd600;font-weight:800;">⚠️ 경고 ${warns}건</span>`
+    : `<span style="color:#2ecc71;font-weight:800;">✅ 전체 정상</span>`;
+
+  findingsEl.innerHTML = findings.map(f => {
+    const c  = f.level==='crit'?'#ef4444':f.level==='warn'?'#ffd600':'#2ecc71';
+    const ic = f.level==='crit'?'🚨':f.level==='warn'?'⚠️':'✅';
+    const bg = f.level==='crit'?'rgba(239,68,68,.1)':f.level==='warn'?'rgba(255,214,0,.08)':'rgba(46,204,113,.06)';
+    return `<div style="display:flex;gap:8px;padding:6px 8px;border-radius:7px;background:${bg};margin-bottom:4px;">
+      <span style="flex-shrink:0;">${ic}</span>
+      <div>
+        <div style="font-size:11px;font-weight:800;color:${c};">${f.title}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:1px;">${f.detail}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const n = new Date();
+  if (lastRunEl) lastRunEl.textContent =
+    `마지막 실행: ${n.getMonth()+1}/${n.getDate()} ${n.getHours()}:${String(n.getMinutes()).padStart(2,'0')}`;
+}
+
+// 작업시간(9~18시)에만 자동 실행
+function _rtAutoRun() {
+  const h = new Date().getHours();
+  if (h >= 9 && h < 18) runRedTeam();
+}
+if (_rtTimer) clearInterval(_rtTimer);
+_rtTimer = setInterval(_rtAutoRun, 3600000);
+// 초기 실행: 작업시간이면 8초 후, 아니면 상태만 표시
+setTimeout(() => {
+  const h = new Date().getHours();
+  if (h >= 9 && h < 18) {
+    runRedTeam();
+  } else {
+    const s = document.getElementById('redteamStatus');
+    if (s) s.innerHTML = '<span style="color:var(--muted);">💤 작업시간 외 (9시~18시 자동 실행)</span>';
+  }
+}, 8000);
 </script>
 </body>
 </html>

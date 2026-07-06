@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>위고비 실시간 현황</title>
+<style>
+:root{
+  --bg:#0a0f1a; --card:#111827; --card2:#1a2235; --border:rgba(255,255,255,.07);
+  --text:#e6edf3; --muted:#5a7a99;
+  --a1:#58a6ff; --a3:#3fb950; --a5:#d29922; --a6:#f78166; --pink:#e91e8c;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,'Noto Sans KR',sans-serif;min-height:100vh;}
+
+/* ── 헤더 ── */
+.header{
+  background:linear-gradient(135deg,rgba(233,30,140,.18),rgba(10,15,26,.9));
+  border-bottom:1.5px solid rgba(233,30,140,.3);
+  padding:12px 16px 10px;
+  display:flex;align-items:center;gap:10px;
+}
+.header h1{font-size:15px;font-weight:900;color:#fff;letter-spacing:.3px;}
+.header .sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.live-dot-wrap{display:flex;align-items:center;gap:5px;margin-left:auto;
+  background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3);
+  border-radius:8px;padding:4px 10px;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--a3);
+  animation:blink 1.5s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+.live-label{font-size:10px;font-weight:800;color:var(--a3);}
+
+.wrap{padding:12px 12px 80px;max-width:480px;margin:0 auto;}
+
+/* ── 상태바 ── */
+.status-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;
+  font-size:10px;color:var(--muted);}
+#lastUpdate{flex:1;}
+.rf-btn{background:none;border:1px solid var(--border);color:var(--muted);
+  border-radius:7px;padding:4px 10px;font-size:10px;cursor:pointer;font-family:inherit;}
+.rf-btn:active{opacity:.7;}
+
+/* ── 메인 박스수 카드 ── */
+.main-card{
+  background:linear-gradient(135deg,rgba(233,30,140,.12),rgba(10,15,26,.95));
+  border:2px solid rgba(233,30,140,.4);
+  border-radius:16px;padding:20px 20px 16px;margin-bottom:12px;
+  text-align:center;
+}
+.main-label{font-size:11px;font-weight:800;color:rgba(233,30,140,.7);
+  letter-spacing:.8px;margin-bottom:8px;}
+.main-num{font-size:72px;font-weight:900;color:var(--pink);line-height:1;
+  letter-spacing:-2px;}
+.main-unit{font-size:16px;color:rgba(233,30,140,.5);font-weight:700;margin-top:4px;}
+
+/* 진행 바 */
+.prog-wrap{margin-top:14px;}
+.prog-header{display:flex;justify-content:space-between;font-size:10px;
+  color:var(--muted);margin-bottom:5px;}
+.prog-bar-bg{height:8px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden;}
+.prog-bar{height:100%;border-radius:5px;transition:width .6s ease;
+  background:linear-gradient(90deg,var(--pink),#ff6b9d);}
+.prog-bar.over{background:linear-gradient(90deg,var(--a3),#22c55e);}
+.prog-pct{font-size:24px;font-weight:900;color:var(--a5);margin-top:6px;text-align:center;}
+
+/* 목표 입력 */
+.target-row{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.target-row label{font-size:10px;color:var(--muted);font-weight:700;white-space:nowrap;}
+.target-row input{
+  flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(233,30,140,.25);
+  border-radius:7px;padding:6px 10px;font-size:14px;font-weight:700;
+  color:#fff;outline:none;font-family:inherit;text-align:center;
+}
+.target-row input:focus{border-color:var(--pink);}
+.target-row .t-unit{font-size:11px;color:var(--muted);flex-shrink:0;}
+
+/* ── 완료 배너 ── */
+.done-banner{
+  background:linear-gradient(135deg,rgba(63,185,80,.18),rgba(10,15,26,.95));
+  border:2px solid rgba(63,185,80,.5);border-radius:16px;
+  padding:18px 20px;margin-bottom:12px;text-align:center;
+  display:none;
+}
+.done-banner.show{display:block;}
+.done-title{font-size:22px;font-weight:900;color:var(--a3);margin-bottom:6px;}
+.done-sub{font-size:11px;color:var(--muted);margin-bottom:14px;}
+.done-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;
+  background:rgba(0,0,0,.25);border-radius:10px;overflow:hidden;}
+.done-item{padding:10px 6px;text-align:center;}
+.done-item+.done-item{border-left:1px solid var(--border);}
+.done-item .di-lbl{font-size:9px;color:var(--muted);font-weight:700;margin-bottom:4px;}
+.done-item .di-val{font-size:18px;font-weight:900;line-height:1;}
+
+/* ── 페이스 카드 ── */
+.pace-card{
+  border-radius:14px;padding:14px 16px;margin-bottom:12px;
+  border:1.5px solid var(--border);background:var(--card);
+  display:flex;align-items:center;gap:14px;
+}
+.pace-icon{font-size:36px;flex-shrink:0;}
+.pace-info{flex:1;}
+.pace-label{font-size:9px;font-weight:800;color:var(--muted);
+  letter-spacing:.5px;margin-bottom:3px;}
+.pace-num{font-size:28px;font-weight:900;line-height:1;}
+.pace-sub{font-size:10px;color:var(--muted);margin-top:3px;}
+.pace-status{font-size:11px;font-weight:800;padding:4px 10px;
+  border-radius:8px;flex-shrink:0;text-align:center;}
+.ps-fast{background:rgba(63,185,80,.15);color:var(--a3);}
+.ps-slow{background:rgba(247,129,102,.15);color:var(--a6);}
+.ps-normal{background:rgba(88,166,255,.15);color:var(--a1);}
+.ps-none{background:rgba(255,255,255,.05);color:var(--muted);}
+
+/* ── ETA 카드 ── */
+.eta-card{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:12px;padding:12px 16px;margin-bottom:12px;
+  display:flex;gap:0;
+}
+.eta-item{flex:1;text-align:center;}
+.eta-item+.eta-item{border-left:1px solid var(--border);}
+.eta-label{font-size:9px;color:var(--muted);font-weight:700;
+  margin-bottom:5px;letter-spacing:.3px;}
+.eta-val{font-size:20px;font-weight:900;line-height:1;}
+.eta-unit{font-size:9px;color:var(--muted);margin-top:2px;}
+
+/* ── 페이스 경고 ── */
+.pace-warn{display:none;background:rgba(247,129,102,.12);border:1px solid rgba(247,129,102,.35);
+  border-radius:9px;padding:8px 12px;margin-top:8px;
+  font-size:11px;font-weight:700;color:var(--a6);text-align:center;line-height:1.5;}
+.pace-warn.show{display:block;}
+
+/* ── 예측 카드 ── */
+.pred-card{
+  background:var(--card2);border:1px solid rgba(210,153,34,.3);
+  border-radius:12px;padding:12px 16px;margin-bottom:12px;
+}
+.pred-grid{display:flex;gap:0;}
+.pred-item{flex:1;text-align:center;}
+.pred-item+.pred-item{border-left:1px solid var(--border);}
+.pred-label{font-size:9px;color:var(--muted);font-weight:700;
+  margin-bottom:5px;letter-spacing:.3px;}
+.pred-val{font-size:20px;font-weight:900;line-height:1;}
+.pred-unit{font-size:9px;color:var(--muted);margin-top:2px;}
+.pred-hint{font-size:9px;color:var(--muted);text-align:center;
+  margin-top:8px;padding-top:7px;border-top:1px solid var(--border);}
+
+/* ── 섹션 헤더 ── */
+.sec{font-size:10px;font-weight:800;color:var(--muted);
+  letter-spacing:.5px;margin:14px 0 8px;padding-left:2px;}
+
+/* ── 출근 카드 ── */
+.att-card{background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:12px 14px;margin-bottom:12px;}
+.att-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.att-count{font-size:32px;font-weight:900;color:var(--a1);}
+.att-info .ai-main{font-size:12px;font-weight:700;color:var(--text);}
+.att-info .ai-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.member-list{display:flex;flex-wrap:wrap;gap:6px;}
+.member-chip{
+  font-size:10px;font-weight:700;padding:4px 9px;border-radius:7px;
+  display:flex;align-items:center;gap:4px;
+}
+.mc-present{background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.2);color:var(--a3);}
+.mc-late{background:rgba(210,153,34,.12);border:1px solid rgba(210,153,34,.2);color:var(--a5);}
+.mc-absent{background:rgba(247,129,102,.12);border:1px solid rgba(247,129,102,.2);color:var(--a6);}
+.mc-off{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);}
+
+/* ── 주문 카드 ── */
+.order-card{background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:12px 14px;margin-bottom:12px;}
+.order-row{display:flex;align-items:center;justify-content:space-between;
+  padding:5px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.order-row:last-child{border-bottom:none;}
+.or-label{font-size:11px;color:var(--muted);}
+.or-val{font-size:13px;font-weight:700;color:var(--a5);}
+.or-time{font-size:10px;color:var(--muted);margin-left:6px;}
+.order-total-row{display:flex;align-items:center;justify-content:space-between;
+  padding-top:8px;margin-top:4px;border-top:1px solid var(--border);}
+.ot-label{font-size:11px;font-weight:800;color:var(--text);}
+.ot-val{font-size:16px;font-weight:900;color:var(--pink);}
+
+/* 로딩 */
+.spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.1);
+  border-top-color:var(--pink);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;}
+@keyframes sp{to{transform:rotate(360deg);}}
+
+.no-data{color:var(--muted);font-size:11px;text-align:center;padding:16px 0;}
+
+/* 주문 목록 행 (읽기 전용) */
+.order-entry-row{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);
+}
+.order-entry-row:last-of-type{border-bottom:none;}
+.oe-seq{font-size:10px;font-weight:800;color:rgba(233,30,140,.6);
+  flex-shrink:0;width:26px;}
+.oe-vals{flex:1;display:flex;gap:10px;align-items:center;}
+.oe-val{text-align:right;}
+.oe-num{font-size:13px;font-weight:700;color:var(--text);}
+.oe-lbl{font-size:9px;color:var(--muted);margin-top:1px;}
+.mc-done{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.15);color:var(--muted);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="font-size:20px;">💊</div>
+  <div>
+    <h1>위고비 실시간 현황</h1>
+    <div class="sub">종근당 박스수 · 읽기 전용</div>
+  </div>
+  <div class="live-dot-wrap">
+    <div class="live-dot"></div>
+    <div class="live-label">LIVE</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- 상태바 -->
+  <div class="status-bar">
+    <div id="lastUpdate">연결 중...</div>
+    <button class="rf-btn" onclick="fetchLive(true)">🔄</button>
+  </div>
+
+  <!-- ① 메인 박스수 -->
+  <div class="main-card">
+    <div class="main-label">현재 종근당 박스수</div>
+    <div class="main-num" id="mainBox">—</div>
+    <div class="main-unit">박스</div>
+
+    <!-- 예측 달성률 (주문 입력 후 자동 표시) -->
+    <div class="prog-wrap" id="progWrap" style="display:none;">
+      <div class="prog-header">
+        <span>예측 달성률</span>
+        <span id="progText">0 / 0 박스</span>
+      </div>
+      <div class="prog-bar-bg">
+        <div class="prog-bar" id="progBar" style="width:0%"></div>
+      </div>
+      <div class="prog-pct" id="progPct">0%</div>
+    </div>
+
+    <!-- 작업 시간 입력 -->
+    <div class="target-row" style="margin-top:6px;">
+      <label>작업 시간</label>
+      <input type="number" id="workHourInput" placeholder="7.5" min="1" max="24" step="0.5"
+        oninput="onWorkHourChange()" value="">
+      <span class="t-unit">시간</span>
+    </div>
+  </div>
+
+  <!-- 완료 배너 -->
+  <div class="done-banner" id="doneBanner">
+    <div class="done-title">🎉 목표 달성!</div>
+    <div class="done-sub" id="doneSubText">오늘 작업 완료</div>
+    <div class="done-grid">
+      <div class="done-item">
+        <div class="di-lbl">최종 박스수</div>
+        <div class="di-val" id="doneBox" style="color:var(--a3);">—</div>
+      </div>
+      <div class="done-item">
+        <div class="di-lbl">목표 대비</div>
+        <div class="di-val" id="donePct" style="color:var(--a5);">—</div>
+      </div>
+      <div class="done-item">
+        <div class="di-lbl">소요 시간</div>
+        <div class="di-val" id="doneElapsed" style="color:var(--a1);">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 페이스 -->
+  <div class="pace-card" id="paceCard">
+    <div class="pace-icon" id="paceIcon">⏳</div>
+    <div class="pace-info">
+      <div class="pace-label">현재 처리 페이스</div>
+      <div class="pace-num" id="paceNum" style="color:var(--muted);">측정 중</div>
+      <div class="pace-sub" id="paceSub">최근 데이터 수집 중 (30초마다 갱신)</div>
+    </div>
+    <div class="pace-status ps-none" id="paceStatus">—</div>
+  </div>
+
+  <!-- ③ ETA -->
+  <div class="eta-card" id="etaCard">
+    <div class="eta-item">
+      <div class="eta-label">경과 시간</div>
+      <div class="eta-val" id="etaElapsed" style="color:var(--a1);">—</div>
+      <div class="eta-unit">분</div>
+    </div>
+    <div class="eta-item">
+      <div class="eta-label">예상 완료</div>
+      <div class="eta-val" id="etaTime" style="color:var(--a5);">—</div>
+      <div class="eta-unit"></div>
+    </div>
+    <div class="eta-item">
+      <div class="eta-label">남은 박스</div>
+      <div class="eta-val" id="etaRemain" style="color:var(--pink);">—</div>
+      <div class="eta-unit">박스</div>
+    </div>
+  </div>
+
+  <div class="pace-warn" id="paceWarn"></div>
+
+  <!-- ④ 예측 박스수 -->
+  <div class="sec">🔮 오늘 예측</div>
+  <div class="pred-card" id="predCard">
+    <div class="pred-grid">
+      <div class="pred-item">
+        <div class="pred-label">주문 기반 예측</div>
+        <div class="pred-val" id="predBoxes" style="color:var(--a5);">—</div>
+        <div class="pred-unit">박스</div>
+      </div>
+      <div class="pred-item">
+        <div class="pred-label">현재 달성률</div>
+        <div class="pred-val" id="predVsTarget" style="color:var(--muted);">—</div>
+        <div class="pred-unit" id="predVsUnit">%</div>
+      </div>
+      <div class="pred-item">
+        <div class="pred-label">인당 예상</div>
+        <div class="pred-val" id="predPerPerson" style="color:var(--a1);">—</div>
+        <div class="pred-unit">박스/인</div>
+      </div>
+    </div>
+    <div class="pred-hint" id="predHint">주문 입력 후 자동 계산 (과거 비율 기반)</div>
+  </div>
+
+  <!-- ⑤ 출근 현황 -->
+  <div class="sec">👥 출근 현황</div>
+  <div class="att-card">
+    <div class="att-top">
+      <div class="att-count" id="attCount">—</div>
+      <div class="att-info">
+        <div class="ai-main" id="attMain">로딩 중...</div>
+        <div class="ai-sub" id="attSub"></div>
+      </div>
+    </div>
+    <div class="member-list" id="memberList"></div>
+  </div>
+
+  <!-- ⑥ 분석 바로가기 -->
+  <a href="jkg-dashboard.html" style="
+    display:flex;align-items:center;justify-content:space-between;
+    background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.25);
+    border-radius:12px;padding:12px 16px;margin-bottom:12px;
+    text-decoration:none;color:var(--a1);
+  ">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:20px;">📊</span>
+      <div>
+        <div style="font-size:13px;font-weight:800;">위고비 박스수 분석</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">과거 데이터 · 주문건수 분석</div>
+      </div>
+    </div>
+    <span style="font-size:18px;opacity:.6;">›</span>
+  </a>
+
+  <!-- ⑦ 오늘 종근당 주문 (읽기 전용 - 관리자폰 입력 기준) -->
+  <div class="sec">📋 오늘 종근당 주문 <span style="font-weight:400;color:rgba(255,255,255,.2);">관리자폰 입력</span></div>
+
+  <div class="order-card" id="orderCard">
+    <div class="no-data"><div class="spin"></div></div>
+  </div>
+
+</div>
+
+<script src="daya-api.js?v=20250519"></script>
+<script src="daya-error-log.js?v=20250519"></script>
+<script>
+const FB = window.FB_URL;
+
+// ── 상태 ──
+let snapHistory = [];  // [{ts, box}] 로컬 추적 (30초마다)
+let predictedBoxes = 0; // 주문량 기반 예측 박스수 (= 자동 목표)
+let workHours = parseFloat(localStorage.getItem('jkg_work_hours') || '7.5') || 7.5;
+let firstSnapTs = 0;
+let pollTimer = null;
+let workHourSaveTimer = null;
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ── snapHistory 영속화 ──
+const SNAP_CACHE_KEY = 'jkg_snap_' + (() => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+
+function loadSnapHistory() {
+  try {
+    const raw = localStorage.getItem(SNAP_CACHE_KEY);
+    if (!raw) return;
+    const snaps = JSON.parse(raw);
+    if (!Array.isArray(snaps) || !snaps.length) return;
+    // 오늘 날짜 데이터만, 2시간 이상 지난 스냅은 제외
+    const cutoff = Date.now() - 2 * 60 * 60 * 1000;
+    snapHistory = snaps.filter(s => s.ts > cutoff);
+    if (snapHistory.length > 0) {
+      firstSnapTs = snapHistory[0].ts;
+    }
+  } catch {}
+}
+
+function saveSnapHistory() {
+  try {
+    // 최근 120개만 저장
+    const toSave = snapHistory.slice(-120);
+    localStorage.setItem(SNAP_CACHE_KEY, JSON.stringify(toSave));
+    // 어제 키 정리
+    const yesterday = (() => { const d=new Date(); d.setDate(d.getDate()-1); return `jkg_snap_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+    localStorage.removeItem(yesterday);
+  } catch {}
+}
+
+// ── 초기값 세팅 ──
+document.getElementById('workHourInput').value = workHours;
+
+function onWorkHourChange() {
+  workHours = parseFloat(document.getElementById('workHourInput').value) || 7.5;
+  localStorage.setItem('jkg_work_hours', workHours);
+  clearTimeout(workHourSaveTimer);
+  workHourSaveTimer = setTimeout(async () => {
+    if (!FB) return;
+    try {
+      await fetch(`${FB}/jkg_config/workHours.json`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hours: workHours, savedAt: Date.now() })
+      });
+    } catch {}
+  }, 1000);
+  renderPace(currentBox());
+}
+
+async function loadWorkHours() {
+  if (!FB) return;
+  try {
+    const res = await fetch(`${FB}/jkg_config/workHours.json?t=${Date.now()}`);
+    if (!res.ok) return;
+    const d = await res.json();
+    if (d && d.hours > 0) {
+      workHours = parseFloat(d.hours) || 7.5;
+      localStorage.setItem('jkg_work_hours', workHours);
+      document.getElementById('workHourInput').value = workHours;
+    }
+  } catch {}
+}
+
+function currentBox() {
+  return snapHistory.length > 0 ? snapHistory[snapHistory.length - 1].box : 0;
+}
+
+// ── Firebase live.json 읽기 ──
+async function fetchLive(manual) {
+  if (!FB) {
+    document.getElementById('lastUpdate').textContent = 'API URL 없음';
+    return;
+  }
+  try {
+    const res = await fetch(`${FB}/live.json?t=${Date.now()}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const d = await res.json();
+    if (!d) return;
+
+    const now = Date.now();
+    const box = d.종근당?.매핑 || 0;
+
+    // 로컬 스냅 기록 (30초마다, 값이 바뀐 경우만)
+    const last = snapHistory[snapHistory.length - 1];
+    if (!last || Math.abs(last.box - box) > 0 || now - last.ts > 60000) {
+      snapHistory.push({ ts: now, box });
+      if (!firstSnapTs) firstSnapTs = now;
+      if (snapHistory.length > 120) snapHistory.shift();
+      saveSnapHistory(); // localStorage에 즉시 저장
+    }
+
+    renderMain(box);
+    renderProgress(box);
+    renderPace(box);
+    renderEta(box);
+    renderAttendance(d);
+    loadAndRenderOrders(d);
+
+    const timeStr = new Date().toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    document.getElementById('lastUpdate').textContent = `마지막 갱신: ${timeStr}`;
+
+  } catch (e) {
+    document.getElementById('lastUpdate').textContent = `연결 오류: ${e.message}`;
+  }
+}
+
+// ── 렌더: 박스수 ──
+function renderMain(box) {
+  document.getElementById('mainBox').textContent = box.toLocaleString();
+}
+
+// ── 렌더: 진행률 ──
+function renderProgress(box) {
+  const wrap = document.getElementById('progWrap');
+  if (!predictedBoxes || predictedBoxes <= 0) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+  const pct = Math.min(Math.round(box / predictedBoxes * 100), 100);
+  const over = box >= predictedBoxes;
+  document.getElementById('progText').textContent = `${box.toLocaleString()} / ${predictedBoxes.toLocaleString()} 박스 (예측)`;
+  const bar = document.getElementById('progBar');
+  bar.style.width = pct + '%';
+  bar.className = 'prog-bar' + (over ? ' over' : '');
+  document.getElementById('progPct').textContent = pct + '%';
+
+  // 완료 배너
+  const banner = document.getElementById('doneBanner');
+  if (over) {
+    banner.classList.add('show');
+    document.getElementById('doneBox').textContent = box.toLocaleString();
+    document.getElementById('donePct').textContent = pct + '%';
+    if (firstSnapTs > 0) {
+      const elMin = Math.round((Date.now() - firstSnapTs) / 60000);
+      const h = Math.floor(elMin / 60), m = elMin % 60;
+      document.getElementById('doneElapsed').textContent = h > 0 ? `${h}h ${m}m` : `${m}분`;
+    }
+    const totalQty = orderEntries.reduce((s, e) => s + e.qty, 0);
+    document.getElementById('doneSubText').textContent =
+      totalQty > 0 ? `주문 ${totalQty.toLocaleString()}개 → 박스 ${box.toLocaleString()}개 완료` : '오늘 작업 완료';
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+// ════════════════════════════════
+// 과거 데이터 기반 평균 계산
+// ════════════════════════════════
+let histAvgBoxPerDay = 0;   // 과거 일평균 박스수
+let histBoxToQtyRatio = 0;  // 과거 박스/수량 비율 (예: 0.07 = 수량 1개당 0.07박스)
+let histDayCount = 0;       // 샘플 수
+let histLoaded = false;
+let presentCount = 0;       // 현재 출근 인원
+
+const HIST_CACHE_KEY = 'jkg_hist_cache_v1';
+const HIST_CACHE_TTL = 6 * 60 * 60 * 1000; // 6시간
+
+function loadHistCache() {
+  try {
+    const raw = localStorage.getItem(HIST_CACHE_KEY);
+    if (!raw) return false;
+    const c = JSON.parse(raw);
+    if (!c || Date.now() - c.ts > HIST_CACHE_TTL) return false;
+    histAvgBoxPerDay  = c.avg   || 0;
+    histBoxToQtyRatio = c.ratio || 0;
+    histDayCount      = c.days  || 0;
+    histLoaded = true;
+    renderPace(snapHistory.length ? snapHistory[snapHistory.length-1].box : 0);
+    renderPrediction();
+    return true;
+  } catch { return false; }
+}
+
+function saveHistCache() {
+  try {
+    localStorage.setItem(HIST_CACHE_KEY, JSON.stringify({
+      avg: histAvgBoxPerDay, ratio: histBoxToQtyRatio,
+      days: histDayCount, ts: Date.now()
+    }));
+  } catch {}
+}
+
+async function loadHistAvg() {
+  if (!FB || histLoaded) return;
+
+  // 캐시 우선 사용 (6시간 이내)
+  if (loadHistCache()) return;
+
+  try {
+    // NAS API: /history/ → ["2026-05-01.json", ...] 배열 반환
+    const res = await fetch(`${FB}/history/?t=${Date.now()}`);
+    if (!res.ok) return;
+    const list = await res.json();
+    if (!Array.isArray(list) || !list.length) return;
+
+    const dateKeys = list
+      .map(f => f.replace('.json', ''))
+      .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k) && k < todayKey())
+      .sort((a, b) => b.localeCompare(a))
+      .slice(0, 30);
+
+    if (!dateKeys.length) return;
+
+    const BATCH = 10;
+    const boxes = [], ratios = [];
+    for (let i = 0; i < dateKeys.length; i += BATCH) {
+      const batch = dateKeys.slice(i, i + BATCH);
+      const results = await Promise.all(batch.map(async dk => {
+        try {
+          const r = await fetch(`${FB}/history/${dk}.json?t=${Date.now()}`);
+          if (!r.ok) return null;
+          const d = await r.json();
+          const b = d?.instrData?.종근당?.boxes || 0;
+          const q = d?.instrData?.종근당?.instr  || 0;
+          return { boxes: b, instr: q };
+        } catch { return null; }
+      }));
+      results.forEach(v => {
+        if (!v) return;
+        if (v.boxes > 0) boxes.push(v.boxes);
+        if (v.boxes > 0 && v.instr > 0) ratios.push(v.boxes / v.instr);
+      });
+    }
+
+    if (boxes.length > 0) {
+      histAvgBoxPerDay = Math.round(boxes.reduce((s, v) => s + v, 0) / boxes.length);
+      histDayCount = boxes.length;
+      histLoaded = true;
+    }
+    if (ratios.length > 0) {
+      histBoxToQtyRatio = ratios.reduce((s, v) => s + v, 0) / ratios.length;
+    }
+
+    saveHistCache(); // localStorage에 캐시 저장
+    const curBox = snapHistory.length ? snapHistory[snapHistory.length-1].box : 0;
+    renderPace(curBox);
+    renderPrediction();
+  } catch {}
+}
+
+// ── 휴식 시간 판별 (점심 11:30~12:30, 오후휴식 15:00~15:30) ──
+function isBreakTime(ts) {
+  const d = new Date(ts);
+  const m = d.getHours() * 60 + d.getMinutes();
+  return (m >= 690 && m < 750) || (m >= 900 && m < 930); // 11:30~12:30 or 15:00~15:30
+}
+
+// ── 렌더: 페이스 ──
+function renderPace(curBox) {
+  const paceNum = document.getElementById('paceNum');
+  const paceSub = document.getElementById('paceSub');
+  const paceIcon = document.getElementById('paceIcon');
+  const paceStatus = document.getElementById('paceStatus');
+
+  if (snapHistory.length < 2) {
+    paceNum.textContent = '측정 중';
+    paceNum.style.color = 'var(--muted)';
+    paceSub.textContent = '30초마다 자동 갱신됩니다';
+    paceIcon.textContent = '⏳';
+    paceStatus.textContent = '—';
+    paceStatus.className = 'pace-status ps-none';
+    return;
+  }
+
+  // 현재 페이스 (최근 30분 기준, 휴식시간 스냅 제외)
+  const now = Date.now();
+  const windowMs = 30 * 60 * 1000;
+  const recent = snapHistory.filter(s => now - s.ts <= windowMs && !isBreakTime(s.ts));
+  const from = recent[0], to = recent[recent.length - 1];
+  if (!from || !to || from.ts === to.ts) return;
+
+  const elapsedMin = (to.ts - from.ts) / 60000;
+  const boxDiff = to.box - from.box;
+  const ratePerHour = Math.round(boxDiff / elapsedMin * 60);
+
+  paceNum.textContent = ratePerHour >= 0 ? `${ratePerHour}` : '0';
+  paceNum.style.color = ratePerHour > 0 ? 'var(--a1)' : 'var(--muted)';
+
+  // ── 과거 데이터 기반 기준 판단 ──
+  if (histAvgBoxPerDay > 0 && firstSnapTs > 0) {
+    // 오늘 경과시간 기반으로 "지금쯤 있어야 할 박스수" 계산
+    // 가정: 하루 8시간 작업 (480분)
+    const elapsedTotalMin = (now - firstSnapTs) / 60000;
+    const WORK_MIN = workHours * 60;
+    const expectedNow = Math.round(histAvgBoxPerDay * (elapsedTotalMin / WORK_MIN));
+    const diff = curBox - expectedNow;
+    const diffPct = expectedNow > 0 ? Math.round(diff / expectedNow * 100) : 0;
+
+    const perPerson = presentCount > 0 ? ` · 인당 ${Math.round(ratePerHour / presentCount)}박스/h` : '';
+    paceSub.textContent = `박스/시간 · 과거평균 ${histAvgBoxPerDay}박스/일 (${histDayCount}일)${perPerson}`;
+
+    // ±15% 범위를 정상으로 판단
+    if (ratePerHour <= 0) {
+      paceIcon.textContent = '⏸️';
+      paceStatus.textContent = '대기중';
+      paceStatus.className = 'pace-status ps-none';
+    } else if (diffPct < -20) {
+      paceIcon.textContent = '🐢';
+      paceStatus.textContent = `느림 ${diffPct}%`;
+      paceStatus.className = 'pace-status ps-slow';
+    } else if (diffPct > 20) {
+      paceIcon.textContent = '🚀';
+      paceStatus.textContent = `빠름 +${diffPct}%`;
+      paceStatus.className = 'pace-status ps-fast';
+    } else {
+      paceIcon.textContent = '🚶';
+      paceStatus.textContent = `정상 (${diffPct > 0 ? '+' : ''}${diffPct}%)`;
+      paceStatus.className = 'pace-status ps-normal';
+    }
+  } else {
+    // 과거 데이터 없으면 절대값 임시 기준
+    paceSub.textContent = `박스/시간 (과거 데이터 로딩 중...)`;
+    if (ratePerHour <= 0) {
+      paceIcon.textContent = '⏸️'; paceStatus.textContent = '대기중'; paceStatus.className = 'pace-status ps-none';
+    } else if (ratePerHour < 20) {
+      paceIcon.textContent = '🐢'; paceStatus.textContent = '느림'; paceStatus.className = 'pace-status ps-slow';
+    } else {
+      paceIcon.textContent = '🚶'; paceStatus.textContent = '진행중'; paceStatus.className = 'pace-status ps-normal';
+    }
+  }
+}
+
+// ── 렌더: 예측 박스수 ──
+function renderPrediction() {
+  const totalQty = orderEntries.reduce((s, e) => s + e.qty, 0);
+  const predBoxesEl    = document.getElementById('predBoxes');
+  const predVsTargetEl = document.getElementById('predVsTarget');
+  const predVsUnitEl   = document.getElementById('predVsUnit');
+  const predPerPersonEl= document.getElementById('predPerPerson');
+  const predHintEl     = document.getElementById('predHint');
+
+  if (totalQty <= 0 || histBoxToQtyRatio <= 0) {
+    predBoxesEl.textContent = '—';
+    predVsTargetEl.textContent = '—';
+    predVsTargetEl.style.color = 'var(--muted)';
+    predVsUnitEl.textContent = '';
+    predPerPersonEl.textContent = '—';
+    if (totalQty <= 0) {
+      predHintEl.textContent = '주문 입력 후 자동 계산 (과거 비율 기반)';
+    } else {
+      predHintEl.textContent = '과거 데이터 로딩 중...';
+    }
+    return;
+  }
+
+  const predicted = Math.round(totalQty * histBoxToQtyRatio);
+  predictedBoxes = predicted; // 전역 업데이트 → 진행률/ETA 자동 연동
+  predBoxesEl.textContent = predicted.toLocaleString();
+
+  // 현재 달성률 (현재 박스 / 예측 박스)
+  const curBox = snapHistory.length ? snapHistory[snapHistory.length - 1].box : 0;
+  if (predicted > 0 && curBox > 0) {
+    const achPct = Math.round(curBox / predicted * 100);
+    predVsTargetEl.textContent = achPct;
+    predVsTargetEl.style.color = achPct >= 100 ? 'var(--a3)' : achPct >= 70 ? 'var(--a5)' : 'var(--a6)';
+    predVsUnitEl.textContent = '%';
+  } else {
+    predVsTargetEl.textContent = '—';
+    predVsTargetEl.style.color = 'var(--muted)';
+    predVsUnitEl.textContent = '%';
+  }
+
+  // 인당 예상 (출근 인원 기준)
+  if (presentCount > 0) {
+    predPerPersonEl.textContent = Math.round(predicted / presentCount).toLocaleString();
+    predPerPersonEl.style.color = 'var(--a1)';
+  } else {
+    predPerPersonEl.textContent = '—';
+  }
+
+  const ratioPct = Math.round(histBoxToQtyRatio * 100 * 10) / 10;
+  predHintEl.textContent = `수량 ${totalQty.toLocaleString()}개 × ${ratioPct}% (과거 비율, ${histDayCount}일 평균)`;
+}
+
+// ── 렌더: ETA ──
+function renderEta(curBox) {
+  const elapsed = document.getElementById('etaElapsed');
+  const etaTime = document.getElementById('etaTime');
+  const remain  = document.getElementById('etaRemain');
+
+  // 경과시간 (첫 스냅부터)
+  if (firstSnapTs > 0) {
+    const elMin = Math.round((Date.now() - firstSnapTs) / 60000);
+    elapsed.textContent = elMin;
+  }
+
+  if (!predictedBoxes || predictedBoxes <= 0) {
+    etaTime.textContent = '주문 입력 필요';
+    etaTime.style.fontSize = '11px';
+    remain.textContent = '—';
+    return;
+  }
+
+  const rem = Math.max(predictedBoxes - curBox, 0);
+  remain.textContent = rem.toLocaleString();
+
+  if (rem <= 0) {
+    etaTime.textContent = '완료!';
+    etaTime.style.color = 'var(--a3)';
+    etaTime.style.fontSize = '18px';
+    return;
+  }
+
+  // 페이스 기반 ETA
+  if (snapHistory.length < 2) {
+    etaTime.textContent = '—';
+    return;
+  }
+  const now = Date.now();
+  const windowMs = 30 * 60 * 1000;
+  const recent = snapHistory.filter(s => now - s.ts <= windowMs && !isBreakTime(s.ts));
+  const from = recent[0], to = recent[recent.length - 1];
+  if (!from || from.ts === to.ts) return;
+  const elMin = (to.ts - from.ts) / 60000;
+  const diff = to.box - from.box;
+  if (diff <= 0) { etaTime.textContent = '—'; return; }
+
+  const ratePerMin = diff / elMin;
+  const etaMin = Math.ceil(rem / ratePerMin);
+  const etaDate = new Date(Date.now() + etaMin * 60000);
+  const hh = String(etaDate.getHours()).padStart(2,'0');
+  const mm = String(etaDate.getMinutes()).padStart(2,'0');
+  etaTime.textContent = `${hh}:${mm}`;
+  etaTime.style.fontSize = '20px';
+
+  // 페이스 경고: 작업종료 시간 초과 여부
+  const warnEl = document.getElementById('paceWarn');
+  if (firstSnapTs > 0 && workHours > 0) {
+    const endTs = firstSnapTs + workHours * 3600000;
+    if (etaDate.getTime() > endTs) {
+      const overMin = Math.round((etaDate.getTime() - endTs) / 60000);
+      const endHH = String(new Date(endTs).getHours()).padStart(2,'0');
+      const endMM = String(new Date(endTs).getMinutes()).padStart(2,'0');
+      warnEl.textContent = `⚠️ 현재 속도로 목표 달성 불가\n종료 ${endHH}:${endMM} 기준 ${overMin}분 초과 예상`;
+      warnEl.style.whiteSpace = 'pre';
+      warnEl.classList.add('show');
+      etaTime.style.color = 'var(--a6)';
+    } else {
+      warnEl.classList.remove('show');
+      etaTime.style.color = 'var(--a5)';
+    }
+  }
+}
+
+// ── 렌더: 출근부 ──
+function renderAttendance(d) {
+  const att = d.출근부;
+  const countEl = document.getElementById('attCount');
+  const mainEl  = document.getElementById('attMain');
+  const subEl   = document.getElementById('attSub');
+  const listEl  = document.getElementById('memberList');
+
+  if (!att) {
+    countEl.textContent = '—';
+    mainEl.textContent = '출근 데이터 없음';
+    listEl.innerHTML = '';
+    return;
+  }
+
+  const present = att.presentCount || 0;
+  presentCount = present; // 전역 저장 (예측에 활용)
+
+  // 작업 시작 시간 = 오늘 09:00 고정 (출근 후 준비시간 감안)
+  const members = att.members || [];
+  const today = new Date(); const ymd = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const workStartTs = new Date(`${ymd}T09:00:00`).getTime();
+  if (!firstSnapTs || firstSnapTs < workStartTs) {
+    firstSnapTs = workStartTs; // 9시 기준 고정 (ETA/페이스 계산 기준점)
+  }
+  const offCount = members.filter(m => m.status === 'off' || m.status === '휴무').length;
+
+  countEl.textContent = present;
+  mainEl.textContent = `명 출근 중`;
+  subEl.textContent  = offCount > 0 ? `휴무 ${offCount}명 포함` : '';
+
+  const statusMap = {
+    present:'present', work:'present',
+    late:'late',
+    absent:'absent', early:'absent',
+    off:'off', none:'off',
+    out:'done', done:'done'   // 퇴근
+  };
+  const labelMap = {
+    present:'출근', work:'출근',
+    late:'지각',
+    absent:'조퇴', early:'조퇴',
+    off:'휴무', none:'',
+    out:'퇴근', done:'퇴근'
+  };
+
+  listEl.innerHTML = members.map(m => {
+    const st = statusMap[m.status] || 'off';
+    const lb = labelMap[m.status] || m.status;
+    return `<div class="member-chip mc-${st}">${m.name} <span style="opacity:.6;font-size:9px;">${lb}</span></div>`;
+  }).join('');
+}
+
+// ── 렌더: 주문 현황 ──
+function renderOrders(d) {
+  const el = document.getElementById('orderCard');
+  const log = d.주문로그?.종근당;
+
+  if (!log || !Array.isArray(log) || log.length === 0) {
+    el.innerHTML = '<div class="no-data">오늘 주문 입력 없음</div>';
+    return;
+  }
+
+  const totalQty = log.reduce((s, e) => s + (parseInt(e.qty) || 0), 0);
+  const rows = log.map((e, i) => `
+    <div class="order-row">
+      <span class="or-label">${i+1}차 주문</span>
+      <span>
+        <span class="or-val">${(parseInt(e.qty)||0).toLocaleString()}개</span>
+        <span class="or-time">${e.t || ''}</span>
+      </span>
+    </div>
+  `).join('');
+
+  el.innerHTML = `
+    ${rows}
+    <div class="order-total-row">
+      <span class="ot-label">총 주문수량</span>
+      <span class="ot-val">${totalQty.toLocaleString()}개</span>
+    </div>
+  `;
+}
+
+// ════════════════════════════════
+// 주문 현황 (읽기 전용 - 관리자폰 입력 기준)
+// ════════════════════════════════
+
+// jkg_orders 또는 live.json 주문로그에서 읽어서 표시
+async function loadAndRenderOrders(liveData) {
+  const el = document.getElementById('orderCard');
+  if (!el) return;
+
+  let entries = [];
+  let source = '';
+
+  // 1순위: jkg_orders/{today}.json (관리자폰 저장)
+  if (FB) {
+    try {
+      const res = await fetch(`${FB}/jkg_orders/${todayKey()}.json?t=${Date.now()}`);
+      if (res.ok) {
+        const d = await res.json();
+        if (d?.entries?.length > 0) {
+          entries = d.entries;
+          source = 'jkg_orders';
+        }
+      }
+    } catch {}
+  }
+
+  // 2순위: live.json 주문로그.종근당 (fallback)
+  if (!entries.length && liveData) {
+    const log = liveData?.주문로그?.종근당;
+    if (Array.isArray(log) && log.length > 0) {
+      entries = log.map(e => ({ qty: parseInt(e.qty)||0, t: e.t||'', round: e.round||'' }));
+      source = 'live';
+    }
+  }
+
+  if (!entries.length) {
+    el.innerHTML = '<div class="no-data">오늘 주문 없음 (관리자폰에서 입력)</div>';
+    // 예측 업데이트 (주문 없음)
+    predictedBoxes = 0;
+    renderPrediction();
+    return;
+  }
+
+  const totQty = entries.reduce((s, e) => s + (parseInt(e.qty)||0), 0);
+  const totCount = entries.reduce((s, e) => s + (parseInt(e.count)||0), 0);
+  const JKG_BOX = 18;
+  const estBoxes = Math.round(totQty / JKG_BOX);
+
+  const rows = entries.map((e, i) => {
+    const qty = parseInt(e.qty) || 0;
+    const cnt = parseInt(e.count) || 0;
+    const roundLabel = e.round ? `<span style="font-size:9px;color:rgba(233,30,140,.5);">${e.round}</span>` : `<span style="font-size:9px;color:var(--muted);">${i+1}차</span>`;
+    return `
+    <div class="order-entry-row">
+      <div class="oe-seq">${roundLabel}</div>
+      <div class="oe-vals">
+        ${cnt > 0 ? `<div class="oe-val"><div class="oe-num" style="color:var(--a1);">${cnt}<span style="font-size:10px;color:var(--muted);">건</span></div><div class="oe-lbl">건수</div></div><div style="color:var(--muted);font-size:11px;align-self:center;">·</div>` : ''}
+        <div class="oe-val">
+          <div class="oe-num" style="color:var(--a5);">${qty.toLocaleString()}<span style="font-size:10px;color:var(--muted);">개</span></div>
+          <div class="oe-lbl">지시수량</div>
+        </div>
+        <div class="oe-val" style="margin-left:auto;">
+          <div class="oe-num" style="color:var(--muted);font-size:11px;">${e.t||''}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    ${rows}
+    <div style="display:flex;justify-content:space-between;align-items:center;
+      padding-top:8px;margin-top:4px;border-top:1px solid var(--border);">
+      <span style="font-size:10px;color:var(--muted);">합계 · ≈${estBoxes}박스</span>
+      <span>
+        ${totCount > 0 ? `<span style="font-size:11px;color:var(--a1);margin-right:8px;">${totCount}건</span>` : ''}
+        <span style="font-size:14px;font-weight:900;color:var(--pink);">${totQty.toLocaleString()}개</span>
+      </span>
+    </div>`;
+
+  // 예측 박스수 업데이트
+  predictedBoxes = estBoxes;
+  renderPrediction();
+  renderProgress(currentBox());
+}
+
+// ── 자동 폴링 (30초) ──
+function startPoll() {
+  loadSnapHistory();  // 오늘 스냅 기록 복원 (새로고침 후에도 페이스 유지)
+  loadWorkHours();    // Firebase에서 작업 기준 시간 로드
+  loadHistAvg();      // 과거 30일 평균 박스수 로드
+  fetchLive(false);
+  pollTimer = setInterval(() => fetchLive(false), 30000);
+}
+
+window.addEventListener('load', startPoll);
+window.addEventListener('beforeunload', () => { if(pollTimer) clearInterval(pollTimer); });
+</script>
+</body>
+</html>
