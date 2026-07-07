@@ -1161,7 +1161,7 @@ function goTab(i) {
 }
 
 // ══ API (daya-api.js) ══
-const APP_VERSION_ADM = 'admin-mobile-v1.11';
+const APP_VERSION_ADM = 'admin-mobile-v1.12';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -1545,6 +1545,29 @@ function boxNum(id) {
   return parseInt(document.getElementById(id)?.value, 10) || 0;
 }
 
+function getBoxBaseHolding(name) {
+  const el = document.getElementById(`box_holding_${name}`);
+  return parseInt(el?.dataset.baseHolding || '0', 10) || 0;
+}
+
+function syncBoxHolding(name) {
+  const holdingEl = document.getElementById(`box_holding_${name}`);
+  if (!holdingEl) return;
+  const inbound = boxNum(`box_inbound_${name}`);
+  const outbound = boxNum(`box_outbound_${name}`);
+  const nextHolding = getBoxBaseHolding(name) + inbound - outbound;
+  holdingEl.value = Math.max(0, nextHolding);
+}
+
+function updateBoxHoldingBase(name) {
+  const holdingEl = document.getElementById(`box_holding_${name}`);
+  if (!holdingEl) return;
+  const inbound = boxNum(`box_inbound_${name}`);
+  const outbound = boxNum(`box_outbound_${name}`);
+  const currentHolding = parseInt(holdingEl.value, 10) || 0;
+  holdingEl.dataset.baseHolding = String(currentHolding - inbound + outbound);
+}
+
 function renderBoxCompanyRows() {
   const wrap = document.getElementById('boxCompanyRows');
   if (!wrap) return;
@@ -1566,7 +1589,13 @@ function renderBoxCompanyRows() {
               min="0"
               inputmode="numeric"
               placeholder="0"
-              oninput="updateBoxSummary()"
+              oninput="${
+                key === 'holding'
+                  ? `updateBoxHoldingBase('${name}'); updateBoxSummary();`
+                  : key === 'inbound' || key === 'outbound'
+                    ? `syncBoxHolding('${name}'); updateBoxSummary();`
+                    : `updateBoxSummary();`
+              }"
               style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:17px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:3px 0;"
             >
           </div>
@@ -1580,7 +1609,10 @@ function resetBoxForm() {
   BOX_COMPANIES.forEach(name => {
     ['total', 'holding', 'inbound', 'outbound'].forEach(key => {
       const el = document.getElementById(`box_${key}_${name}`);
-      if (el) el.value = '';
+      if (el) {
+        el.value = '';
+        if (key === 'holding') el.dataset.baseHolding = '0';
+      }
     });
   });
   const status = document.getElementById('boxSaveStatus');
@@ -1592,10 +1624,20 @@ function fillBoxForm(data) {
   const items = data?.items || {};
   BOX_COMPANIES.forEach(name => {
     const item = items[name] || {};
-    ['total', 'holding', 'inbound', 'outbound'].forEach(key => {
-      const el = document.getElementById(`box_${key}_${name}`);
-      if (el) el.value = item[key] ?? '';
-    });
+    const totalEl = document.getElementById(`box_total_${name}`);
+    const holdingEl = document.getElementById(`box_holding_${name}`);
+    const inboundEl = document.getElementById(`box_inbound_${name}`);
+    const outboundEl = document.getElementById(`box_outbound_${name}`);
+    if (totalEl) totalEl.value = item.total ?? '';
+    if (inboundEl) inboundEl.value = item.inbound ?? '';
+    if (outboundEl) outboundEl.value = item.outbound ?? '';
+    if (holdingEl) {
+      const holding = parseInt(item.holding, 10) || 0;
+      const inbound = parseInt(item.inbound, 10) || 0;
+      const outbound = parseInt(item.outbound, 10) || 0;
+      holdingEl.dataset.baseHolding = String(holding - inbound + outbound);
+      holdingEl.value = holding ? String(holding) : (item.holding === 0 ? '0' : '');
+    }
   });
   updateBoxSummary();
 }
@@ -3458,7 +3500,7 @@ async function admCheckVersionNotice() {
       type: 'update',
       version: APP_VERSION_ADM,
       title: `🛠 관리자 모바일 업데이트 (${APP_VERSION_ADM})`,
-      content: `✅ 관리자 모바일 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_ADM})\n\n📌 주요 변경사항\n① 종근당 하이라이트 카드 — 화면 최상단에 종근당 수량·달성률·예측 대비·ETA 표시\n② 공지사항 등록 기능 — 현황탭 하단에서 공지 작성·삭제 가능\n③ 접속 시 미확인 공지 자동 팝업 — 새 공지 있으면 로그인 직후 표시\n④ 리포트 분석 완료 시 결과 자동 공지 등록\n⑤ 예측 정확도 대폭 향상 — 이상치 제거·가중평균·트렌드·주차·월말·백테스트 6단계 반영`,
+      content: `✅ 관리자 모바일 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_ADM})\n\n📌 주요 변경사항\n① 박스탭 전체 입력은 이제 입력값 그대로 저장/표시됩니다.\n② 박스탭 입고 입력 시 보유량에 자동 가산됩니다.\n③ 박스탭 출고 입력 시 보유량에서 자동 차감됩니다.\n④ 관리자 PC 박스현황과 같은 데이터를 공유하도록 연동했습니다.`,
       date: new Date().toISOString().slice(0,10),
       important: false,
       auto: true

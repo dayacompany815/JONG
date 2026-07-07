@@ -781,7 +781,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 <script src="daya-predict.js?v=20250519"></script>
 <script>
 // ══ API (daya-api.js) ══
-const APP_VERSION_PC = 'admin-pc-v2.6.7';
+const APP_VERSION_PC = 'admin-pc-v2.6.8';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -2082,9 +2082,10 @@ function initAdmBoxRealtime(){
 var BOX_COMPANIES=['종근당','국제','삼천당','비씨','대우'];
 var _boxDates=[], _boxCache={}, _boxMode='date', _boxSelKey=null, _boxRangeStart=null, _boxRangeEnd=null, _boxInit=false;
 
-function admBoxNorm(item){ // 전체=보유+입고+출고 (GitHub 자동계산 방식 유지)
+function admBoxNorm(item){ // 신규 데이터는 total 직접입력, 구버전 데이터는 holding+inbound+outbound로 폴백
   const holding=Number(item?.holding||0), inbound=Number(item?.inbound||0), outbound=Number(item?.outbound||0);
-  return {holding,inbound,outbound,total:holding+inbound+outbound};
+  const hasDirectTotal = item && item.total !== undefined && item.total !== null && item.total !== '';
+  return {holding,inbound,outbound,total:hasDirectTotal ? Number(item.total||0) : holding+inbound+outbound};
 }
 async function admFetchBox(key){
   if(!key||!FB_URL) return null;
@@ -2562,7 +2563,7 @@ async function pcCheckVersionNotice() {
       type: 'update',
       version: APP_VERSION_PC,
       title: `💻 관리자 PC 업데이트 (${APP_VERSION_PC})`,
-      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 📦 박스현황 날짜별·기간별 조회 — [날짜별] 탭에서 날짜 선택/◀▶ 이동, [기간별] 탭에서 시작~종료일(또는 최근7일/30일/전체)로 입고·출고 합계·순증감·기말보유를 회사별로 확인.\n② ⚡ 박스현황 실시간(SSE) 자동 갱신 — 작업자 입력 시 새로고침 없이 즉시 반영.\n③ 🐛 날짜 시간대 버그 수정(새벽 시간 '오늘' 박스가 어제로 보이던 문제).\n④ 🔗 NAS·GitHub 코드 통합 — 양쪽이 동일 버전으로 유지됩니다.`,
+      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 모바일 박스탭의 전체 입력값을 그대로 표시하도록 박스현황 집계를 조정했습니다.\n② 모바일 입고/출고에 따라 계산된 보유량이 PC 박스현황에도 동일하게 반영됩니다.\n③ 기존 박스 데이터는 이전 계산 방식으로 자동 호환됩니다.`,
       date: new Date().toISOString().slice(0,10),
       important: false,
       auto: true
