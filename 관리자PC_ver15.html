@@ -310,6 +310,13 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 .pc-dis-name{font-size:12px;font-weight:900;color:var(--text);}
 .pc-dis-col{font-size:10px;color:var(--muted);font-weight:800;text-align:center;}
 .pc-dis-num{font-size:16px;font-weight:900;text-align:center;}
+.pc-dis-tabs{display:flex;gap:4px;}
+.pc-dis-btn{border:none;cursor:pointer;font-size:10px;font-weight:800;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--muted);}
+.pc-dis-btn.active{background:var(--a3);color:#07110b;}
+.pc-dis-controls{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.pc-dis-select{background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 6px;font-size:11px;}
+.pc-dis-day{border-top:1px solid rgba(255,255,255,.08);padding-top:7px;margin-top:5px;}
+.pc-dis-day-title{font-size:10px;color:var(--muted);font-weight:900;margin-bottom:5px;}
 /* ── 공지 상세 모달 (PC) ── */
 .pc-nd-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.82);align-items:center;justify-content:center;padding:30px;}
 .pc-nd-overlay.show{display:flex;}
@@ -366,9 +373,13 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
     <div class="pc-dis-card" id="pcDismantleCard">
       <div class="pc-dis-head">
         <div class="pc-dis-title">🔧 해체 현황</div>
-        <div class="pc-dis-date" id="pcDisDate">오늘</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="pc-dis-tabs" id="pcDisTabs"></div>
+          <div class="pc-dis-date" id="pcDisDate">오늘</div>
+        </div>
       </div>
-      <div class="pc-dis-list" id="pcDisList"><div class="pc-dis-row"><div class="pc-dis-name">불러오는 중</div><div></div><div></div><div></div></div></div>
+      <div id="pcDisControls" class="pc-dis-controls"></div>
+      <div class="pc-dis-list" id="pcDisContent"><div class="pc-dis-row"><div class="pc-dis-name">불러오는 중</div><div></div><div></div><div></div></div></div>
     </div>
   </div>
 
@@ -805,7 +816,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 <script src="daya-predict.js?v=20250519"></script>
 <script>
 // ══ API (daya-api.js) ══
-const APP_VERSION_PC = 'admin-pc-v2.7.4';
+const APP_VERSION_PC = 'admin-pc-v2.7.5';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -900,6 +911,7 @@ function setOffline(msg) {
 const NAS_URL = 'https://dayawork.gumpmelong.workers.dev';
 
 const PC_DISMANTLE_COMPANIES = ['종근당', '국제', '삼천당', '비씨', '대우'];
+let pcDisDates = [], pcDisCache = {}, pcDisMode = 'date', pcDisSelKey = null, pcDisRangeStart = null, pcDisRangeEnd = null, pcDisInit = false;
 
 function pcTodayKey() {
   const d = new Date();
@@ -911,23 +923,47 @@ function pcSetDismantleText(id, value) {
   if (el) el.textContent = value;
 }
 
-function pcRenderDismantleCard(data, dateKey) {
-  const card = document.getElementById('pcDismantleCard');
-  if (!card) return;
-  pcSetDismantleText('pcDisDate', dateKey || pcTodayKey());
-  const items = data?.items || {};
-  const list = document.getElementById('pcDisList');
-  if (!list) return;
-  if (!data) {
-    list.innerHTML = '<div class="pc-dis-row"><div class="pc-dis-name">오늘 입력 없음</div><div class="pc-dis-num" style="color:var(--a1);">0</div><div class="pc-dis-num" style="color:var(--a3);">0</div><div class="pc-dis-num" style="color:var(--a5);">0</div></div>';
-    return;
+function pcMergeDateLists() {
+  const all = new Set();
+  Array.from(arguments).forEach(src => {
+    if (Array.isArray(src)) src.forEach(v => { if (typeof v === 'string') all.add(v); });
+    else if (src && typeof src === 'object') Object.keys(src).forEach(v => all.add(v));
+  });
+  return Array.from(all).sort().reverse();
+}
+
+async function pcFetchDismantleDateKeys() {
+  const tasks = [
+    fetch(`${FB_URL}/dismantle_history?t=${Date.now()}`).then(r => r.ok ? r.json() : null).catch(() => null)
+  ];
+  if (window.FB_BACKUP) {
+    tasks.push(fetch(`${window.FB_BACKUP}/dismantle_history.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null).catch(() => null));
   }
+  const res = await Promise.all(tasks);
+  return pcMergeDateLists.apply(null, res);
+}
+
+async function pcFetchDismantle(key) {
+  if (!key || !FB_URL) return null;
+  if (pcDisCache[key] !== undefined) return pcDisCache[key];
+  const d = typeof dayaFetchLatestJson === 'function'
+    ? await dayaFetchLatestJson(`/dismantle_history/${key}.json`)
+    : await fetch(`${FB_URL}/dismantle_history/${key}.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null).catch(() => null);
+  pcDisCache[key] = d;
+  return d;
+}
+
+function pcDisNum(item, key) {
+  return Number((item || {})[key] || 0);
+}
+
+function pcDisCompanyRows(items) {
   const header = '<div class="pc-dis-row hdr"><div></div><div class="pc-dis-col">입고</div><div class="pc-dis-col">해체</div><div class="pc-dis-col">대기</div></div>';
   const rows = PC_DISMANTLE_COMPANIES.map(name => {
     const item = items[name] || {};
-    const pending = Number(item.pending || 0);
-    const inbound = Number(item.inbound || 0);
-    const done = Number(item.dismantled || 0);
+    const inbound = pcDisNum(item, 'inbound');
+    const done = pcDisNum(item, 'dismantled');
+    const pending = pcDisNum(item, 'pending');
     return `<div class="pc-dis-row">
       <div class="pc-dis-name">${name}</div>
       <div class="pc-dis-num" style="color:var(--a1);">${inbound}</div>
@@ -935,19 +971,191 @@ function pcRenderDismantleCard(data, dateKey) {
       <div class="pc-dis-num" style="color:var(--a5);">${pending}</div>
     </div>`;
   }).join('');
-  list.innerHTML = header + rows;
+  return header + rows;
+}
+
+function pcRenderDismantleTabs() {
+  const el = document.getElementById('pcDisTabs');
+  if (!el) return;
+  const btn = (m, label) => `<button class="pc-dis-btn ${pcDisMode === m ? 'active' : ''}" onclick="pcDisSetMode('${m}')">${label}</button>`;
+  el.innerHTML = btn('date', '날짜별') + btn('period', '기간별');
+}
+
+function pcRenderDismantleControls() {
+  const el = document.getElementById('pcDisControls');
+  if (!el) return;
+  const opts = sel => pcDisDates.map(k => `<option value="${k}"${k === sel ? ' selected' : ''}>${k}</option>`).join('');
+  const btn = (onclick, label, cls = '') => `<button class="pc-dis-btn ${cls}" onclick="${onclick}">${label}</button>`;
+  const toolbar = `${btn('pcDisExport()','엑셀')}${btn('pcDisPrint()','인쇄')}`;
+  if (pcDisMode === 'date') {
+    el.innerHTML = `
+      ${btn('pcDisNav(1)','◀')}
+      <select class="pc-dis-select" onchange="pcDisSelectDate(this.value)">${opts(pcDisSelKey)}</select>
+      ${btn('pcDisNav(-1)','▶')}
+      ${toolbar}`;
+  } else {
+    el.innerHTML = `
+      <select class="pc-dis-select" onchange="pcDisRangeChange('start',this.value)">${opts(pcDisRangeStart)}</select>
+      <span style="color:var(--muted);font-size:11px;align-self:center;">~</span>
+      <select class="pc-dis-select" onchange="pcDisRangeChange('end',this.value)">${opts(pcDisRangeEnd)}</select>
+      ${btn('pcDisPreset(7)','7일')}
+      ${btn('pcDisPreset(30)','30일')}
+      ${toolbar}`;
+  }
+}
+
+async function pcRenderDismantleBody() {
+  const el = document.getElementById('pcDisContent');
+  if (!el) return;
+  if (pcDisMode === 'date') {
+    const key = pcDisSelKey || pcTodayKey();
+    const data = await pcFetchDismantle(key);
+    pcSetDismantleText('pcDisDate', key);
+    el.innerHTML = data?.items
+      ? pcDisCompanyRows(data.items)
+      : '<div class="pc-dis-row"><div class="pc-dis-name">입력 없음</div><div class="pc-dis-num" style="color:var(--a1);">0</div><div class="pc-dis-num" style="color:var(--a3);">0</div><div class="pc-dis-num" style="color:var(--a5);">0</div></div>';
+    return;
+  }
+  let s = pcDisRangeStart, e = pcDisRangeEnd;
+  if (s > e) { const t = s; s = e; e = t; }
+  const keys = pcDisDates.filter(k => k >= s && k <= e);
+  pcSetDismantleText('pcDisDate', `${s} ~ ${e}`);
+  if (!keys.length) {
+    el.innerHTML = '<div class="pc-dis-row"><div class="pc-dis-name">기간 데이터 없음</div><div></div><div></div><div></div></div>';
+    return;
+  }
+  const datas = await Promise.all(keys.map(k => pcFetchDismantle(k)));
+  el.innerHTML = keys.map((k, i) => {
+    const data = datas[i];
+    return `<div class="pc-dis-day"><div class="pc-dis-day-title">${k}</div>${pcDisCompanyRows(data?.items || {})}</div>`;
+  }).join('');
 }
 
 async function pcLoadDismantleCard() {
   if (!FB_URL) return;
-  const dk = pcTodayKey();
   try {
-    const data = typeof dayaFetchLatestJson === 'function'
-      ? await dayaFetchLatestJson(`/dismantle_history/${dk}.json`)
-      : await fetch(`${FB_URL}/dismantle_history/${dk}.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null).catch(() => null);
-    pcRenderDismantleCard(data, dk);
+    const today = pcTodayKey();
+    const dates = await pcFetchDismantleDateKeys();
+    if (!dates.includes(today)) dates.unshift(today);
+    pcDisDates = dates;
+    pcDisCache = {};
+    if (!pcDisInit) {
+      pcDisInit = true;
+      pcDisSelKey = today;
+      pcDisRangeEnd = pcDisDates[0];
+      pcDisRangeStart = pcDisDates[Math.min(pcDisDates.length - 1, 6)];
+    }
+    if (!pcDisDates.includes(pcDisSelKey)) pcDisSelKey = today;
+    if (!pcDisDates.includes(pcDisRangeEnd)) pcDisRangeEnd = pcDisDates[0];
+    if (!pcDisDates.includes(pcDisRangeStart)) pcDisRangeStart = pcDisDates[Math.min(pcDisDates.length - 1, 6)];
+    pcRenderDismantleTabs();
+    pcRenderDismantleControls();
+    await pcRenderDismantleBody();
   } catch(e) {
-    pcRenderDismantleCard(null, dk);
+    const el = document.getElementById('pcDisContent');
+    if (el) el.innerHTML = '<div class="pc-dis-row"><div class="pc-dis-name">해체 조회 실패</div><div></div><div></div><div></div></div>';
+  }
+}
+
+function pcDisSetMode(mode) { pcDisMode = mode; pcRenderDismantleTabs(); pcRenderDismantleControls(); pcRenderDismantleBody(); }
+function pcDisSelectDate(key) { pcDisSelKey = key; pcRenderDismantleBody(); }
+function pcDisNav(dir) {
+  const i = pcDisDates.indexOf(pcDisSelKey);
+  const ni = Math.max(0, Math.min(pcDisDates.length - 1, i + (dir > 0 ? 1 : -1)));
+  pcDisSelKey = pcDisDates[ni];
+  pcRenderDismantleControls();
+  pcRenderDismantleBody();
+}
+
+function pcDisRangeChange(which, value) {
+  if (which === 'start') pcDisRangeStart = value;
+  else pcDisRangeEnd = value;
+  pcRenderDismantleBody();
+}
+
+function pcDisPreset(days) {
+  pcDisRangeEnd = pcDisDates[0];
+  pcDisRangeStart = pcDisDates[Math.min(pcDisDates.length - 1, days - 1)];
+  pcRenderDismantleControls();
+  pcRenderDismantleBody();
+}
+
+async function pcDisGatherTable() {
+  if (pcDisMode === 'date') {
+    const key = pcDisSelKey || pcTodayKey();
+    const d = await pcFetchDismantle(key);
+    return {
+      title: `해체현황 ${key}`,
+      fname: `해체현황_${key}`,
+      headers: ['제약사', '입고', '해체', '해체대기'],
+      rows: PC_DISMANTLE_COMPANIES.map(name => {
+        const item = d?.items?.[name] || {};
+        return [name, pcDisNum(item, 'inbound'), pcDisNum(item, 'dismantled'), pcDisNum(item, 'pending')];
+      })
+    };
+  }
+  let s = pcDisRangeStart, e = pcDisRangeEnd;
+  if (s > e) { const t = s; s = e; e = t; }
+  const keys = pcDisDates.filter(k => k >= s && k <= e);
+  const datas = await Promise.all(keys.map(k => pcFetchDismantle(k)));
+  const rows = [];
+  keys.forEach((k, i) => {
+    PC_DISMANTLE_COMPANIES.forEach(name => {
+      const item = datas[i]?.items?.[name] || {};
+      rows.push([k, name, pcDisNum(item, 'inbound'), pcDisNum(item, 'dismantled'), pcDisNum(item, 'pending')]);
+    });
+  });
+  return { title: `해체현황 ${s} ~ ${e}`, fname: `해체현황_${s}_${e}`, headers: ['날짜', '제약사', '입고', '해체', '해체대기'], rows };
+}
+
+function pcDisEsc(v) {
+  return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function pcDisExport() {
+  try {
+    const t = await pcDisGatherTable();
+    const thead = '<tr>' + t.headers.map(h => `<th style="background:#e8e8e8;border:1px solid #999;padding:5px 10px;">${pcDisEsc(h)}</th>`).join('') + '</tr>';
+    const tbody = t.rows.map(r => '<tr>' + r.map((c, idx) => `<td style="border:1px solid #999;padding:5px 10px;${idx >= t.headers.length - 3 ? 'mso-number-format:\\#\\,\\#\\#0;text-align:right;' : ''}">${pcDisEsc(c)}</td>`).join('') + '</tr>').join('');
+    const html = `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body><h3>${pcDisEsc(t.title)}</h3><table>${thead}${tbody}</table></body></html>`;
+    const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = t.fname + '.xls';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  } catch(e) {
+    alert('해체 엑셀 내보내기 오류: ' + ((e && e.message) || e));
+  }
+}
+
+async function pcDisPrint() {
+  try {
+    const t = await pcDisGatherTable();
+    const thead = '<tr>' + t.headers.map(h => `<th>${pcDisEsc(h)}</th>`).join('') + '</tr>';
+    const tbody = t.rows.map(r => '<tr>' + r.map((c, idx) => `<td class="${idx >= t.headers.length - 3 ? 'num' : ''}">${pcDisEsc(typeof c === 'number' ? c.toLocaleString() : c)}</td>`).join('') + '</tr>').join('');
+    const w = window.open('', '_blank', 'width=900,height=700');
+    if (!w) { alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.'); return; }
+    w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${pcDisEsc(t.title)}</title>
+<style>
+  @page{ size:A4 portrait; margin:16mm; }
+  body{ font-family:'Malgun Gothic','맑은 고딕',AppleGothic,sans-serif; color:#111; margin:0; }
+  h1{ font-size:19px; margin:0 0 4px; }
+  .sub{ font-size:11px; color:#555; margin-bottom:14px; }
+  table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  th,td{ border:1px solid #555; padding:6px 9px; }
+  th{ background:#e8e8e8; }
+  td.num{ text-align:right; font-variant-numeric:tabular-nums; }
+</style></head><body>
+  <h1>해체현황</h1>
+  <div class="sub">${pcDisEsc(t.title)} · 출력 ${new Date().toLocaleString('ko-KR')}</div>
+  <table>${thead}${tbody}</table>
+  <scr`+`ipt>window.onload=function(){ setTimeout(function(){ window.focus(); window.print(); }, 200); };<\/scr`+`ipt>
+</body></html>`);
+    w.document.close();
+  } catch(e) {
+    alert('해체 인쇄 오류: ' + ((e && e.message) || e));
   }
 }
 
@@ -2686,7 +2894,7 @@ async function pcCheckVersionNotice() {
       type: 'update',
       version: APP_VERSION_PC,
       title: `💻 관리자 PC 업데이트 (${APP_VERSION_PC})`,
-      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 모바일 박스탭의 전체 입력값을 그대로 표시하도록 박스현황 집계를 조정했습니다.\n② 모바일 입고/출고에 따라 계산된 보유량이 PC 박스현황에도 동일하게 반영됩니다.\n③ 기존 박스 데이터는 이전 계산 방식으로 자동 호환됩니다.\n④ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑤ 박스현황 실시간 감지를 보강해 모바일 저장 후 PC 반영 속도를 개선했습니다.\n⑥ 박스현황 조회 시 NAS/Firebase 중 더 최신 데이터를 우선 사용합니다.\n⑦ 전체수량 대비 보유수량 비율을 박스현황에 표시합니다.\n⑧ 상단 주문량 예측 영역 오른쪽에 모바일 해체탭 입력값을 제약사별로 표시합니다.`,
+      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 모바일 박스탭의 전체 입력값을 그대로 표시하도록 박스현황 집계를 조정했습니다.\n② 모바일 입고/출고에 따라 계산된 보유량이 PC 박스현황에도 동일하게 반영됩니다.\n③ 기존 박스 데이터는 이전 계산 방식으로 자동 호환됩니다.\n④ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑤ 박스현황 실시간 감지를 보강해 모바일 저장 후 PC 반영 속도를 개선했습니다.\n⑥ 박스현황 조회 시 NAS/Firebase 중 더 최신 데이터를 우선 사용합니다.\n⑦ 전체수량 대비 보유수량 비율을 박스현황에 표시합니다.\n⑧ 상단 주문량 예측 영역 오른쪽에 모바일 해체탭 입력값을 제약사별로 표시합니다.\n⑨ 해체현황 날짜별·기간별 조회와 엑셀·인쇄 기능을 추가했습니다.`,
       date: new Date().toISOString().slice(0,10),
       important: false,
       auto: true
