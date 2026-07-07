@@ -304,13 +304,12 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 .pc-dis-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
 .pc-dis-title{font-size:12px;font-weight:900;color:var(--a3);letter-spacing:.3px;}
 .pc-dis-date{font-size:10px;color:var(--muted);font-weight:700;}
-.pc-dis-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:9px;}
-.pc-dis-kpi{background:rgba(0,0,0,.18);border-radius:8px;padding:8px;text-align:center;}
-.pc-dis-lbl{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;}
-.pc-dis-val{font-size:24px;font-weight:900;line-height:1;}
-.pc-dis-list{display:flex;gap:5px;flex-wrap:wrap;}
-.pc-dis-chip{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:5px 7px;font-size:10px;color:var(--muted);}
-.pc-dis-chip strong{color:var(--text);font-size:11px;}
+.pc-dis-list{display:flex;flex-direction:column;gap:6px;}
+.pc-dis-row{display:grid;grid-template-columns:72px repeat(3,1fr);gap:6px;align-items:center;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:7px 8px;}
+.pc-dis-row.hdr{background:transparent;border:none;padding:0 8px 2px;}
+.pc-dis-name{font-size:12px;font-weight:900;color:var(--text);}
+.pc-dis-col{font-size:10px;color:var(--muted);font-weight:800;text-align:center;}
+.pc-dis-num{font-size:16px;font-weight:900;text-align:center;}
 /* ── 공지 상세 모달 (PC) ── */
 .pc-nd-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.82);align-items:center;justify-content:center;padding:30px;}
 .pc-nd-overlay.show{display:flex;}
@@ -369,21 +368,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
         <div class="pc-dis-title">🔧 해체 현황</div>
         <div class="pc-dis-date" id="pcDisDate">오늘</div>
       </div>
-      <div class="pc-dis-summary">
-        <div class="pc-dis-kpi">
-          <div class="pc-dis-lbl">입고</div>
-          <div class="pc-dis-val" style="color:var(--a1);" id="pcDisInbound">—</div>
-        </div>
-        <div class="pc-dis-kpi">
-          <div class="pc-dis-lbl">해체</div>
-          <div class="pc-dis-val" style="color:var(--a3);" id="pcDisDone">—</div>
-        </div>
-        <div class="pc-dis-kpi">
-          <div class="pc-dis-lbl">대기</div>
-          <div class="pc-dis-val" style="color:var(--a5);" id="pcDisPending">—</div>
-        </div>
-      </div>
-      <div class="pc-dis-list" id="pcDisList"><span class="pc-dis-chip">불러오는 중</span></div>
+      <div class="pc-dis-list" id="pcDisList"><div class="pc-dis-row"><div class="pc-dis-name">불러오는 중</div><div></div><div></div><div></div></div></div>
     </div>
   </div>
 
@@ -820,7 +805,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 <script src="daya-predict.js?v=20250519"></script>
 <script>
 // ══ API (daya-api.js) ══
-const APP_VERSION_PC = 'admin-pc-v2.7.3';
+const APP_VERSION_PC = 'admin-pc-v2.7.4';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -931,29 +916,26 @@ function pcRenderDismantleCard(data, dateKey) {
   if (!card) return;
   pcSetDismantleText('pcDisDate', dateKey || pcTodayKey());
   const items = data?.items || {};
-  const summary = data?.summary || PC_DISMANTLE_COMPANIES.reduce((acc, name) => {
-    const item = items[name] || {};
-    acc.inbound += Number(item.inbound || 0);
-    acc.dismantled += Number(item.dismantled || 0);
-    acc.pending += Number(item.pending || 0);
-    return acc;
-  }, { inbound: 0, dismantled: 0, pending: 0 });
-  pcSetDismantleText('pcDisInbound', Number(summary.inbound || 0));
-  pcSetDismantleText('pcDisDone', Number(summary.dismantled || 0));
-  pcSetDismantleText('pcDisPending', Number(summary.pending || 0));
   const list = document.getElementById('pcDisList');
   if (!list) return;
   if (!data) {
-    list.innerHTML = '<span class="pc-dis-chip">오늘 해체 입력 없음</span>';
+    list.innerHTML = '<div class="pc-dis-row"><div class="pc-dis-name">오늘 입력 없음</div><div class="pc-dis-num" style="color:var(--a1);">0</div><div class="pc-dis-num" style="color:var(--a3);">0</div><div class="pc-dis-num" style="color:var(--a5);">0</div></div>';
     return;
   }
-  list.innerHTML = PC_DISMANTLE_COMPANIES.map(name => {
+  const header = '<div class="pc-dis-row hdr"><div></div><div class="pc-dis-col">입고</div><div class="pc-dis-col">해체</div><div class="pc-dis-col">대기</div></div>';
+  const rows = PC_DISMANTLE_COMPANIES.map(name => {
     const item = items[name] || {};
     const pending = Number(item.pending || 0);
     const inbound = Number(item.inbound || 0);
     const done = Number(item.dismantled || 0);
-    return `<span class="pc-dis-chip">${name} <strong>${pending}</strong> 대기 <span style="opacity:.65;">입${inbound}/해${done}</span></span>`;
+    return `<div class="pc-dis-row">
+      <div class="pc-dis-name">${name}</div>
+      <div class="pc-dis-num" style="color:var(--a1);">${inbound}</div>
+      <div class="pc-dis-num" style="color:var(--a3);">${done}</div>
+      <div class="pc-dis-num" style="color:var(--a5);">${pending}</div>
+    </div>`;
   }).join('');
+  list.innerHTML = header + rows;
 }
 
 async function pcLoadDismantleCard() {
@@ -2704,7 +2686,7 @@ async function pcCheckVersionNotice() {
       type: 'update',
       version: APP_VERSION_PC,
       title: `💻 관리자 PC 업데이트 (${APP_VERSION_PC})`,
-      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 모바일 박스탭의 전체 입력값을 그대로 표시하도록 박스현황 집계를 조정했습니다.\n② 모바일 입고/출고에 따라 계산된 보유량이 PC 박스현황에도 동일하게 반영됩니다.\n③ 기존 박스 데이터는 이전 계산 방식으로 자동 호환됩니다.\n④ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑤ 박스현황 실시간 감지를 보강해 모바일 저장 후 PC 반영 속도를 개선했습니다.\n⑥ 박스현황 조회 시 NAS/Firebase 중 더 최신 데이터를 우선 사용합니다.\n⑦ 전체수량 대비 보유수량 비율을 박스현황에 표시합니다.\n⑧ 상단 주문량 예측 영역 오른쪽에 모바일 해체탭 입력값을 표시합니다.`,
+      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 모바일 박스탭의 전체 입력값을 그대로 표시하도록 박스현황 집계를 조정했습니다.\n② 모바일 입고/출고에 따라 계산된 보유량이 PC 박스현황에도 동일하게 반영됩니다.\n③ 기존 박스 데이터는 이전 계산 방식으로 자동 호환됩니다.\n④ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑤ 박스현황 실시간 감지를 보강해 모바일 저장 후 PC 반영 속도를 개선했습니다.\n⑥ 박스현황 조회 시 NAS/Firebase 중 더 최신 데이터를 우선 사용합니다.\n⑦ 전체수량 대비 보유수량 비율을 박스현황에 표시합니다.\n⑧ 상단 주문량 예측 영역 오른쪽에 모바일 해체탭 입력값을 제약사별로 표시합니다.`,
       date: new Date().toISOString().slice(0,10),
       important: false,
       auto: true
