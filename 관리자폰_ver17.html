@@ -63,7 +63,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
 
 /* ── 페이지 슬라이더 ── */
 .pages-outer{overflow:hidden;width:100%;}
-.pages-slider{display:flex;width:600vw;transition:transform .32s cubic-bezier(.4,0,.2,1);}
+.pages-slider{display:flex;width:700vw;transition:transform .32s cubic-bezier(.4,0,.2,1);}
 .page{width:100vw;min-width:100vw;padding-bottom:80px;}
 .page-inner{padding:10px;display:flex;flex-direction:column;gap:10px;}
 
@@ -457,7 +457,8 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
   <button class="tab-btn" onclick="goTab(2)"><div class="tab-icon">👷</div><div class="tab-label">출근부</div></button>
   <button class="tab-btn" onclick="goTab(3)" style="position:relative;"><div class="tab-icon">📋</div><div class="tab-label">주문/지시</div><div id="orderTabBadge" style="display:none;position:absolute;top:6px;right:8px;background:#e91e8c;color:#fff;border-radius:10px;font-size:9px;font-weight:900;padding:1px 5px;"></div></button>
   <button class="tab-btn" onclick="goTab(4)"><div class="tab-icon">📦</div><div class="tab-label">박스</div></button>
-  <button class="tab-btn" onclick="goTab(5)"><div class="tab-icon">📜</div><div class="tab-label">이력</div></button>
+  <button class="tab-btn" onclick="goTab(5)"><div class="tab-icon">🔧</div><div class="tab-label">해체</div></button>
+  <button class="tab-btn" onclick="goTab(6)"><div class="tab-icon">📜</div><div class="tab-label">이력</div></button>
   <a href="리포트_ver1.html" class="tab-btn" style="text-decoration:none;"><div class="tab-icon">📈</div><div class="tab-label">리포트</div></a>
   <a href="설정관리_ver1.html" class="tab-btn" style="text-decoration:none;"><div class="tab-icon">⚙️</div><div class="tab-label">설정</div></a>
 </div>
@@ -1078,7 +1079,42 @@ html,body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR','App
   </div>
   </div>
 
-  <!-- ⑥ 이력 페이지 -->
+  <!-- ⑥ 해체 페이지 -->
+  <div class="page">
+  <div class="page-inner">
+    <div class="card c-green">
+      <div class="panel-title">🔧 제약사별 해체 현황</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;">
+        날짜별로 각 제약사 입고, 해체, 해체대기 수량을 저장합니다.
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--muted);font-weight:700;">날짜</div>
+        <input type="date" id="dismantleDate" style="flex:1;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
+        <button onclick="loadDismantleHistory()" style="background:rgba(63,185,80,.15);border:1px solid rgba(63,185,80,.4);color:var(--a3);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">조회</button>
+      </div>
+      <div id="dismantleSummary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;"></div>
+    </div>
+
+    <div class="card c-yellow">
+      <div class="panel-title">📝 입력</div>
+      <div id="dismantleCompanyRows"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button onclick="saveDismantleHistory()" style="flex:1;background:linear-gradient(135deg,var(--a3),#16a34a);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">💾 저장</button>
+        <button onclick="resetDismantleForm()" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:var(--text);border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">초기화</button>
+      </div>
+      <div id="dismantleSaveStatus" style="margin-top:8px;font-size:11px;text-align:center;color:var(--muted);min-height:16px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="panel-title">📚 최근 기록</div>
+      <div id="dismantleRecentList" style="display:flex;flex-direction:column;gap:7px;">
+        <div class="jb-empty">기록을 불러오는 중...</div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ⑦ 이력 페이지 -->
   <div class="page">
   <div class="page-inner" style="padding-bottom:80px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin:12px 6px 8px;">
@@ -1160,11 +1196,12 @@ function goTab(i) {
   if (i === 2) setTimeout(() => initAttendanceTab(), 80);
   if (i === 3) setTimeout(() => { initOrderTab(); initInstrTab(); }, 80);
   if (i === 4) setTimeout(() => initBoxTab(), 80);
-  if (i === 5) setTimeout(() => loadHistoryTable(), 80);
+  if (i === 5) setTimeout(() => initDismantleTab(), 80);
+  if (i === 6) setTimeout(() => loadHistoryTable(), 80);
 }
 
 // ══ API (daya-api.js) ══
-const APP_VERSION_ADM = 'admin-mobile-v1.18';
+const APP_VERSION_ADM = 'admin-mobile-v1.19';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -1879,6 +1916,235 @@ function initBoxTab() {
   updateBoxSummary();
   loadBoxHistory();
   loadBoxRecentList();
+}
+
+// ══ 해체 현황 ══
+const DISMANTLE_COMPANIES = ['종근당', '국제', '삼천당', '비씨', '대우'];
+
+function dismantleTodayKey() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function dismantleNum(id) {
+  return parseInt(document.getElementById(id)?.value, 10) || 0;
+}
+
+function renderDismantleCompanyRows() {
+  const wrap = document.getElementById('dismantleCompanyRows');
+  if (!wrap) return;
+  wrap.innerHTML = DISMANTLE_COMPANIES.map((name, idx) => `
+    <div style="background:var(--card2);border-radius:12px;padding:10px 10px 12px;margin-bottom:8px;border-left:3px solid ${idx===0 ? 'var(--a6)' : 'var(--a3)'};">
+      <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px;">${name}</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+        ${[
+          ['inbound', '입고'],
+          ['dismantled', '해체'],
+          ['pending', '해체대기'],
+        ].map(([key, label]) => `
+          <div style="background:rgba(0,0,0,.16);border-radius:8px;padding:7px 6px;">
+            <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;text-align:center;">${label}</div>
+            <input
+              id="dismantle_${key}_${name}"
+              type="number"
+              min="0"
+              inputmode="numeric"
+              placeholder="0"
+              oninput="updateDismantleSummary()"
+              style="width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--border);color:var(--text);font-size:17px;font-weight:900;font-family:inherit;outline:none;text-align:center;padding:3px 0;"
+            >
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function resetDismantleForm() {
+  DISMANTLE_COMPANIES.forEach(name => {
+    ['inbound', 'dismantled', 'pending'].forEach(key => {
+      const el = document.getElementById(`dismantle_${key}_${name}`);
+      if (el) el.value = '';
+    });
+  });
+  const status = document.getElementById('dismantleSaveStatus');
+  if (status) status.textContent = '';
+  updateDismantleSummary();
+}
+
+function fillDismantleForm(data) {
+  const items = data?.items || {};
+  DISMANTLE_COMPANIES.forEach(name => {
+    const item = items[name] || {};
+    ['inbound', 'dismantled', 'pending'].forEach(key => {
+      const el = document.getElementById(`dismantle_${key}_${name}`);
+      if (el) el.value = item[key] ?? '';
+    });
+  });
+  updateDismantleSummary();
+}
+
+function collectDismantlePayload() {
+  const items = {};
+  DISMANTLE_COMPANIES.forEach(name => {
+    items[name] = {
+      inbound: dismantleNum(`dismantle_inbound_${name}`),
+      dismantled: dismantleNum(`dismantle_dismantled_${name}`),
+      pending: dismantleNum(`dismantle_pending_${name}`)
+    };
+  });
+  const summary = DISMANTLE_COMPANIES.reduce((acc, name) => {
+    const item = items[name];
+    acc.inbound += item.inbound;
+    acc.dismantled += item.dismantled;
+    acc.pending += item.pending;
+    return acc;
+  }, { inbound:0, dismantled:0, pending:0 });
+  return {
+    date: document.getElementById('dismantleDate')?.value || dismantleTodayKey(),
+    items,
+    summary,
+    updatedAt: new Date().toLocaleString('ko-KR'),
+    savedAt: Date.now()
+  };
+}
+
+function normalizeDismantleItems(items) {
+  const out = {};
+  DISMANTLE_COMPANIES.forEach(name => {
+    const item = items?.[name] || {};
+    out[name] = {
+      inbound: Number(item.inbound || 0),
+      dismantled: Number(item.dismantled || 0),
+      pending: Number(item.pending || 0)
+    };
+  });
+  return out;
+}
+
+function updateDismantleSummary() {
+  const el = document.getElementById('dismantleSummary');
+  if (!el) return;
+  const s = collectDismantlePayload().summary;
+  el.innerHTML = `
+    <div style="background:var(--card2);border-radius:10px;padding:10px;text-align:center;">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;">입고 합계</div>
+      <div style="font-size:21px;font-weight:900;color:var(--a1);">${s.inbound}</div>
+    </div>
+    <div style="background:var(--card2);border-radius:10px;padding:10px;text-align:center;">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;">해체 합계</div>
+      <div style="font-size:21px;font-weight:900;color:var(--a3);">${s.dismantled}</div>
+    </div>
+    <div style="background:var(--card2);border-radius:10px;padding:10px;text-align:center;">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;">대기 합계</div>
+      <div style="font-size:21px;font-weight:900;color:var(--a5);">${s.pending}</div>
+    </div>
+  `;
+}
+
+async function fetchDismantleDateKeys() {
+  const tasks = [
+    fetch(`${FB_URL}/dismantle_history?t=${Date.now()}`).then(r => r.ok ? r.json() : null).catch(() => null)
+  ];
+  if (FB_BACKUP) {
+    tasks.push(fetch(`${FB_BACKUP}/dismantle_history.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null).catch(() => null));
+  }
+  const results = await Promise.all(tasks);
+  return mergeBoxDateLists.apply(null, results);
+}
+
+async function loadDismantleHistory() {
+  if (!FB_URL) return;
+  const dk = document.getElementById('dismantleDate')?.value || dismantleTodayKey();
+  const status = document.getElementById('dismantleSaveStatus');
+  try {
+    const data = typeof dayaFetchLatestJson === 'function'
+      ? await dayaFetchLatestJson(`/dismantle_history/${dk}.json`)
+      : await fetch(`${FB_URL}/dismantle_history/${dk}.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null);
+    if (data) {
+      fillDismantleForm(data);
+      if (status) status.textContent = `${dk} 기록을 불러왔습니다.`;
+    } else {
+      resetDismantleForm();
+      if (status) status.textContent = `${dk} 기록이 없습니다.`;
+    }
+  } catch(e) {
+    resetDismantleForm();
+    if (status) status.textContent = `${dk} 기록을 불러오지 못했습니다.`;
+  }
+}
+
+async function saveDismantleHistory() {
+  if (_TM) { showToast('🧪 테스트 모드 — 해체 저장 차단'); return; }
+  if (!FB_URL) { showToast('❌ 연결 설정이 없습니다'); return; }
+  const payload = collectDismantlePayload();
+  const status = document.getElementById('dismantleSaveStatus');
+  try {
+    if (typeof dayaPutJson === 'function') {
+      await dayaPutJson(`/dismantle_history/${payload.date}.json`, payload);
+    } else {
+      const res = await fetch(`${FB_URL}/dismantle_history/${payload.date}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(String(res.status));
+    }
+    let verifyState = 'ok';
+    try {
+      const verify = typeof dayaFetchLatestJson === 'function'
+        ? await dayaFetchLatestJson(`/dismantle_history/${payload.date}.json`)
+        : await fetch(`${FB_URL}/dismantle_history/${payload.date}.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null);
+      const saved = JSON.stringify(normalizeDismantleItems(verify?.items));
+      const sent = JSON.stringify(normalizeDismantleItems(payload.items));
+      if (verify && saved === sent) fillDismantleForm(verify);
+      else verifyState = verify ? 'mismatch' : 'delay';
+    } catch(e) {
+      verifyState = 'delay';
+    }
+    if (status) status.textContent =
+      verifyState === 'ok'
+        ? `${payload.date} 저장 완료 · 서버 반영 확인`
+        : `${payload.date} 저장 완료 · 서버 확인 지연`;
+    showToast(verifyState === 'ok' ? '✅ 해체 현황 저장 완료' : '✅ 저장 완료 (서버 확인 지연)');
+    await loadDismantleRecentList();
+  } catch(e) {
+    if (status) status.textContent = `저장 실패: ${e.message}`;
+    showToast(`❌ 해체 현황 저장 실패: ${e.message}`);
+  }
+}
+
+async function loadDismantleRecentList() {
+  const el = document.getElementById('dismantleRecentList');
+  if (!el || !FB_URL) return;
+  try {
+    const dates = await fetchDismantleDateKeys();
+    if (!Array.isArray(dates) || dates.length === 0) {
+      el.innerHTML = '<div class="jb-empty">저장된 기록 없음</div>';
+      return;
+    }
+    el.innerHTML = dates.slice(0, 10).map(dateKey => `
+      <button onclick="openDismantleHistoryDate('${dateKey}')" style="background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:10px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left;">
+        📅 ${dateKey}
+      </button>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="jb-empty">기록 목록을 불러오지 못했습니다</div>';
+  }
+}
+
+function openDismantleHistoryDate(dateKey) {
+  const dateEl = document.getElementById('dismantleDate');
+  if (dateEl) dateEl.value = dateKey;
+  loadDismantleHistory();
+}
+
+function initDismantleTab() {
+  const dateEl = document.getElementById('dismantleDate');
+  if (dateEl && !dateEl.value) dateEl.value = dismantleTodayKey();
+  renderDismantleCompanyRows();
+  updateDismantleSummary();
+  loadDismantleHistory();
+  loadDismantleRecentList();
 }
 
 
@@ -3616,7 +3882,7 @@ async function admCheckVersionNotice() {
       type: 'update',
       version: APP_VERSION_ADM,
       title: `🛠 관리자 모바일 업데이트 (${APP_VERSION_ADM})`,
-      content: `✅ 관리자 모바일 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_ADM})\n\n📌 주요 변경사항\n① 박스탭 전체 입력은 이제 입력값 그대로 저장/표시됩니다.\n② 박스탭 입고 입력 시 보유량에 자동 가산됩니다.\n③ 박스탭 출고 입력 시 보유량에서 자동 차감됩니다.\n④ 관리자 PC 박스현황과 같은 데이터를 공유하도록 연동했습니다.\n⑤ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑥ 박스 저장 후 서버 재조회/검증을 추가해 저장 유지 여부를 바로 확인합니다.\n⑦ 박스현황 조회 시 NAS/Firebase 중 더 최신 데이터를 우선 사용합니다.\n⑧ 전체수량 대비 보유수량 비율을 박스 요약에 표시합니다.\n⑨ 새 날짜 기록이 없으면 이전 날짜의 전체/보유 값을 시작값으로 이어받습니다.`,
+      content: `✅ 관리자 모바일 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_ADM})\n\n📌 주요 변경사항\n① 박스탭 전체 입력은 이제 입력값 그대로 저장/표시됩니다.\n② 박스탭 입고 입력 시 보유량에 자동 가산됩니다.\n③ 박스탭 출고 입력 시 보유량에서 자동 차감됩니다.\n④ 관리자 PC 박스현황과 같은 데이터를 공유하도록 연동했습니다.\n⑤ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑥ 박스 저장 후 서버 재조회/검증을 추가해 저장 유지 여부를 바로 확인합니다.\n⑦ 박스현황 조회 시 NAS/Firebase 중 더 최신 데이터를 우선 사용합니다.\n⑧ 전체수량 대비 보유수량 비율을 박스 요약에 표시합니다.\n⑨ 새 날짜 기록이 없으면 이전 날짜의 전체/보유 값을 시작값으로 이어받습니다.\n⑩ 박스탭 다음에 해체탭을 추가하고 제약사별 입고·해체·해체대기를 저장합니다.`,
       date: new Date().toISOString().slice(0,10),
       important: false,
       auto: true
