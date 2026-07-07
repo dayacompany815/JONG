@@ -1671,6 +1671,20 @@ function collectBoxPayload() {
   };
 }
 
+function normalizeBoxItems(items) {
+  const out = {};
+  BOX_COMPANIES.forEach(name => {
+    const item = items?.[name] || {};
+    out[name] = {
+      total: Number(item.total || 0),
+      holding: Number(item.holding || 0),
+      inbound: Number(item.inbound || 0),
+      outbound: Number(item.outbound || 0)
+    };
+  });
+  return out;
+}
+
 function updateBoxSummary() {
   const el = document.getElementById('boxSummary');
   if (!el) return;
@@ -1733,8 +1747,8 @@ async function saveBoxHistory() {
     if (!res.ok) throw new Error(String(res.status));
     const verify = await fetch(`${FB_URL}/box_history/${payload.date}.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null);
     if (!verify) throw new Error('verify failed');
-    const saved = JSON.stringify(verify?.items || {});
-    const sent = JSON.stringify(payload.items || {});
+    const saved = JSON.stringify(normalizeBoxItems(verify?.items));
+    const sent = JSON.stringify(normalizeBoxItems(payload.items));
     if (saved !== sent) throw new Error('saved data mismatch');
     fillBoxForm(verify);
     currentBoxHistoryKey = payload.date;
