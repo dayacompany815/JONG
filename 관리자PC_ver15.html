@@ -784,7 +784,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 <script src="daya-predict.js?v=20250519"></script>
 <script>
 // ══ API (daya-api.js) ══
-const APP_VERSION_PC = 'admin-pc-v2.6.9';
+const APP_VERSION_PC = 'admin-pc-v2.7.0';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -2072,15 +2072,49 @@ function admUpdatePaceWidget(liveData,pInfo) {
 
 // ══ 📦 박스현황: 날짜별 / 기간별 조회 ══
 function admBoxTodayKey(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-var admBoxStream=null, admBoxReloadTimer=null;
+var admBoxStream=null, admBoxReloadTimer=null, admBoxPollTimer=null, admBoxLastSig='';
 function admReloadBoxSoon(){ clearTimeout(admBoxReloadTimer); admBoxReloadTimer=setTimeout(()=>{ _admMonthLoaded=false; admLoadMonthForecast(); },250); }
+function admBoxSig(data){
+  if(!data) return '';
+  const s=data.summary||{};
+  return JSON.stringify([data.updatedAt||'', data.date||'', s.total||0, s.holding||0, s.inbound||0, s.outbound||0]);
+}
+async function admCheckBoxRefresh(){
+  if(!FB_URL||document.hidden) return;
+  const watchKey=_boxMode==='date' ? (_boxSelKey||admBoxTodayKey()) : (_boxDates[0]||admBoxTodayKey());
+  if(!watchKey) return;
+  try{
+    const d=await fetch(`${FB_URL}/box_history/${watchKey}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null);
+    const sig=admBoxSig(d);
+    if(!admBoxLastSig){ admBoxLastSig=sig; return; }
+    if(sig!==admBoxLastSig){
+      admBoxLastSig=sig;
+      _boxCache={};
+      admReloadBoxSoon();
+    }
+  }catch(e){}
+}
+function initAdmBoxPolling(){
+  if(admBoxPollTimer||!FB_URL) return;
+  admBoxPollTimer=setInterval(admCheckBoxRefresh, 2000);
+}
 function initAdmBoxRealtime(){
   if(!FB_URL||admBoxStream||typeof EventSource==='undefined') return;
   try{
     admBoxStream=new EventSource(`${FB_URL}/stream`);
-    admBoxStream.onmessage=(event)=>{ try{ const msg=JSON.parse(event.data); if(msg&&msg.type==='box_history') admReloadBoxSoon(); }catch(e){} };
+    admBoxStream.onmessage=(event)=>{
+      try{
+        const msg=JSON.parse(event.data);
+        const raw=JSON.stringify(msg||{});
+        if((msg&&msg.type==='box_history') || raw.includes('box_history')){
+          _boxCache={};
+          admReloadBoxSoon();
+        }
+      }catch(e){}
+    };
     admBoxStream.onerror=()=>{ if(admBoxStream) admBoxStream.close(); admBoxStream=null; setTimeout(initAdmBoxRealtime,5000); };
   }catch(e){}
+  initAdmBoxPolling();
 }
 var BOX_COMPANIES=['종근당','국제','삼천당','비씨','대우'];
 var _boxDates=[], _boxCache={}, _boxMode='date', _boxSelKey=null, _boxRangeStart=null, _boxRangeEnd=null, _boxInit=false;
@@ -2566,7 +2600,7 @@ async function pcCheckVersionNotice() {
       type: 'update',
       version: APP_VERSION_PC,
       title: `💻 관리자 PC 업데이트 (${APP_VERSION_PC})`,
-      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 모바일 박스탭의 전체 입력값을 그대로 표시하도록 박스현황 집계를 조정했습니다.\n② 모바일 입고/출고에 따라 계산된 보유량이 PC 박스현황에도 동일하게 반영됩니다.\n③ 기존 박스 데이터는 이전 계산 방식으로 자동 호환됩니다.\n④ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.`,
+      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 모바일 박스탭의 전체 입력값을 그대로 표시하도록 박스현황 집계를 조정했습니다.\n② 모바일 입고/출고에 따라 계산된 보유량이 PC 박스현황에도 동일하게 반영됩니다.\n③ 기존 박스 데이터는 이전 계산 방식으로 자동 호환됩니다.\n④ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑤ 박스현황 실시간 감지를 보강해 모바일 저장 후 PC 반영 속도를 개선했습니다.`,
       date: new Date().toISOString().slice(0,10),
       important: false,
       auto: true
