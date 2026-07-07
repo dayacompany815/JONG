@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>다야냉장팀 실시간현황 (모바일)</title>
 <style>
 :root {
@@ -1161,7 +1164,7 @@ function goTab(i) {
 }
 
 // ══ API (daya-api.js) ══
-const APP_VERSION_ADM = 'admin-mobile-v1.12';
+const APP_VERSION_ADM = 'admin-mobile-v1.13';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -3500,7 +3503,7 @@ async function admCheckVersionNotice() {
       type: 'update',
       version: APP_VERSION_ADM,
       title: `🛠 관리자 모바일 업데이트 (${APP_VERSION_ADM})`,
-      content: `✅ 관리자 모바일 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_ADM})\n\n📌 주요 변경사항\n① 박스탭 전체 입력은 이제 입력값 그대로 저장/표시됩니다.\n② 박스탭 입고 입력 시 보유량에 자동 가산됩니다.\n③ 박스탭 출고 입력 시 보유량에서 자동 차감됩니다.\n④ 관리자 PC 박스현황과 같은 데이터를 공유하도록 연동했습니다.`,
+      content: `✅ 관리자 모바일 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_ADM})\n\n📌 주요 변경사항\n① 박스탭 전체 입력은 이제 입력값 그대로 저장/표시됩니다.\n② 박스탭 입고 입력 시 보유량에 자동 가산됩니다.\n③ 박스탭 출고 입력 시 보유량에서 자동 차감됩니다.\n④ 관리자 PC 박스현황과 같은 데이터를 공유하도록 연동했습니다.\n⑤ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.`,
       date: new Date().toISOString().slice(0,10),
       important: false,
       auto: true
