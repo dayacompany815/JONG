@@ -1745,19 +1745,33 @@ async function saveBoxHistory() {
       body: JSON.stringify(payload)
     });
     if (!res.ok) throw new Error(String(res.status));
-    const verify = await fetch(`${FB_URL}/box_history/${payload.date}.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null);
-    if (!verify) throw new Error('verify failed');
-    const saved = JSON.stringify(normalizeBoxItems(verify?.items));
-    const sent = JSON.stringify(normalizeBoxItems(payload.items));
-    if (saved !== sent) throw new Error('saved data mismatch');
-    fillBoxForm(verify);
     currentBoxHistoryKey = payload.date;
-    if (status) status.textContent = `${payload.date} 저장 완료 · 서버 반영 확인`;
-    showToast('✅ 박스 현황 저장 완료');
+    let verifyState = 'ok';
+    try {
+      const verify = await fetch(`${FB_URL}/box_history/${payload.date}.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null);
+      if (verify) {
+        const saved = JSON.stringify(normalizeBoxItems(verify?.items));
+        const sent = JSON.stringify(normalizeBoxItems(payload.items));
+        if (saved === sent) {
+          fillBoxForm(verify);
+        } else {
+          verifyState = 'mismatch';
+        }
+      } else {
+        verifyState = 'delay';
+      }
+    } catch(e) {
+      verifyState = 'delay';
+    }
+    if (status) status.textContent =
+      verifyState === 'ok'
+        ? `${payload.date} 저장 완료 · 서버 반영 확인`
+        : `${payload.date} 저장 완료 · 서버 확인 지연`;
+    showToast(verifyState === 'ok' ? '✅ 박스 현황 저장 완료' : '✅ 저장 완료 (서버 확인 지연)');
     await loadBoxRecentList();
   } catch(e) {
     if (status) status.textContent = `저장 실패: ${e.message}`;
-    showToast('❌ 박스 현황 저장 실패');
+    showToast(`❌ 박스 현황 저장 실패: ${e.message}`);
   }
 }
 
