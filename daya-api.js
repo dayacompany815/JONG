@@ -174,6 +174,28 @@
     return mergeLiveSources(d1, d2);
   }
 
+  function dayaJsonTs(d) {
+    if (!d) return 0;
+    return d.savedAt || d.updatedAt || d.ts || d.timestamp || 0;
+  }
+
+  async function dayaFetchLatestJson(path) {
+    var _f = global.__dayaOrigFetch;
+    if (!_f) return null;
+    var base = resolveApiBase();
+    var p = path.charAt(0) === '/' ? path : '/' + path;
+    var fbPath = p.endsWith('.json') ? FB_BACKUP + p : FB_BACKUP + p + '.json';
+    var results = await Promise.allSettled([
+      _f(base + p + '?t=' + Date.now()).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+      _f(fbPath + '?t=' + Date.now()).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+    ]);
+    var d1 = results[0].status === 'fulfilled' ? results[0].value : null;
+    var d2 = results[1].status === 'fulfilled' ? results[1].value : null;
+    if (!d1) return d2;
+    if (!d2) return d1;
+    return dayaJsonTs(d2) >= dayaJsonTs(d1) ? d2 : d1;
+  }
+
   async function dayaWriteLive(patch, baseFallback) {
     var current = (await dayaFetchLive()) || baseFallback || {};
     var merged = Object.assign({}, current);
@@ -286,6 +308,7 @@
   global.dayaApiRel = apiRel;
   global.dayaApiUrl = function (path) { return toFullApiUrl(apiRel(path)); };
   global.dayaFetchLive = dayaFetchLive;
+  global.dayaFetchLatestJson = dayaFetchLatestJson;
   global.dayaWriteLive = dayaWriteLive;
   global.dayaPutJson = dayaPutJson;
   global.dayaMergeLive = mergeLiveSources;

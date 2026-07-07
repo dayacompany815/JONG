@@ -1164,7 +1164,7 @@ function goTab(i) {
 }
 
 // ══ API (daya-api.js) ══
-const APP_VERSION_ADM = 'admin-mobile-v1.14';
+const APP_VERSION_ADM = 'admin-mobile-v1.15';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -1714,9 +1714,9 @@ async function loadBoxHistory() {
   const dk = document.getElementById('boxDate')?.value || boxTodayKey();
   currentBoxHistoryKey = dk;
   try {
-    const res = await fetch(`${FB_URL}/box_history/${dk}.json?t=${Date.now()}`);
-    if (!res.ok) throw new Error(String(res.status));
-    const data = await res.json();
+    const data = typeof dayaFetchLatestJson === 'function'
+      ? await dayaFetchLatestJson(`/box_history/${dk}.json`)
+      : await fetch(`${FB_URL}/box_history/${dk}.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null);
     if (data) {
       fillBoxForm(data);
       const status = document.getElementById('boxSaveStatus');
@@ -1748,7 +1748,9 @@ async function saveBoxHistory() {
     currentBoxHistoryKey = payload.date;
     let verifyState = 'ok';
     try {
-      const verify = await fetch(`${FB_URL}/box_history/${payload.date}.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null);
+      const verify = typeof dayaFetchLatestJson === 'function'
+        ? await dayaFetchLatestJson(`/box_history/${payload.date}.json`)
+        : await fetch(`${FB_URL}/box_history/${payload.date}.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null);
       if (verify) {
         const saved = JSON.stringify(normalizeBoxItems(verify?.items));
         const sent = JSON.stringify(normalizeBoxItems(payload.items));
@@ -3537,7 +3539,7 @@ async function admCheckVersionNotice() {
       type: 'update',
       version: APP_VERSION_ADM,
       title: `🛠 관리자 모바일 업데이트 (${APP_VERSION_ADM})`,
-      content: `✅ 관리자 모바일 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_ADM})\n\n📌 주요 변경사항\n① 박스탭 전체 입력은 이제 입력값 그대로 저장/표시됩니다.\n② 박스탭 입고 입력 시 보유량에 자동 가산됩니다.\n③ 박스탭 출고 입력 시 보유량에서 자동 차감됩니다.\n④ 관리자 PC 박스현황과 같은 데이터를 공유하도록 연동했습니다.\n⑤ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑥ 박스 저장 후 서버 재조회/검증을 추가해 저장 유지 여부를 바로 확인합니다.`,
+      content: `✅ 관리자 모바일 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_ADM})\n\n📌 주요 변경사항\n① 박스탭 전체 입력은 이제 입력값 그대로 저장/표시됩니다.\n② 박스탭 입고 입력 시 보유량에 자동 가산됩니다.\n③ 박스탭 출고 입력 시 보유량에서 자동 차감됩니다.\n④ 관리자 PC 박스현황과 같은 데이터를 공유하도록 연동했습니다.\n⑤ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑥ 박스 저장 후 서버 재조회/검증을 추가해 저장 유지 여부를 바로 확인합니다.\n⑦ 박스현황 조회 시 NAS/Firebase 중 더 최신 데이터를 우선 사용합니다.`,
       date: new Date().toISOString().slice(0,10),
       important: false,
       auto: true

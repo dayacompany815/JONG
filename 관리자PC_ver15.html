@@ -784,7 +784,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 <script src="daya-predict.js?v=20250519"></script>
 <script>
 // ══ API (daya-api.js) ══
-const APP_VERSION_PC = 'admin-pc-v2.7.0';
+const APP_VERSION_PC = 'admin-pc-v2.7.1';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -2084,7 +2084,9 @@ async function admCheckBoxRefresh(){
   const watchKey=_boxMode==='date' ? (_boxSelKey||admBoxTodayKey()) : (_boxDates[0]||admBoxTodayKey());
   if(!watchKey) return;
   try{
-    const d=await fetch(`${FB_URL}/box_history/${watchKey}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null);
+    const d=typeof dayaFetchLatestJson==='function'
+      ? await dayaFetchLatestJson(`/box_history/${watchKey}.json`)
+      : await fetch(`${FB_URL}/box_history/${watchKey}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null);
     const sig=admBoxSig(d);
     if(!admBoxLastSig){ admBoxLastSig=sig; return; }
     if(sig!==admBoxLastSig){
@@ -2127,7 +2129,9 @@ function admBoxNorm(item){ // 신규 데이터는 total 직접입력, 구버전 
 async function admFetchBox(key){
   if(!key||!FB_URL) return null;
   if(_boxCache[key]!==undefined) return _boxCache[key];
-  const d=await fetch(`${FB_URL}/box_history/${key}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null);
+  const d=typeof dayaFetchLatestJson==='function'
+    ? await dayaFetchLatestJson(`/box_history/${key}.json`)
+    : await fetch(`${FB_URL}/box_history/${key}.json?t=${Date.now()}`).then(r=>r.ok?r.json():null).catch(()=>null);
   _boxCache[key]=d; return d;
 }
 
@@ -2600,7 +2604,7 @@ async function pcCheckVersionNotice() {
       type: 'update',
       version: APP_VERSION_PC,
       title: `💻 관리자 PC 업데이트 (${APP_VERSION_PC})`,
-      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 모바일 박스탭의 전체 입력값을 그대로 표시하도록 박스현황 집계를 조정했습니다.\n② 모바일 입고/출고에 따라 계산된 보유량이 PC 박스현황에도 동일하게 반영됩니다.\n③ 기존 박스 데이터는 이전 계산 방식으로 자동 호환됩니다.\n④ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑤ 박스현황 실시간 감지를 보강해 모바일 저장 후 PC 반영 속도를 개선했습니다.`,
+      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 모바일 박스탭의 전체 입력값을 그대로 표시하도록 박스현황 집계를 조정했습니다.\n② 모바일 입고/출고에 따라 계산된 보유량이 PC 박스현황에도 동일하게 반영됩니다.\n③ 기존 박스 데이터는 이전 계산 방식으로 자동 호환됩니다.\n④ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑤ 박스현황 실시간 감지를 보강해 모바일 저장 후 PC 반영 속도를 개선했습니다.\n⑥ 박스현황 조회 시 NAS/Firebase 중 더 최신 데이터를 우선 사용합니다.`,
       date: new Date().toISOString().slice(0,10),
       important: false,
       auto: true
