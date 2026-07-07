@@ -9,19 +9,19 @@
 <title>작업현황 관리자 대시보드</title>
 <style>
 :root {
-  --bg: #0b0f1a;
-  --card: #111827;
-  --card2: #1a2235;
-  --border: #1e2d45;
-  --text: #e2eaf5;
-  --muted: #5a7a99;
-  --a1: #3b9eff;
-  --a2: #f97316;
+  --bg: #050505;
+  --card: #111111;
+  --card2: #1a1a1a;
+  --border: #2a2a2a;
+  --text: #f5f5f5;
+  --muted: #9a9a9a;
+  --a1: #e50914;
+  --a2: #f5f5f5;
   --a3: #2ecc71;
-  --a4: #a78bfa;
-  --a5: #ffd600;
-  --a6: #ff6b9d;
-  --red: #ef4444;
+  --a4: #b3b3b3;
+  --a5: #f5c518;
+  --a6: #e50914;
+  --red: #e50914;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
@@ -329,6 +329,76 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 /* 공지 목록 아이템 클릭 스타일 */
 .pc-notice-clickable{cursor:pointer;transition:background .15s;}
 .pc-notice-clickable:hover{background:var(--card) !important;}
+
+/* ══ Netflix-inspired PC Theme ══ */
+body{
+  background:
+    radial-gradient(circle at 18% -12%, rgba(229,9,20,.22), transparent 32%),
+    linear-gradient(180deg,#070707 0%,#050505 42%,#000 100%);
+}
+.header{
+  background:rgba(5,5,5,.96);
+  border-bottom:1px solid rgba(229,9,20,.72);
+  box-shadow:0 12px 36px rgba(0,0,0,.74);
+  backdrop-filter:blur(10px);
+}
+.header-title{letter-spacing:.2px;text-transform:uppercase;}
+.header-sub,.last-update{color:#8c8c8c;}
+.main{max-width:1680px;}
+.sum-card,.panel,.history-panel,.adm-pred,.adm-month,.pc-dis-card,#orderPredWrap,#jkgHighlightPC,#jkgLiveCard,#jkgBatchPanel,.prod-banner,.modal-box,.admin-confirm-box{
+  background:linear-gradient(180deg,rgba(28,28,28,.96),rgba(12,12,12,.96)) !important;
+  border:1px solid rgba(255,255,255,.09) !important;
+  border-radius:8px !important;
+  box-shadow:0 14px 32px rgba(0,0,0,.38);
+}
+.sum-card::before,.card::before{height:4px;background:linear-gradient(90deg,#e50914,#8b0008) !important;}
+.sum-card:hover,.panel:hover,.history-panel:hover{
+  transform:translateY(-2px);
+  border-color:rgba(229,9,20,.35) !important;
+}
+.sum-val.c-blue,.sum-val.c-pink,.sum-val.c-orange,.sum-val.c-purple,.sum-val.c-green,
+.jkg-detail-val.pink,.pc-dis-title,.adm-pred-pct,.admPredCur{
+  color:#fff !important;
+}
+.sum-label,.sum-sub,.panel-title,.sec-title span,.pc-dis-col,.pc-dis-date{color:#a6a6a6;}
+.panel-title,.sec-title{
+  border-bottom-color:rgba(255,255,255,.08);
+  letter-spacing:.1px;
+}
+.firebase-btn,.refresh-btn,.msg-send-btn,.modal-btn.primary,.admin-confirm-close,.pc-dis-btn.active{
+  background:#e50914 !important;
+  border-color:#e50914 !important;
+  color:#fff !important;
+  border-radius:6px !important;
+}
+.firebase-btn:hover,.refresh-btn:hover,.msg-send-btn:hover,.modal-btn.primary:hover{
+  background:#f6121d !important;
+}
+.pc-dis-btn,.hist-filter,.adm-chip,.adm-tag{
+  border-radius:4px !important;
+}
+.pc-dis-row,.jkg-detail-item,.worker-card,.msg-history-item,.att-member-badge,.pc-dis-kpi{
+  background:rgba(255,255,255,.045) !important;
+  border-color:rgba(255,255,255,.08) !important;
+  border-radius:6px !important;
+}
+.pc-dis-row.hdr{background:transparent !important;}
+.pc-dis-num[style*="var(--a1)"],.pc-dis-num[style*="var(--a5)"],.pc-dis-num[style*="var(--a3)"]{
+  color:#fff !important;
+}
+.history-table th{
+  color:#b3b3b3;
+  border-bottom-color:rgba(255,255,255,.12);
+}
+.history-table td{border-bottom-color:rgba(255,255,255,.055);}
+.history-table tr:hover td{background:rgba(229,9,20,.08);}
+.biz-bar-wrap,.adm-bar-bg,.modal-input,.msg-textarea{
+  background:#090909;
+  border-color:rgba(255,255,255,.1);
+}
+.adm-bar,.batchPaceBar,#jkgPCHL-bar,#jkgProgressBar{
+  background:linear-gradient(90deg,#e50914,#ff4b55) !important;
+}
 </style>
 </head>
 <body>
@@ -816,7 +886,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 <script src="daya-predict.js?v=20250519"></script>
 <script>
 // ══ API (daya-api.js) ══
-const APP_VERSION_PC = 'admin-pc-v2.7.5';
+const APP_VERSION_PC = 'admin-pc-v2.7.6';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -2894,7 +2964,7 @@ async function pcCheckVersionNotice() {
       type: 'update',
       version: APP_VERSION_PC,
       title: `💻 관리자 PC 업데이트 (${APP_VERSION_PC})`,
-      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 모바일 박스탭의 전체 입력값을 그대로 표시하도록 박스현황 집계를 조정했습니다.\n② 모바일 입고/출고에 따라 계산된 보유량이 PC 박스현황에도 동일하게 반영됩니다.\n③ 기존 박스 데이터는 이전 계산 방식으로 자동 호환됩니다.\n④ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑤ 박스현황 실시간 감지를 보강해 모바일 저장 후 PC 반영 속도를 개선했습니다.\n⑥ 박스현황 조회 시 NAS/Firebase 중 더 최신 데이터를 우선 사용합니다.\n⑦ 전체수량 대비 보유수량 비율을 박스현황에 표시합니다.\n⑧ 상단 주문량 예측 영역 오른쪽에 모바일 해체탭 입력값을 제약사별로 표시합니다.\n⑨ 해체현황 날짜별·기간별 조회와 엑셀·인쇄 기능을 추가했습니다.`,
+      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 모바일 박스탭의 전체 입력값을 그대로 표시하도록 박스현황 집계를 조정했습니다.\n② 모바일 입고/출고에 따라 계산된 보유량이 PC 박스현황에도 동일하게 반영됩니다.\n③ 기존 박스 데이터는 이전 계산 방식으로 자동 호환됩니다.\n④ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑤ 박스현황 실시간 감지를 보강해 모바일 저장 후 PC 반영 속도를 개선했습니다.\n⑥ 박스현황 조회 시 NAS/Firebase 중 더 최신 데이터를 우선 사용합니다.\n⑦ 전체수량 대비 보유수량 비율을 박스현황에 표시합니다.\n⑧ 상단 주문량 예측 영역 오른쪽에 모바일 해체탭 입력값을 제약사별로 표시합니다.\n⑨ 해체현황 날짜별·기간별 조회와 엑셀·인쇄 기능을 추가했습니다.\n⑩ 관리자 PC 화면을 블랙/레드 기반의 넷플릭스 느낌 테마로 조정했습니다.`,
       date: new Date().toISOString().slice(0,10),
       important: false,
       auto: true
