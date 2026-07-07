@@ -784,7 +784,7 @@ body { font-family: 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg
 <script src="daya-predict.js?v=20250519"></script>
 <script>
 // ══ API (daya-api.js) ══
-const APP_VERSION_PC = 'admin-pc-v2.7.1';
+const APP_VERSION_PC = 'admin-pc-v2.7.2';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -2289,8 +2289,13 @@ function admBoxSummaryGrid(cols){
       <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">${c.label}</div><div style="font-size:15px;font-weight:900;color:${c.color}">${(c.v||0).toLocaleString()}</div>
     </div>`).join('')+`</div>`;
 }
+function admBoxHoldingPct(holding,total){
+  const t=Number(total||0);
+  if(t<=0) return 0;
+  return Math.round(Number(holding||0)/t*100);
+}
 function admBoxCompanyRow(name,cols){
-  return `<div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr 1fr;gap:6px;align-items:center;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;">
+  return `<div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr 1fr 1fr;gap:6px;align-items:center;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 8px;">
     <div style="font-size:11px;font-weight:800;color:${name==='종근당'?'var(--a6)':'var(--text)'};">${name}</div>
     ${cols.map(c=>`<div style="font-size:11px;text-align:center;"><span style="color:var(--muted);font-size:9px;">${c.label}</span><br><span style="font-weight:900;color:${c.color||'inherit'};">${(c.v||0).toLocaleString()}</span></div>`).join('')}
   </div>`;
@@ -2309,6 +2314,7 @@ async function admRenderBoxDate(mc){
   const hasData=!!(data&&data.items);        // 데이터 없으면 0으로 표시 (당일 미입력 시)
   const items={}; BOX_COMPANIES.forEach(n=>{items[n]=admBoxNorm(hasData?data.items[n]:{});});
   const sum=BOX_COMPANIES.reduce((a,n)=>{a.total+=items[n].total;a.holding+=items[n].holding;a.inbound+=items[n].inbound;a.outbound+=items[n].outbound;return a;},{total:0,holding:0,inbound:0,outbound:0});
+  const sumPct=admBoxHoldingPct(sum.holding,sum.total);
   mc.innerHTML=`
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px;">
       <div style="font-size:12px;color:var(--muted);">📅 ${key}</div>
@@ -2320,12 +2326,14 @@ async function admRenderBoxDate(mc){
       {label:'입고',v:sum.inbound,color:'var(--a3)'},
       {label:'출고',v:sum.outbound,color:'var(--a2)'},
     ])+
+    `<div style="margin:-2px 0 8px;font-size:11px;color:var(--muted);text-align:right;">보유율 <span style="color:var(--a4);font-weight:900;">${sumPct}%</span> <span style="font-size:10px;">(보유 ÷ 전체)</span></div>`+
     `<div style="display:flex;flex-direction:column;gap:6px;">`+
     BOX_COMPANIES.map(name=>{const it=items[name];return admBoxCompanyRow(name,[
       {label:'전체',v:it.total},
       {label:'보유',v:it.holding},
       {label:'입고',v:it.inbound,color:'var(--a3)'},
       {label:'출고',v:it.outbound,color:'var(--a2)'},
+      {label:'보유율',v:admBoxHoldingPct(it.holding,it.total)+'%',color:'var(--a4)'},
     ]);}).join('')+`</div>`;
 }
 
@@ -2604,7 +2612,7 @@ async function pcCheckVersionNotice() {
       type: 'update',
       version: APP_VERSION_PC,
       title: `💻 관리자 PC 업데이트 (${APP_VERSION_PC})`,
-      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 모바일 박스탭의 전체 입력값을 그대로 표시하도록 박스현황 집계를 조정했습니다.\n② 모바일 입고/출고에 따라 계산된 보유량이 PC 박스현황에도 동일하게 반영됩니다.\n③ 기존 박스 데이터는 이전 계산 방식으로 자동 호환됩니다.\n④ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑤ 박스현황 실시간 감지를 보강해 모바일 저장 후 PC 반영 속도를 개선했습니다.\n⑥ 박스현황 조회 시 NAS/Firebase 중 더 최신 데이터를 우선 사용합니다.`,
+      content: `✅ 관리자 PC 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_PC})\n\n📌 주요 변경사항\n① 모바일 박스탭의 전체 입력값을 그대로 표시하도록 박스현황 집계를 조정했습니다.\n② 모바일 입고/출고에 따라 계산된 보유량이 PC 박스현황에도 동일하게 반영됩니다.\n③ 기존 박스 데이터는 이전 계산 방식으로 자동 호환됩니다.\n④ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑤ 박스현황 실시간 감지를 보강해 모바일 저장 후 PC 반영 속도를 개선했습니다.\n⑥ 박스현황 조회 시 NAS/Firebase 중 더 최신 데이터를 우선 사용합니다.\n⑦ 전체수량 대비 보유수량 비율을 박스현황에 표시합니다.`,
       date: new Date().toISOString().slice(0,10),
       important: false,
       auto: true
