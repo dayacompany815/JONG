@@ -1164,7 +1164,7 @@ function goTab(i) {
 }
 
 // ══ API (daya-api.js) ══
-const APP_VERSION_ADM = 'admin-mobile-v1.17';
+const APP_VERSION_ADM = 'admin-mobile-v1.18';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -2877,6 +2877,16 @@ function showInstrEstimate(brands, totalInstr) {
     </div>` : '');
 }
 
+function getJkgExplicitCount() {
+  try {
+    const current = parseInt(document.getElementById('instr_c_종근당')?.value || '0', 10) || 0;
+    if (current > 0) return current;
+  } catch(e) {}
+  const liveCount = parseInt(cachedLiveData?.instrData?.종근당?.count || '0', 10) || 0;
+  if (liveCount > 0) return liveCount;
+  return 0;
+}
+
 async function loadInstrForDate() {
   const di = document.getElementById('instrDate');
   const dk = di?.value || instrTodayKey();
@@ -4178,13 +4188,14 @@ function calcJkgRollingPred() {
   // (수량÷18 같은 고정값 금지: 18은 파레트당 적재박스수일 뿐 박스환산값 아님)
   // 건수 = 실시간 주문입력 누적 / 비율 = 과거 건수로 학습한 박스÷건수
   const countTotal = entries.reduce((s, e) => s + (parseInt(e.count) || 0), 0);
-  // 건수도 수량과 동일한 누적비율로 최종 건수 롤링 예측
-  const predCount = countTotal > 0 ? Math.round(countTotal / ratio) : 0;
+  const explicitCount = getJkgExplicitCount();
+  // A0 건수가 이미 확정 입력된 경우에는 그 값을 최종 건수로 간주하고 추가 롤링 예측 금지
+  const predCount = explicitCount > 0 ? explicitCount : (countTotal > 0 ? Math.round(countTotal / ratio) : 0);
   // 학습된 박스/건 비율 (없으면 박스 환산 불가 → null, 추측값 사용 안 함)
   const bpoRatio = (_learnedBoxPerOrder?.ratio > 0) ? _learnedBoxPerOrder.ratio : null;
   const predBoxes = (bpoRatio && predCount > 0) ? Math.round(predCount * bpoRatio) : null;
 
-  return { total, pred, pct, n, ratio, predBoxes, countTotal, predCount, bpoRatio,
+  return { total, pred, pct, n, ratio, predBoxes, countTotal, predCount, bpoRatio, explicitCount,
            isLearned: !!_learnedBoxPerOrder?.sampleCount };
 }
 
@@ -4285,7 +4296,9 @@ function renderOrderLog() {
     const rem = Math.max(jkgPred.pred - jkgPred.total, 0);
     const pctLeft = Math.round((1 - jkgPred.ratio) * 100);
     const learnedMark = jkgPred.isLearned ? ' 🧠학습됨' : '';
-    let basisText = `${jkgPred.n}회차 입력 · 잔여 예상 ${rem}개 (${pctLeft}% 미도착)${learnedMark}`;
+    let basisText = jkgPred.explicitCount > 0
+      ? `확정건수 ${jkgPred.predCount}건 기준${learnedMark}`
+      : `${jkgPred.n}회차 입력 · 잔여 예상 ${rem}개 (${pctLeft}% 미도착)${learnedMark}`;
     if (jkgPred.predBoxes > 0) {
       basisText += ` | 예측건수 ${jkgPred.predCount}건 × 비율 ${jkgPred.bpoRatio} = ${jkgPred.predBoxes}박스`;
     }
@@ -4649,11 +4662,12 @@ window.calcJkgRollingPred = function() {
   // (수량÷18 같은 고정값 금지: 18은 파레트당 적재박스수일 뿐 박스환산값 아님)
   // 건수 = 실시간 주문입력 누적 / 비율 = 과거 건수로 학습한 박스÷건수
   const countTotal = entries.reduce((s, e) => s + (parseInt(e.count) || 0), 0);
-  const predCount = countTotal > 0 ? Math.round(countTotal / ratio) : 0; // 건수도 동일 누적비율로 롤링
+  const explicitCount = getJkgExplicitCount();
+  const predCount = explicitCount > 0 ? explicitCount : (countTotal > 0 ? Math.round(countTotal / ratio) : 0);
   const bpoRatio = (_learnedBoxPerOrder?.ratio > 0) ? _learnedBoxPerOrder.ratio : null;
   const predBoxes = (bpoRatio && predCount > 0) ? Math.round(predCount * bpoRatio) : null;
 
-  return { total, pred, pct, n, ratio, isLearned, countTotal, predCount, bpoRatio, predBoxes };
+  return { total, pred, pct, n, ratio, isLearned, countTotal, predCount, bpoRatio, predBoxes, explicitCount };
 };
 
 // ── 이전 같은 요일 비교 로드 ──
