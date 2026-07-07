@@ -1164,7 +1164,7 @@ function goTab(i) {
 }
 
 // ══ API (daya-api.js) ══
-const APP_VERSION_ADM = 'admin-mobile-v1.13';
+const APP_VERSION_ADM = 'admin-mobile-v1.14';
 var FB_URL = window.FB_URL;
 var FB_BACKUP = window.FB_BACKUP;
 let cachedLiveData = null;
@@ -1731,8 +1731,14 @@ async function saveBoxHistory() {
       body: JSON.stringify(payload)
     });
     if (!res.ok) throw new Error(String(res.status));
+    const verify = await fetch(`${FB_URL}/box_history/${payload.date}.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null);
+    if (!verify) throw new Error('verify failed');
+    const saved = JSON.stringify(verify?.items || {});
+    const sent = JSON.stringify(payload.items || {});
+    if (saved !== sent) throw new Error('saved data mismatch');
+    fillBoxForm(verify);
     currentBoxHistoryKey = payload.date;
-    if (status) status.textContent = `${payload.date} 저장 완료`;
+    if (status) status.textContent = `${payload.date} 저장 완료 · 서버 반영 확인`;
     showToast('✅ 박스 현황 저장 완료');
     await loadBoxRecentList();
   } catch(e) {
@@ -3503,7 +3509,7 @@ async function admCheckVersionNotice() {
       type: 'update',
       version: APP_VERSION_ADM,
       title: `🛠 관리자 모바일 업데이트 (${APP_VERSION_ADM})`,
-      content: `✅ 관리자 모바일 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_ADM})\n\n📌 주요 변경사항\n① 박스탭 전체 입력은 이제 입력값 그대로 저장/표시됩니다.\n② 박스탭 입고 입력 시 보유량에 자동 가산됩니다.\n③ 박스탭 출고 입력 시 보유량에서 자동 차감됩니다.\n④ 관리자 PC 박스현황과 같은 데이터를 공유하도록 연동했습니다.\n⑤ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.`,
+      content: `✅ 관리자 모바일 앱이 업데이트되었습니다 (${stored} → ${APP_VERSION_ADM})\n\n📌 주요 변경사항\n① 박스탭 전체 입력은 이제 입력값 그대로 저장/표시됩니다.\n② 박스탭 입고 입력 시 보유량에 자동 가산됩니다.\n③ 박스탭 출고 입력 시 보유량에서 자동 차감됩니다.\n④ 관리자 PC 박스현황과 같은 데이터를 공유하도록 연동했습니다.\n⑤ 정상 주소 접속 시 HTML 캐시를 줄이도록 갱신했습니다.\n⑥ 박스 저장 후 서버 재조회/검증을 추가해 저장 유지 여부를 바로 확인합니다.`,
       date: new Date().toISOString().slice(0,10),
       important: false,
       auto: true
